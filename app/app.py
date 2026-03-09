@@ -1,7 +1,7 @@
 from app.utils.config import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 from flask import Flask
 from .routes.contacts import contacts_bp
-from src.utils.db import db
+from app.utils.database_connection import db
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = (
