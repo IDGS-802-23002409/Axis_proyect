@@ -1,0 +1,302 @@
+{% extends "layout.html" %}
+
+{% block title %}Catálogo - AXIS Streetwear{% endblock %}
+
+{% block content %}
+<section id="catalog-section" class="watermark-bg relative min-h-screen bg-[#000000] pt-24 pb-16">
+    <div class="relative z-10 mx-auto max-w-7xl px-4 lg:px-8">
+        <!-- Section Header -->
+        <div class="mb-12 text-center">
+            <span class="mb-2 block text-xs font-medium uppercase tracking-[0.4em] text-primary">
+                Streetwear Collection
+            </span>
+            <h2 class="text-balance text-4xl font-black uppercase tracking-wide text-foreground md:text-5xl">
+                Catálogo
+            </h2>
+            <div class="mx-auto mt-4 h-px w-24 bg-primary"></div>
+        </div>
+
+        <!-- Featured Row -->
+        <div id="catalog-featured" class="mb-16">
+            <h3 class="mb-6 text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">
+                / Destacados
+            </h3>
+            <div id="catalog-featured-grid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- Filters Bar -->
+        <div
+            class="mb-8 flex flex-col gap-4 border-b border-border pb-6 md:flex-row md:items-center md:justify-between">
+            <!-- Categories -->
+            <div id="catalog-categories" class="flex flex-wrap items-center gap-2">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Right controls -->
+            <div class="flex items-center gap-3">
+                <!-- Favorites toggle -->
+                <button id="toggle-favorites-btn"
+                    class="flex items-center gap-1 px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all border border-border text-muted-foreground hover:border-primary hover:text-primary">
+                    Favoritos
+                    <span id="favorites-badge"
+                        class="hidden ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary/20 text-[10px]">0</span>
+                </button>
+
+                <!-- Sort -->
+                <div class="relative">
+                    <select id="catalog-sort"
+                        class="appearance-none border border-border bg-card px-3 py-2 pr-8 text-xs font-bold uppercase tracking-wider text-foreground"
+                        aria-label="Ordenar por">
+                        <option value="default">Ordenar</option>
+                        <option value="price-asc">Precio: menor</option>
+                        <option value="price-desc">Precio: mayor</option>
+                        <option value="name">Nombre A-Z</option>
+                    </select>
+                    <i data-lucide="sliders-horizontal"
+                        class="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground"></i>
+                </div>
+
+                <!-- View mode -->
+                <div class="hidden items-center border border-border md:flex">
+                    <button id="view-mode-grid" class="p-2 transition-colors bg-primary text-primary-foreground"
+                        aria-label="Vista de cuadricula">
+                        <i data-lucide="grid-3x3" class="h-3.5 w-3.5"></i>
+                    </button>
+                    <button id="view-mode-list" class="p-2 transition-colors text-muted-foreground"
+                        aria-label="Vista de lista">
+                        <i data-lucide="layout-list" class="h-3.5 w-3.5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results count -->
+        <p id="catalog-count" class="mb-6 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            0 productos
+        </p>
+
+        <!-- Products Grid -->
+        <div id="catalog-grid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <!-- Injected via JS -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="catalog-empty"
+            class="hidden flex min-h-[300px] flex-col items-center justify-center gap-4 border border-dashed border-border">
+            <p id="catalog-empty-text" class="text-sm uppercase tracking-wider text-muted-foreground">
+                No se encontraron productos
+            </p>
+            <button id="catalog-reset-btn"
+                class="border border-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary transition-colors hover:bg-primary hover:text-primary-foreground">
+                Ver todo
+            </button>
+        </div>
+
+    </div>
+</section>
+
+<!-- Logic for Product Catalog (Should ideally be in a separate JS file, but placed here for component modularity) -->
+<script src="{{ url_for('static', filename='js/products.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Logic for Catalog rendering (requires products.js to define window.axisProducts)
+        if (!window.axisProducts) return;
+
+        const state = {
+            category: "Todos",
+            sortBy: "default",
+            viewMode: "grid",
+            showFavoritesOnly: false
+        };
+
+        const els = {
+            grid: document.getElementById('catalog-grid'),
+            empty: document.getElementById('catalog-empty'),
+            featuredGrid: document.getElementById('catalog-featured-grid'),
+            featuredSection: document.getElementById('catalog-featured'),
+            catContainer: document.getElementById('catalog-categories'),
+            sortSelect: document.getElementById('catalog-sort'),
+            btnFav: document.getElementById('toggle-favorites-btn'),
+            favBadge: document.getElementById('favorites-badge'),
+            btnGrid: document.getElementById('view-mode-grid'),
+            btnList: document.getElementById('view-mode-list'),
+            count: document.getElementById('catalog-count'),
+            emptyText: document.getElementById('catalog-empty-text'),
+            btnReset: document.getElementById('catalog-reset-btn')
+        };
+
+        function createProductCardHtml(product) {
+            const isFav = window.axisStore.favorites.includes(product.id);
+            const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+            const encodedProduct = encodeURIComponent(JSON.stringify(product));
+
+            return `
+      <div class="group relative flex h-full flex-col border border-border bg-[#050505] transition-colors hover:border-primary/50 overflow-hidden">
+        <div class="absolute inset-0 z-0 bg-gradient-to-t from-[#000000] via-transparent to-transparent opacity-60"></div>
+        <div class="relative z-10 aspect-[4/5] w-full cursor-pointer overflow-hidden p-4" onclick="openProductModal('${encodedProduct}')">
+          <img src="${product.image}" alt="${product.name}" class="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
+          <div class="absolute inset-0 flex items-center justify-center opacity-[0.03] transition-opacity duration-500 group-hover:opacity-[0.08] pointer-events-none">
+            <img src="{{ url_for('static', filename='images/axis-logo.png') }}" alt="" class="w-1/2 object-contain" />
+          </div>
+          <div class="absolute left-4 top-4 flex flex-col gap-2">
+            ${product.isNew ? '<span class="w-fit bg-primary px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground backdrop-blur-sm">Nuevo</span>' : ''}
+            ${hasDiscount ? '<span class="w-fit bg-[#dc2626] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground backdrop-blur-sm">Oferta</span>' : ''}
+          </div>
+        </div>
+        
+        <div class="relative z-20 flex flex-1 flex-col p-5">
+          <div class="mb-auto">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-[9px] font-medium uppercase tracking-[0.3em] text-primary">${product.category}</span>
+                <h3 class="mt-1 line-clamp-2 text-sm font-black uppercase tracking-wide text-foreground transition-colors group-hover:text-primary" onclick="openProductModal('${encodedProduct}')" style="cursor:pointer">${product.name}</h3>
+              </div>
+              <button onclick="toggleCardFavorite(event, '${product.id}')" class="text-muted-foreground transition-colors hover:text-primary z-30 relative" aria-label="Favorito">
+                <i data-lucide="heart" class="h-4 w-4 ${isFav ? 'fill-primary text-primary' : ''}"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="mt-4 flex items-end justify-between border-t border-border/50 pt-4">
+            <div class="flex flex-col">
+              ${hasDiscount ? `<span class="text-xs text-muted-foreground line-through">$${product.originalPrice.toFixed(2)}</span>` : ''}
+              <span class="text-lg font-black text-foreground">$${product.price.toFixed(2)}</span>
+            </div>
+            
+            <button onclick="openProductModal('${encodedProduct}')" class="flex h-10 w-10 items-center justify-center bg-primary text-primary-foreground transition-transform hover:scale-105 z-30 relative" aria-label="Ver detalles">
+              <i data-lucide="plus" class="h-4 w-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+        }
+
+        window.toggleCardFavorite = function (e, id) {
+            e.stopPropagation();
+            if (window.axisStore.favorites.includes(id)) {
+                window.axisStore.favorites = window.axisStore.favorites.filter(fid => fid !== id);
+            } else {
+                window.axisStore.favorites.push(id);
+            }
+            renderCatalog();
+            if (window.renderFavoriteStatus) window.renderFavoriteStatus(); // Update modal if open
+        };
+
+        function renderCategories() {
+            let ht = '';
+            window.axisCategories.forEach(cat => {
+                const active = state.category === cat;
+                ht += `<button onclick="setCatalogCategory('${cat}')" class="px-4 py-2 text-xs font-bold uppercase tracking-[0.15em] transition-all ${active ? 'bg-primary text-primary-foreground' : 'border border-border text-muted-foreground hover:border-primary hover:text-primary'}">${cat}</button>`;
+            });
+            els.catContainer.innerHTML = ht;
+        }
+
+        window.setCatalogCategory = function (cat) {
+            state.category = cat;
+            renderCatalog();
+        };
+
+        function renderCatalog() {
+            renderCategories();
+
+            // Favorites button
+            if (window.axisStore.favorites.length > 0) {
+                els.favBadge.textContent = window.axisStore.favorites.length;
+                els.favBadge.classList.remove('hidden');
+            } else {
+                els.favBadge.classList.add('hidden');
+            }
+
+            if (state.showFavoritesOnly) {
+                els.btnFav.classList.add('bg-primary', 'text-primary-foreground');
+                els.btnFav.classList.remove('border', 'border-border', 'text-muted-foreground', 'hover:border-primary', 'hover:text-primary');
+            } else {
+                els.btnFav.classList.remove('bg-primary', 'text-primary-foreground');
+                els.btnFav.classList.add('border', 'border-border', 'text-muted-foreground', 'hover:border-primary', 'hover:text-primary');
+            }
+
+            // Filter
+            let filtered = window.axisProducts
+                .filter(p => state.category === "Todos" || p.category === state.category)
+                .filter(p => !state.showFavoritesOnly || window.axisStore.favorites.includes(p.id));
+
+            // Sort
+            if (state.sortBy === "price-asc") filtered.sort((a, b) => a.price - b.price);
+            else if (state.sortBy === "price-desc") filtered.sort((a, b) => b.price - a.price);
+            else if (state.sortBy === "name") filtered.sort((a, b) => a.name.localeCompare(b.name));
+
+            // Featured section
+            if (!state.showFavoritesOnly && state.category === "Todos") {
+                els.featuredSection.classList.remove('hidden');
+                const featured = window.axisProducts.filter(p => p.isFeatured);
+                els.featuredGrid.innerHTML = featured.map(createProductCardHtml).join('');
+            } else {
+                els.featuredSection.classList.add('hidden');
+            }
+
+            // Count
+            els.count.textContent = `${filtered.length} producto${filtered.length !== 1 ? 's' : ''}`;
+
+            // Grid rendering
+            if (filtered.length > 0) {
+                els.empty.classList.add('hidden');
+                els.grid.classList.remove('hidden');
+
+                if (state.viewMode === 'grid') {
+                    els.grid.className = "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+                } else {
+                    els.grid.className = "flex flex-col gap-4";
+                }
+
+                els.grid.innerHTML = filtered.map(createProductCardHtml).join('');
+                if (window.lucide) window.lucide.createIcons();
+            } else {
+                els.empty.classList.remove('hidden');
+                els.grid.classList.add('hidden');
+                els.emptyText.textContent = state.showFavoritesOnly ? "No tienes favoritos aún" : "No se encontraron productos";
+            }
+        }
+
+        // Bind events
+        els.btnFav.addEventListener('click', () => {
+            state.showFavoritesOnly = !state.showFavoritesOnly;
+            renderCatalog();
+        });
+
+        els.sortSelect.addEventListener('change', (e) => {
+            state.sortBy = e.target.value;
+            renderCatalog();
+        });
+
+        els.btnGrid.addEventListener('click', () => {
+            state.viewMode = 'grid';
+            els.btnGrid.classList.add('bg-primary', 'text-primary-foreground');
+            els.btnGrid.classList.remove('text-muted-foreground');
+            els.btnList.classList.add('text-muted-foreground');
+            els.btnList.classList.remove('bg-primary', 'text-primary-foreground');
+            renderCatalog();
+        });
+
+        els.btnList.addEventListener('click', () => {
+            state.viewMode = 'list';
+            els.btnList.classList.add('bg-primary', 'text-primary-foreground');
+            els.btnList.classList.remove('text-muted-foreground');
+            els.btnGrid.classList.add('text-muted-foreground');
+            els.btnGrid.classList.remove('bg-primary', 'text-primary-foreground');
+            renderCatalog();
+        });
+
+        els.btnReset.addEventListener('click', () => {
+            state.category = "Todos";
+            state.showFavoritesOnly = false;
+            renderCatalog();
+        });
+
+        // Init
+        renderCatalog();
+    });
+</script>
+{% endblock %}
