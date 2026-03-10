@@ -1,0 +1,284 @@
+{% extends "layout.html" %}
+
+{% block title %}Inicio - AXIS Streetwear{% endblock %}
+
+{% block content %}
+<!-- HERO PIN WRAPPER -->
+<div id="hero-pin-wrap" class="relative h-[100svh] w-full overflow-hidden bg-[#000000]">
+    <!-- Video -->
+    <div id="hero-video-wrap" class="absolute inset-0" style="clip-path: circle(8% at 50% 50%)">
+        <video id="hero-video" autoplay loop muted playsinline class="pointer-events-none h-full w-full object-cover"
+            poster="{{ url_for('static', filename='images/hero-bg.jpg') }}">
+            <source src="https://videos.pexels.com/video-files/4488286/4488286-uhd_2560_1440_24fps.mp4"
+                type="video/mp4" />
+        </video>
+    </div>
+
+    <!-- Dark overlay -->
+    <div id="hero-overlay" class="absolute inset-0 bg-[#000000]" style="opacity: 0.9"></div>
+
+    <!-- Purple vignette -->
+    <div
+        class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(124,58,237,0.10)_100%)]">
+    </div>
+
+    <!-- Subtle watermark -->
+    <div class="pointer-events-none absolute inset-0 opacity-[0.02]"
+        style="background-image: url('{{ url_for('static', filename='images/axis-logo.png') }}'); background-repeat: repeat; background-size: 300px;">
+    </div>
+
+    <!-- Corner accents -->
+    <div id="corner-tl"
+        class="absolute left-6 top-6 z-20 h-12 w-12 border-l-2 border-t-2 border-[#7c3aed]/40 lg:left-10 lg:top-10 lg:h-16 lg:w-16">
+    </div>
+    <div id="corner-tr"
+        class="absolute right-6 top-6 z-20 h-12 w-12 border-r-2 border-t-2 border-[#7c3aed]/40 lg:right-10 lg:top-10 lg:h-16 lg:w-16">
+    </div>
+    <div id="corner-bl"
+        class="absolute bottom-6 left-6 z-20 h-12 w-12 border-b-2 border-l-2 border-[#7c3aed]/40 lg:bottom-10 lg:left-10 lg:h-16 lg:w-16">
+    </div>
+    <div id="corner-br"
+        class="absolute bottom-6 right-6 z-20 h-12 w-12 border-b-2 border-r-2 border-[#7c3aed]/40 lg:bottom-10 lg:right-10 lg:h-16 lg:w-16">
+    </div>
+
+    <!-- CENTER CONTENT -->
+    <div class="relative z-10 flex h-full flex-col items-center justify-center px-6">
+        <div id="hero-line-top"
+            class="mb-6 h-px w-full max-w-xs bg-gradient-to-r from-transparent via-[#7c3aed]/50 to-transparent lg:max-w-md">
+        </div>
+
+        <div id="hero-title" class="flex items-center gap-1 lg:gap-3" style="perspective: 600px">
+            <span data-axis-letter
+                class="inline-block text-[clamp(5rem,18vw,14rem)] font-black uppercase leading-none tracking-tight text-[#f5f5f5]"
+                style="text-shadow: 0 0 80px rgba(124,58,237,0.3), 0 0 160px rgba(124,58,237,0.1)">A</span>
+            <span data-axis-letter
+                class="inline-block text-[clamp(5rem,18vw,14rem)] font-black uppercase leading-none tracking-tight text-[#f5f5f5]"
+                style="text-shadow: 0 0 80px rgba(124,58,237,0.3), 0 0 160px rgba(124,58,237,0.1)">X</span>
+            <span data-axis-letter
+                class="inline-block text-[clamp(5rem,18vw,14rem)] font-black uppercase leading-none tracking-tight text-[#f5f5f5]"
+                style="text-shadow: 0 0 80px rgba(124,58,237,0.3), 0 0 160px rgba(124,58,237,0.1)">I</span>
+            <span data-axis-letter
+                class="inline-block text-[clamp(5rem,18vw,14rem)] font-black uppercase leading-none tracking-tight text-[#f5f5f5]"
+                style="text-shadow: 0 0 80px rgba(124,58,237,0.3), 0 0 160px rgba(124,58,237,0.1)">S</span>
+        </div>
+
+        <!-- Subtitle bar -->
+        <div id="hero-subtitle-line" class="mt-4 flex items-center gap-4 lg:mt-6">
+            <div class="h-px w-12 bg-[#7c3aed]/60 lg:w-20"></div>
+            <span
+                class="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.6em] text-[#7c3aed]/80 lg:text-xs">
+                Modern Streetwear
+            </span>
+            <div class="h-px w-12 bg-[#7c3aed]/60 lg:w-20"></div>
+        </div>
+
+        <!-- Taglines -->
+        <div class="mt-10 flex flex-col items-center gap-3 lg:mt-14 lg:gap-4">
+            <div id="hero-tagline-1">
+                <p class="text-center text-lg font-light uppercase tracking-[0.3em] text-[#f5f5f5]/90 lg:text-2xl">
+                    No seguimos tendencias
+                </p>
+            </div>
+            <div id="hero-tagline-2">
+                <p class="text-center text-lg font-light uppercase tracking-[0.3em] text-[#f5f5f5]/70 lg:text-2xl">
+                    Las creamos en la calle
+                </p>
+            </div>
+            <div id="hero-tagline-3">
+                <p class="text-center text-sm uppercase tracking-[0.4em] text-[#7c3aed]/80 lg:text-base">
+                    Colección 2026 disponible ahora
+                </p>
+            </div>
+        </div>
+
+        <div id="hero-line-bot"
+            class="mt-6 h-px w-full max-w-xs bg-gradient-to-r from-transparent via-[#7c3aed]/50 to-transparent lg:max-w-md">
+        </div>
+
+        <!-- CTA block -->
+        <div id="hero-cta-block" class="mt-10 flex flex-col items-center gap-4 lg:mt-14">
+            <a href="{{ url_for('catalog.catalog_view') }}"
+                class="inline-block animate-pulse-purple border border-[#7c3aed]/50 bg-[#7c3aed]/10 px-14 py-4 text-sm font-bold uppercase tracking-[0.3em] text-[#f5f5f5] backdrop-blur-sm transition-all hover:border-[#7c3aed] hover:bg-[#7c3aed] hover:text-[#ffffff] lg:px-16 lg:py-5 lg:text-base">
+                Explorar Colección
+            </a>
+            <span class="text-[10px] uppercase tracking-[0.3em] text-[#f5f5f5]/30">
+                Envío gratis en pedidos +$999
+            </span>
+        </div>
+    </div>
+
+    <!-- Scroll hint -->
+    <div id="hero-scroll-hint"
+        class="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2">
+        <span class="text-[9px] uppercase tracking-[0.5em] text-[#f5f5f5]/25">
+            Scroll para descubrir
+        </span>
+        <i data-lucide="chevron-down" class="h-4 w-4 animate-bounce text-[#f5f5f5]/25"></i>
+    </div>
+
+    <!-- Mute / Unmute -->
+    <button id="hero-mute-btn"
+        class="absolute bottom-8 right-6 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-[#ffffff]/10 bg-[#000000]/40 text-[#f5f5f5]/50 backdrop-blur-sm transition-all hover:border-[#7c3aed]/50 hover:text-[#f5f5f5]"
+        aria-label="Silenciar/Activar sonido">
+        <i data-lucide="volume-x" id="hero-mute-off" class="h-4 w-4"></i>
+        <i data-lucide="volume-2" id="hero-mute-on" class="h-4 w-4 hidden"></i>
+    </button>
+
+    <!-- Side vertical text -->
+    <p id="hero-side-left"
+        class="pointer-events-none absolute left-5 top-1/2 hidden -translate-y-1/2 text-[10px] font-bold uppercase tracking-[0.5em] text-[#ffffff]/[0.06] [writing-mode:vertical-lr] lg:block">
+        AXIS Streetwear 2026
+    </p>
+    <p id="hero-side-right"
+        class="pointer-events-none absolute right-5 top-1/2 hidden -translate-y-1/2 text-[10px] font-bold uppercase tracking-[0.5em] text-[#ffffff]/[0.06] [writing-mode:vertical-lr] lg:block">
+        Urban Collection
+    </p>
+</div>
+
+<!-- FEATURED SECTION -->
+<div id="featured-section">
+    <section class="relative bg-[#000000] py-20 lg:py-28">
+        <div class="pointer-events-none absolute inset-0 opacity-[0.025]"
+            style="background-image: url('{{ url_for('static', filename='images/axis-logo.png') }}'); background-repeat: repeat; background-size: 250px;">
+        </div>
+        <div class="absolute right-0 top-0 h-96 w-96 rounded-full bg-[#7c3aed]/5 blur-[150px]"></div>
+        <div class="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-[#7c3aed]/5 blur-[120px]"></div>
+
+        <div class="relative z-10 mx-auto max-w-7xl px-4 lg:px-8">
+            <div class="mb-14 flex flex-col items-center gap-4 text-center">
+                <span class="text-xs font-bold uppercase tracking-[0.4em] text-[#7c3aed]">Lo mas buscado</span>
+                <h2 class="text-3xl font-black uppercase tracking-wider text-[#f5f5f5] lg:text-5xl">Destacados</h2>
+                <div class="h-px w-20 bg-[#7c3aed]"></div>
+                <p class="max-w-md text-sm leading-relaxed text-[#a3a3a3]">
+                    Piezas seleccionadas que definen el streetwear. Estilo urbano sin compromisos.
+                </p>
+            </div>
+
+            <div id="home-featured-grid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                <!-- Injected via JS -->
+            </div>
+
+            <div class="mt-14 flex justify-center">
+                <a href="{{ url_for('catalog.catalog_view') }}"
+                    class="group relative inline-block overflow-hidden border border-[#262626] bg-transparent px-10 py-4 text-sm font-bold uppercase tracking-[0.3em] text-[#f5f5f5] transition-all hover:border-[#7c3aed] hover:bg-[#7c3aed] hover:text-[#ffffff]">
+                    Ver todo el catalogo
+                </a>
+            </div>
+        </div>
+
+        <div class="pointer-events-none absolute left-4 top-1/2 hidden -translate-y-1/2 lg:block">
+            <p class="text-xs font-bold uppercase tracking-[0.5em] text-[#1a1a1a] [writing-mode:vertical-lr]">
+                Featured Drops
+            </p>
+        </div>
+    </section>
+</div>
+
+<!-- URBAN BANNER -->
+<section id="urban-banner" class="relative overflow-hidden bg-[#000000]">
+    <div class="relative flex min-h-[55vh] items-center justify-center">
+        <img src="{{ url_for('static', filename='images/hero-bg.jpg') }}" alt=""
+            class="absolute inset-0 object-cover w-full h-full opacity-20" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[#000000] via-[#000000]/50 to-[#000000]"></div>
+
+        <div class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.04]">
+            <img src="{{ url_for('static', filename='images/axis-logo.png') }}" alt="" width="800" height="500"
+                class="h-auto w-[600px] max-w-full" />
+        </div>
+
+        <div class="relative z-10 flex flex-col items-center gap-6 px-4 text-center">
+            <span data-banner-text class="text-xs font-bold uppercase tracking-[0.4em] text-[#7c3aed]">Coleccion
+                2026</span>
+            <h2 data-banner-text
+                class="max-w-2xl text-balance text-3xl font-black uppercase leading-tight tracking-wide text-[#f5f5f5] lg:text-5xl">
+                El arte de la calle se viste diferente
+            </h2>
+            <p data-banner-text class="max-w-lg text-sm leading-relaxed text-[#a3a3a3]">
+                Cada pieza es una declaración. Cada diseño nace en las calles. AXIS no es solo ropa, es identidad
+                urbana.
+            </p>
+            <a href="{{ url_for('catalog.catalog_view') }}" data-banner-text
+                class="mt-4 inline-block border border-[#7c3aed] bg-[#7c3aed]/10 px-10 py-4 text-sm font-bold uppercase tracking-[0.3em] text-[#f5f5f5] transition-all hover:bg-[#7c3aed] hover:text-[#ffffff]">
+                Descubrir ahora
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- NEW ARRIVALS -->
+<section id="new-arrivals" class="relative bg-[#050505] py-20 lg:py-28">
+    <div class="absolute inset-0 spray-texture"></div>
+    <div class="relative z-10 mx-auto max-w-7xl px-4 lg:px-8">
+        <div class="mb-14 flex flex-col items-center gap-4 text-center">
+            <span class="text-xs font-bold uppercase tracking-[0.4em] text-[#7c3aed]">Recien llegados</span>
+            <h2 class="text-3xl font-black uppercase tracking-wider text-[#f5f5f5] lg:text-5xl">Lo Nuevo</h2>
+            <div class="h-px w-20 bg-[#7c3aed]"></div>
+        </div>
+        <div id="home-new-grid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <!-- Injected via JS -->
+        </div>
+    </div>
+</section>
+
+<!-- Logic to populate grids -->
+<script src="{{ url_for('static', filename='js/products.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!window.axisProducts) return;
+
+        function createProductCardLightHtml(product, dataAttr) {
+            const isFav = window.axisStore.favorites.includes(product.id);
+            const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+            const encodedProduct = encodeURIComponent(JSON.stringify(product));
+
+            return `
+      <div ${dataAttr} class="group relative flex h-full flex-col border border-border bg-[#050505] transition-colors hover:border-primary/50 overflow-hidden">
+        <div class="absolute inset-0 z-0 bg-gradient-to-t from-[#000000] via-transparent to-transparent opacity-60"></div>
+        <div class="relative z-10 aspect-[4/5] w-full cursor-pointer overflow-hidden p-4" onclick="openProductModal('${encodedProduct}')">
+          <img src="${product.image}" alt="${product.name}" class="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
+          <div class="absolute inset-0 flex items-center justify-center opacity-[0.03] transition-opacity duration-500 group-hover:opacity-[0.08] pointer-events-none">
+            <img src="{{ url_for('static', filename='images/axis-logo.png') }}" class="w-1/2 object-contain" />
+          </div>
+          <div class="absolute left-4 top-4 flex flex-col gap-2">
+            ${product.isNew ? '<span class="w-fit bg-primary px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground backdrop-blur-sm">Nuevo</span>' : ''}
+            ${hasDiscount ? '<span class="w-fit bg-[#dc2626] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground backdrop-blur-sm">Oferta</span>' : ''}
+          </div>
+        </div>
+        
+        <div class="relative z-20 flex flex-1 flex-col p-5">
+          <div class="mb-auto">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-[9px] font-medium uppercase tracking-[0.3em] text-primary">${product.category}</span>
+                <h3 class="mt-1 line-clamp-2 text-sm font-black uppercase tracking-wide text-foreground transition-colors group-hover:text-primary" onclick="openProductModal('${encodedProduct}')" style="cursor:pointer">${product.name}</h3>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-4 flex items-end justify-between border-t border-border/50 pt-4">
+            <div class="flex flex-col">
+              ${hasDiscount ? `<span class="text-xs text-muted-foreground line-through">$${product.originalPrice.toFixed(2)}</span>` : ''}
+              <span class="text-lg font-black text-foreground">$${product.price.toFixed(2)}</span>
+            </div>
+            
+            <button onclick="openProductModal('${encodedProduct}')" class="flex h-10 w-10 items-center justify-center bg-primary text-primary-foreground transition-transform hover:scale-105" aria-label="Ver detalles">
+              <i data-lucide="plus" class="h-4 w-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+        }
+
+        // Populate Featured
+        const featured = window.axisProducts.filter(p => p.isFeatured);
+        document.getElementById('home-featured-grid').innerHTML = featured.map(p => createProductCardLightHtml(p, 'data-feat-card')).join('');
+
+        // Populate New
+        const newItems = window.axisProducts.filter(p => p.isNew);
+        document.getElementById('home-new-grid').innerHTML = newItems.map(p => createProductCardLightHtml(p, 'data-new-card')).join('');
+
+        if (window.lucide) window.lucide.createIcons();
+    });
+</script>
+{% endblock %}
