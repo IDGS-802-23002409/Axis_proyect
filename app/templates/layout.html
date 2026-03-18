@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, theme-color=#000000">
+    <title>{% block title %}AXIS - Modern Streetwear{% endblock %}</title>
+    <meta name="description" content="Urban streetwear clothing brand. Discover the latest in street fashion, graffiti-inspired designs, and bold urban style.">
+    
+    <!-- Icons -->
+    <link rel="icon" href="{{ url_for('static', filename='images/icon-light-32x32.png') }}" media="(prefers-color-scheme: light)">
+    <link rel="icon" href="{{ url_for('static', filename='images/icon-dark-32x32.png') }}" media="(prefers-color-scheme: dark)">
+    <!-- Tailwind CSS (Play CDN for immediate styling, without build step) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              background: '#000000',
+              foreground: '#f5f5f5',
+              card: '#0a0a0a',
+              'card-foreground': '#f5f5f5',
+              popover: '#0a0a0a',
+              'popover-foreground': '#f5f5f5',
+              primary: '#7c3aed',
+              'primary-foreground': '#ffffff',
+              secondary: '#1a1a1a',
+              'secondary-foreground': '#f5f5f5',
+              muted: '#1a1a1a',
+              'muted-foreground': '#a3a3a3',
+              accent: '#7c3aed',
+              'accent-foreground': '#ffffff',
+              destructive: '#dc2626',
+              'destructive-foreground': '#ffffff',
+              border: '#262626',
+              input: '#262626',
+              ring: '#7c3aed',
+            },
+            fontFamily: {
+              sans: ['Geist', 'sans-serif'],
+              mono: ['Geist Mono', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+    <!-- Custom CSS (converted from globals.css) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/globals.css') }}">
+    
+    <!-- GSAP for Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="font-sans antialiased bg-background text-foreground overflow-x-hidden min-h-screen">
+    
+    {% include 'components/navbar.html' %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    {% include 'components/footer.html' %}
+    {% include 'components/cart_drawer.html' %}
+    {% include 'components/product_modal.html' %}
+
+    <!-- Main Logic Script -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+      // Initialize Lucide icons
+      lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<footer class="relative border-t border-border bg-[#000000]">
+    <!-- Watermark -->
+    <div class="absolute inset-0 opacity-[0.02]"
+        style="background-image: url('{{ url_for('static', filename='images/axis-logo.png') }}'); background-repeat: repeat; background-size: 150px;">
+    </div>
+
+    <div class="relative z-10 mx-auto max-w-7xl px-4 py-12 lg:px-8">
+        <div class="flex flex-col items-center gap-8 md:flex-row md:items-start md:justify-between">
+            <!-- Logo & tagline -->
+            <div class="flex flex-col items-center md:items-start">
+                <img src="{{ url_for('static', filename='images/axis-logo.png') }}" alt="AXIS Modern Streetwear"
+                    width="140" height="90" class="h-auto w-28 mb-3" />
+                <p class="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                    Modern Streetwear
+                </p>
+            </div>
+
+            <!-- Links -->
+            <div class="flex gap-12">
+                <div>
+                    <h4 class="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-foreground">
+                        Tienda
+                    </h4>
+                    <ul class="flex flex-col gap-2">
+                        <li><span
+                                class="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-primary">Camisetas</span>
+                        </li>
+                        <li><span
+                                class="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-primary">Hoodies</span>
+                        </li>
+                        <li><span
+                                class="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-primary">Chamarras</span>
+                        </li>
+                        <li><span
+                                class="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-primary">Pantalones</span>
+                        </li>
+                        <li><span
+                                class="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-primary">Accesorios</span>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-foreground">
+                        Info
+                    </h4>
+                    <ul class="flex flex-col gap-2">
+                        <li><span
+                                class="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-primary">Sobre
+                                nosotros</span></li>
+                        <li><span
+                                class="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-primary">Contacto</span>
+                        </li>
+                        <li><span
+                                class="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-primary">Envíos</span>
+                        </li>
+                        <li><span
+                                class="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-primary">Devoluciones</span>
+                        </li>
+                        <li><span
+                                class="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-primary">FAQ</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Social -->
+            <div class="flex flex-col items-center gap-3 md:items-end">
+                <h4 class="text-[10px] font-bold uppercase tracking-[0.3em] text-foreground">
+                    Síguenos
+                </h4>
+                <div class="flex gap-3">
+                    <span
+                        class="flex h-9 w-9 cursor-pointer items-center justify-center border border-border text-muted-foreground transition-all hover:border-primary hover:text-primary">
+                        <i data-lucide="instagram" class="h-4 w-4"></i>
+                    </span>
+                    <span
+                        class="flex h-9 w-9 cursor-pointer items-center justify-center border border-border text-muted-foreground transition-all hover:border-primary hover:text-primary">
+                        <i data-lucide="twitter" class="h-4 w-4"></i>
+                    </span>
+                    <span
+                        class="flex h-9 w-9 cursor-pointer items-center justify-center border border-border text-muted-foreground transition-all hover:border-primary hover:text-primary">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4">
+                            <path
+                                d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.99a8.21 8.21 0 004.78 1.53V7.1a4.85 4.85 0 01-1.02-.41z" />
+                        </svg>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom -->
+        <div class="mt-10 border-t border-border pt-6 text-center">
+            <p class="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                AXIS Modern Streetwear 2026. Todos los derechos reservados.
+            </p>
+        </div>
+    </div>
+</footer>
