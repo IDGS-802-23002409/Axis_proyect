@@ -16,6 +16,31 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - flask_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "flask_user", "-pflask_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  flask:
+    build: .
+    container_name: flask_app
+    restart: always
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: flask_db
+      DB_USER: flask_user
+      DB_PASSWORD: flask_password
+      FLASK_ENV: development
+      SECRET_KEY: change_this_secret_key_in_production
+    ports:
+      - "3030:3030"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - flask_network
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -23,7 +48,7 @@ services:
     restart: always
     environment:
       PMA_HOST: mysql
-      PMA_PORT: 3333
+      PMA_PORT: 3306
       PMA_USER: root
       PMA_PASSWORD: rootpassword
     ports:
@@ -35,7 +60,6 @@ services:
 
 volumes:
   mysql_data:
-
 
 networks:
   flask_network:
