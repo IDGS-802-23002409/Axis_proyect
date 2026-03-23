@@ -16,7 +16,7 @@ class UserForm(Form):
     ])
 
     password = PasswordField('Contraseña', [
-        validators.DataRequired(message="La contraseña es requerida"),
+        validators.Optional(),
         validators.Length(min=8, message="Mínimo 8 caracteres")
     ])
 
@@ -34,7 +34,16 @@ class UserForm(Form):
         (False, 'Inactivo')
     ], coerce=bool, default=True)
 
-    def validate_email(self, field):
-        user = Usuario.query.filter_by(email=field.data).first()
-        if user:
-            raise validators.ValidationError("Este correo ya está registrado")
+def __init__(self, *args, obj=None, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.obj = obj
+
+def validate_email(self, field):
+    user = Usuario.query.filter_by(email=field.data).first()
+
+    if user and (not self.obj or user.uuid_usuario != self.obj.uuid_usuario):
+        raise validators.ValidationError("Este correo ya está registrado")
+    
+def validate_password(self, field):
+    if not self.obj and not field.data:
+        raise validators.ValidationError("La contraseña es requerida")

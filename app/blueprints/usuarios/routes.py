@@ -27,3 +27,21 @@ def registroUser():
         db.session.commit()
         return redirect(url_for('usuarios.index'))
     return render_template("usuarios/registro_usuario.html", form=form)
+
+@usuarios_bp.route("/usuario/editar/<uuid>", methods=["GET", "POST"])
+def updateUser(uuid):
+    user = Usuario.query.get_or_404(uuid)
+    if request.method == "GET":
+        form = UserForm(obj=user)
+    else:
+        form = UserForm(request.form, obj=user)
+        if form.validate():
+            user.nombre_completo = form.nombre_completo.data
+            user.email = form.email.data
+            user.rol = form.rol.data
+            user.estatus = form.estatus.data
+            if form.password.data:
+                user.password_hash = generate_password_hash(form.password.data)
+            db.session.commit()
+            return redirect(url_for('usuarios.index'))
+    return render_template("usuarios/update_user.html", form=form)

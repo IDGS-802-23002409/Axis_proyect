@@ -122,13 +122,19 @@
                     <!-- Acciones -->
                     <td class="px-6 py-4 text-right flex justify-end gap-4">
 
-                        <a href="#">
+                        <a href="{{ url_for('usuarios.updateUser', uuid=user.uuid_usuario) }}">
                             <i data-lucide="pencil" class="w-4 h-4 cursor-pointer hover:text-primary"></i>
                         </a>
 
-                        <a href="#">
-                            <i data-lucide="trash-2" class="w-4 h-4 text-red-500 cursor-pointer"></i>
-                        </a>
+                        <!-- Eliminar -->
+    {% if user.rol != 'Admin' %}
+        <a href="">
+            <i data-lucide="trash-2" class="w-4 h-4 text-red-500 cursor-pointer"></i>
+        </a>
+    {% else %}
+        <!-- Opcional: icono deshabilitado -->
+        <i data-lucide="trash-2" class="w-4 h-4 text-gray-300 cursor-not-allowed"></i>
+    {% endif %}
 
                     </td>
 
