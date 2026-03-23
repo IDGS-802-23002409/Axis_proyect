@@ -3,7 +3,7 @@ from flask_migrate import Migrate
 from app.utils.config import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 from app.utils.database_connection import db
 import app.models  # noqa: F401 — ensures all models are registered with SQLAlchemy
-
+import app.blueprints as bp
 
 def create_app():
     application = Flask(__name__)
@@ -11,7 +11,7 @@ def create_app():
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
     application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
+    application.register_blueprint(bp.usuarios_bp)
     db.init_app(application)
     Migrate(application, db)
 
