@@ -1,237 +1,145 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AXIS - Gestión de Usuarios</title>
+{% extends "usuarios/layout.html" %}
+{% block container %}
+<!-- CONTENT -->
+<div class="px-10 pb-10 flex flex-col gap-8">
 
-  <!-- Tailwind CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+    <!-- STATS -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
 
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            background: '#ffffff',
-            foreground: '#09090b',
-            border: '#e4e4e7',
-            input: '#f4f4f5',
-            primary: '#09090b',
-            secondary: '#f4f4f5',
-            muted: '#f4f4f5',
-            'muted-foreground': '#71717a',
-            success: '#166534',
-            destructive: '#dc2626',
-            card: '#ffffff',
-            sidebar: '#fafafa'
-          }
-        }
-      }
-    }
-  </script>
+        <div class="bg-card border border-border rounded-lg p-6">
+            <p class="text-sm text-muted-foreground">Total Usuarios</p>
+            <p class="text-3xl font-bold">14</p>
+        </div>
 
-  <!-- Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-</head>
+        <div class="bg-card border border-border rounded-lg p-6">
+            <p class="text-sm text-muted-foreground">Administradores</p>
+            <p class="text-3xl font-bold">3</p>
+        </div>
 
-<body class="bg-background text-foreground font-sans">
+        <div class="bg-card border border-border rounded-lg p-6">
+            <p class="text-sm text-muted-foreground">Personal Taller</p>
+            <p class="text-3xl font-bold">8</p>
+        </div>
 
-<div class="flex min-h-screen">
+        <div class="bg-card border border-border rounded-lg p-6">
+            <p class="text-sm text-muted-foreground">Inactivos</p>
+            <p class="text-3xl font-bold">2</p>
+        </div>
 
-  <!-- SIDEBAR -->
-  <aside class="w-64 bg-sidebar border-r border-border p-6 flex flex-col gap-8">
-
-    <!-- Brand -->
-    <div>
-      <h1 class="text-2xl font-extrabold tracking-wide">AXIS</h1>
-      <p class="text-xs tracking-[0.2em] text-muted-foreground">URBAN APPAREL</p>
     </div>
 
-    <!-- Nav -->
-    <div>
-      <p class="text-xs uppercase tracking-widest text-muted-foreground mb-3">
-        Administración
-      </p>
-
-      <a href="#" class="flex items-center gap-3 px-4 h-12 rounded-md bg-black text-white">
-        <i data-lucide="users" class="w-5 h-5"></i>
-        Usuarios
-      </a>
-    </div>
-
-  </aside>
-
-  <!-- MAIN -->
-  <main class="flex-1 flex flex-col">
-
-    <!-- TOPBAR -->
-    <div class="h-20 px-10 flex items-center justify-between">
-      <h2 class="uppercase font-bold text-lg">Gestión de Usuarios</h2>
-
-      <div class="flex items-center gap-4">
-
-        <!-- Button -->
-        <button class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
-          <i data-lucide="plus" class="w-4 h-4"></i>
-          Nuevo Usuario
-        </button>
-
-        <!-- User -->
-        <div class="flex items-center gap-3 bg-card border border-border px-3 py-1 rounded-full">
-          <div class="text-right text-xs">
-            <p class="font-semibold">Admin</p>
-            <p class="text-muted-foreground uppercase">Taller</p>
-          </div>
-          <img class="w-9 h-9 rounded-full object-cover"
-            src="https://storage.googleapis.com/banani-avatars/avatar%2Fmale%2F25-35%2FHispanic%2F1">
-        </div>
-
-      </div>
-    </div>
-
-    <!-- CONTENT -->
-    <div class="px-10 pb-10 flex flex-col gap-8">
-
-      <!-- STATS -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-
-        <div class="bg-card border border-border rounded-lg p-6">
-          <p class="text-sm text-muted-foreground">Total Usuarios</p>
-          <p class="text-3xl font-bold">14</p>
-        </div>
-
-        <div class="bg-card border border-border rounded-lg p-6">
-          <p class="text-sm text-muted-foreground">Administradores</p>
-          <p class="text-3xl font-bold">3</p>
-        </div>
-
-        <div class="bg-card border border-border rounded-lg p-6">
-          <p class="text-sm text-muted-foreground">Personal Taller</p>
-          <p class="text-3xl font-bold">8</p>
-        </div>
-
-        <div class="bg-card border border-border rounded-lg p-6">
-          <p class="text-sm text-muted-foreground">Inactivos</p>
-          <p class="text-3xl font-bold">2</p>
-        </div>
-
-      </div>
-
-      <!-- TABLE CARD -->
-      <div class="bg-card border border-border rounded-lg overflow-hidden">
+    <!-- TABLE CARD -->
+    <div class="bg-card border border-border rounded-lg overflow-hidden">
 
         <!-- Header -->
         <div class="flex justify-between items-center p-5 border-b border-border">
-          <h3 class="font-semibold">Directorio de Equipo</h3>
+            <h3 class="font-semibold">Directorio de Equipo</h3>
 
-          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3">
+                <!-- Button -->
+                <button onclick="window.location.href='usuario/registro';"
+                    class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Nuevo Usuario
+                </button>
 
-            <div class="flex items-center gap-2 bg-input border border-border px-3 h-9 rounded-md text-sm text-muted-foreground">
-              <i data-lucide="search" class="w-4 h-4"></i>
-              Buscar...
+                <div
+                    class="flex items-center gap-2 bg-input border border-border px-3 h-9 rounded-md text-sm text-muted-foreground">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                    Buscar...
+                </div>
+
+                <button class="flex items-center gap-2 border border-border px-3 h-9 rounded-md text-sm">
+                    <i data-lucide="filter" class="w-4 h-4"></i>
+                    Filtros
+                </button>
+
             </div>
-
-            <button class="flex items-center gap-2 border border-border px-3 h-9 rounded-md text-sm">
-              <i data-lucide="filter" class="w-4 h-4"></i>
-              Filtros
-            </button>
-
-          </div>
         </div>
 
         <!-- Table -->
         <table class="w-full text-sm">
-          <thead class="bg-secondary text-muted-foreground uppercase text-xs">
-            <tr>
-              <th class="text-left px-6 py-4">Usuario</th>
-              <th class="text-left px-6 py-4">Rol</th>
-              <th class="text-left px-6 py-4">Estado</th>
-              <th class="text-left px-6 py-4">Último acceso</th>
-              <th class="text-right px-6 py-4">Acciones</th>
-            </tr>
-          </thead>
+            <thead class="bg-secondary text-muted-foreground uppercase text-xs">
+                <tr>
+                    <th class="text-left px-6 py-4">Usuario</th>
+                    <th class="text-left px-6 py-4">Rol</th>
+                    <th class="text-left px-6 py-4">Estado</th>
+                    <th class="text-left px-6 py-4">Último acceso</th>
+                    <th class="text-right px-6 py-4">Acciones</th>
+                </tr>
+            </thead>
 
-          <tbody>
-          {% for user in usuarios %}
-          <tr class="border-b border-border hover:bg-muted transition">
+            <tbody>
+                {% for user in usuarios %}
+                <tr class="border-b border-border hover:bg-muted transition">
 
-            <!-- Usuario -->
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-3">
-                
-                <div class="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs">
-                  {{ user.nombre_completo[0] }}
-                </div>
+                    <!-- Usuario -->
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
 
-                <div>
-                  <p class="font-medium">{{ user.nombre_completo }}</p>
-                  <p class="text-xs text-muted-foreground">{{ user.email }}</p>
-                </div>
-              </div>
-            </td>
+                            <div class="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs">
+                                {{ user.nombre_completo[0] }}
+                            </div>
 
-            <!-- Rol -->
-            <td class="px-6 py-4">
-              {% if user.rol == 'Admin' %}
-                <span class="text-purple-600">Admin</span>
-              {% elif user.rol == 'Gerente' %}
-                <span class="text-blue-600">Gerente</span>
-              {% elif user.rol == 'Producción' %}
-                <span class="text-yellow-600">Producción</span>
-              {% else %}
-                <span class="text-gray-500">Cliente</span>
-              {% endif %}
-            </td>
+                            <div>
+                                <p class="font-medium">{{ user.nombre_completo }}</p>
+                                <p class="text-xs text-muted-foreground">{{ user.email }}</p>
+                            </div>
+                        </div>
+                    </td>
 
-            <!-- Estado -->
-            <td class="px-6 py-4">
-              {% if user.estatus %}
-                <span class="px-3 py-1 rounded-full text-xs bg-green-100 text-green-700">
-                  Activo
-                </span>
-              {% else %}
-                <span class="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
-                  Inactivo
-                </span>
-              {% endif %}
-            </td>
+                    <!-- Rol -->
+                    <td class="px-6 py-4">
+                        {% if user.rol == 'Admin' %}
+                        <span class="text-purple-600">Admin</span>
+                        {% elif user.rol == 'Gerente' %}
+                        <span class="text-blue-600">Gerente</span>
+                        {% elif user.rol == 'Producción' %}
+                        <span class="text-yellow-600">Producción</span>
+                        {% else %}
+                        <span class="text-gray-500">Cliente</span>
+                        {% endif %}
+                    </td>
 
-            <!-- Fecha -->
-            <td class="px-6 py-4 text-muted-foreground">
-              {{ user.fecha_actualizacion.strftime('%d %b %Y') if user.fecha_actualizacion else '—' }}
-            </td>
+                    <!-- Estado -->
+                    <td class="px-6 py-4">
+                        {% if user.estatus %}
+                        <span class="px-3 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                            Activo
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
+                            Inactivo
+                        </span>
+                        {% endif %}
+                    </td>
 
-            <!-- Acciones -->
-            <td class="px-6 py-4 text-right flex justify-end gap-4">
-              
-              <a href="{{ url_for('usuarios.editar', id=user.uuid_usuario) }}">
-                <i data-lucide="pencil" class="w-4 h-4 cursor-pointer hover:text-primary"></i>
-              </a>
+                    <!-- Fecha -->
+                    <td class="px-6 py-4 text-muted-foreground">
+                        {{ user.fecha_actualizacion.strftime('%d %b %Y') if user.fecha_actualizacion else '—' }}
+                    </td>
 
-              <a href="{{ url_for('usuarios.eliminar', id=user.uuid_usuario) }}">
-                <i data-lucide="trash-2" class="w-4 h-4 text-red-500 cursor-pointer"></i>
-              </a>
+                    <!-- Acciones -->
+                    <td class="px-6 py-4 text-right flex justify-end gap-4">
 
-            </td>
+                        <a href="#">
+                            <i data-lucide="pencil" class="w-4 h-4 cursor-pointer hover:text-primary"></i>
+                        </a>
 
-          </tr>
-          {% endfor %}
-          </tbody>
+                        <a href="#">
+                            <i data-lucide="trash-2" class="w-4 h-4 text-red-500 cursor-pointer"></i>
+                        </a>
+
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
 
         </table>
 
-      </div>
-
     </div>
-
-  </main>
 
 </div>
 
-<script>
-  lucide.createIcons();
-</script>
-
-</body>
-</html>
+{% endblock %}

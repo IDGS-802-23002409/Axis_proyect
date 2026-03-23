@@ -1,0 +1,82 @@
+{% extends "usuarios/layout.html" %}
+{% block container %}
+{% import "usuarios/_macros.html" as macros %}
+
+<div class="px-10 py-8">
+
+  <div class="max-w-2xl mx-auto bg-card border border-border rounded-lg p-8">
+
+    <!-- Title -->
+    <div class="mb-6">
+      <h2 class="text-xl font-bold">Crear Usuario</h2>
+      <p class="text-sm text-muted-foreground">
+        Completa la información del usuario
+      </p>
+    </div>
+
+    <!-- FORM -->
+    <form method="post" class="flex flex-col gap-5" novalidate>
+      <!-- Nombre -->
+      <div>
+        {{ macros.fieldUser(form.nombre_completo, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+      </div>
+
+      <!-- Email -->
+      <div>
+        {{ macros.fieldUser(form.email,"w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+      </div>
+
+      <!-- Password -->
+      <div>
+        {{ macros.fieldUser(form.password,"w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+      </div>
+
+      <!-- Rol -->
+      <div>
+        {{ macros.fieldUser(form.rol, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+      </div>
+
+      <!-- Estatus (radio manual porque macro no lo soporta bien) -->
+      <div>
+        <label class="block text-sm font-medium mb-2">
+          {{ form.estatus.label }}
+        </label>
+
+        <div class="flex gap-6">
+          {% for subfield in form.estatus %}
+            <label class="flex items-center gap-2 text-sm">
+              {{ subfield(class="accent-black") }}
+              {{ subfield.label.text }}
+            </label>
+          {% endfor %}
+        </div>
+
+        {% if form.estatus.errors %}
+          {% for error in form.estatus.errors %}
+            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex justify-end gap-3 pt-4">
+
+        <a href="{{ url_for('usuarios.index') }}"
+           class="px-4 py-2 border border-border rounded-md text-sm">
+          Cancelar
+        </a>
+
+        <button type="submit"
+                class="px-4 py-2 bg-black text-white rounded-md text-sm">
+          Guardar Usuario
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+{% endblock %}

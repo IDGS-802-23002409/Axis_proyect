@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AXIS - Gestión de Usuarios</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: '#ffffff',
+            foreground: '#09090b',
+            border: '#e4e4e7',
+            input: '#f4f4f5',
+            primary: '#09090b',
+            secondary: '#f4f4f5',
+            muted: '#f4f4f5',
+            'muted-foreground': '#71717a',
+            success: '#166534',
+            destructive: '#dc2626',
+            card: '#ffffff',
+            sidebar: '#fafafa'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="bg-background text-foreground font-sans">
+
+<div class="flex min-h-screen">
+
+  <!-- SIDEBAR -->
+  <aside class="w-64 bg-sidebar border-r border-border p-6 flex flex-col gap-8">
+
+    <!-- Brand -->
+    <div>
+      <h1 class="text-2xl font-extrabold tracking-wide">AXIS</h1>
+      <p class="text-xs tracking-[0.2em] text-muted-foreground">URBAN APPAREL</p>
+    </div>
+
+    <!-- Nav -->
+    <div>
+      <p class="text-xs uppercase tracking-widest text-muted-foreground mb-3">
+        Administración
+      </p>
+
+      <a href="#" class="flex items-center gap-3 px-4 h-12 rounded-md bg-black text-white">
+        <i data-lucide="users" class="w-5 h-5"></i>
+        Usuarios
+      </a>
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+  <main class="flex-1 flex flex-col">
+
+    <!-- TOPBAR -->
+    <div class="h-20 px-10 flex items-center justify-between">
+      <h2 class="uppercase font-bold text-lg">Gestión de Usuarios</h2>
+
+      <div class="flex items-center gap-4">
+
+        <!-- User -->
+        <div class="flex items-center gap-3 bg-card border border-border px-3 py-1 rounded-full">
+          <div class="text-right text-xs">
+            <p class="font-semibold">Admin</p>
+            <p class="text-muted-foreground uppercase">Taller</p>
+          </div>
+          <img class="w-9 h-9 rounded-full object-cover"
+            src="https://storage.googleapis.com/banani-avatars/avatar%2Fmale%2F25-35%2FHispanic%2F1">
+        </div>
+
+      </div>
+    </div>
+    <!-- CONTENT -->
+        {% block container%}
+
+
+       
+        {% endblock %}
+    <!-- <div class="px-10 pb-10 flex flex-col gap-8">
+
+    </div> -->
+
+  </main>
+
+</div>
+
+<script>
+  lucide.createIcons();
+</script>
+
+</body>
+</html>
