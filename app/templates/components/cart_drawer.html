@@ -1,0 +1,145 @@
+<div id="cart-overlay" class="fixed inset-0 z-50 bg-[#000000]/80 backdrop-blur-sm hidden" data-toggle-cart></div>
+
+<div id="cart-drawer"
+    class="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l border-border bg-[#0a0a0a] transition-transform duration-300 translate-x-full">
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-border px-6 py-4">
+        <div class="flex items-center gap-3">
+            <i data-lucide="shopping-bag" class="h-5 w-5 text-primary"></i>
+            <h2 class="text-sm font-bold uppercase tracking-[0.2em] text-foreground">
+                Carrito (<span data-cart-count>0</span>)
+            </h2>
+        </div>
+        <button data-toggle-cart
+            class="flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Cerrar carrito">
+            <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+    </div>
+
+    <!-- Items -->
+    <div id="cart-items-container" class="flex-1 overflow-y-auto px-6 py-4">
+        <!-- Empty State -->
+        <div id="cart-empty-state" class="flex h-full flex-col items-center justify-center gap-4">
+            <i data-lucide="shopping-bag" class="h-12 w-12 text-muted-foreground/30"></i>
+            <p class="text-sm uppercase tracking-wider text-muted-foreground">
+                Tu carrito está vacío
+            </p>
+            <a href="{{ url_for('catalog.catalog_view') }}" onclick="toggleCart()"
+                class="border border-primary px-6 py-2 text-xs font-bold uppercase tracking-wider text-primary transition-colors hover:bg-primary hover:text-primary-foreground">
+                Explorar catálogo
+            </a>
+        </div>
+
+        <!-- Populated State Container (Items will be injected here by JS) -->
+        <div id="cart-populated-state" class="flex flex-col gap-4 hidden">
+            <!-- Template for cart item injected via JS -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div id="cart-footer" class="border-t border-border px-6 py-4 hidden">
+        <div class="mb-4 flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                Total
+            </span>
+            <span id="cart-total-price" class="text-xl font-black text-foreground">$0.00</span>
+        </div>
+        <a href="{{ url_for('checkout.checkout_view') }}" onclick="toggleCart()"
+            class="block w-full text-center bg-primary py-4 text-sm font-bold uppercase tracking-[0.2em] text-primary-foreground transition-colors hover:bg-primary/80">
+            Proceder al pago
+        </a>
+    </div>
+</div>
+
+<script>
+    // Logic to render cart items dynamically
+    function renderCart() {
+        const container = document.getElementById('cart-populated-state');
+        const emptyState = document.getElementById('cart-empty-state');
+        const footer = document.getElementById('cart-footer');
+        const totalPriceEl = document.getElementById('cart-total-price');
+
+        if (window.axisStore.cart.length === 0) {
+            container.classList.add('hidden');
+            footer.classList.add('hidden');
+            emptyState.classList.remove('hidden');
+        } else {
+            emptyState.classList.add('hidden');
+            container.classList.remove('hidden');
+            footer.classList.remove('hidden');
+
+            let html = '';
+            let total = 0;
+
+            window.axisStore.cart.forEach(item => {
+                total += (item.price * item.quantity);
+                html += `
+        <div class="flex gap-4 border border-border bg-card p-3" data-cart-item="${item.id}-${item.selectedSize}">
+          <div class="relative h-24 w-20 flex-shrink-0 overflow-hidden">
+            <img src="${item.image}" alt="${item.name}" class="object-cover w-full h-full" />
+          </div>
+          <div class="flex flex-1 flex-col">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="text-xs font-bold uppercase tracking-wide text-foreground">${item.name}</h3>
+                <p class="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">Talla: ${item.selectedSize} / ${item.selectedColor}</p>
+              </div>
+              <button onclick="removeFromCart('${item.id}', '${item.selectedSize}')" class="text-muted-foreground transition-colors hover:text-destructive">
+                <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+              </button>
+            </div>
+            <div class="mt-auto flex items-center justify-between pt-2">
+              <div class="flex items-center border border-border">
+                <button onclick="updateQuantity('${item.id}', '${item.selectedSize}', ${item.quantity - 1})" class="flex h-7 w-7 items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
+                  <i data-lucide="minus" class="h-3 w-3"></i>
+                </button>
+                <span class="flex h-7 w-8 items-center justify-center text-xs font-bold text-foreground">${item.quantity}</span>
+                <button onclick="updateQuantity('${item.id}', '${item.selectedSize}', ${item.quantity + 1})" class="flex h-7 w-7 items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
+                  <i data-lucide="plus" class="h-3 w-3"></i>
+                </button>
+              </div>
+              <span class="text-sm font-bold text-primary">$${(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      `;
+            });
+
+            container.innerHTML = html;
+            totalPriceEl.textContent = '$' + total.toFixed(2);
+            // Re-initialize any new lucide icons injected
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        window.updateCartCount();
+    }
+
+    // Override from main.js implementation
+    function removeFromCart(id, size) {
+        window.axisStore.cart = window.axisStore.cart.filter(item => !(item.id === id && item.selectedSize === size));
+        renderCart();
+    }
+
+    function updateQuantity(id, size, quantity) {
+        if (quantity <= 0) {
+            removeFromCart(id, size);
+            return;
+        }
+        window.axisStore.cart = window.axisStore.cart.map(item =>
+            item.id === id && item.selectedSize === size ? { ...item, quantity } : item
+        );
+        renderCart();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Setup toggle listeners (re-assigned here for clarity, though also in main.js)
+        document.querySelectorAll('[data-toggle-cart]').forEach(btn => {
+            // Only add if not already added to prevent double toggling
+            if (!btn.hasAttribute('data-cart-listener')) {
+                btn.addEventListener('click', toggleCart);
+                btn.setAttribute('data-cart-listener', 'true');
+            }
+        });
+    });
+</script>

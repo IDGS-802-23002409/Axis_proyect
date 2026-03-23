@@ -1,0 +1,131 @@
+<nav id="navbar"
+    class="fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out bg-transparent border-b border-transparent">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 lg:px-8">
+        <!-- Logo -->
+        <a href="{{ url_for('catalog.index') }}" class="relative h-10 w-28 flex-shrink-0 block"
+            aria-label="Ir a inicio">
+            <img src="{{ url_for('static', filename='images/axis-logo.png') }}" alt="AXIS Modern Streetwear"
+                class="object-contain w-full h-full" />
+        </a>
+
+        <!-- Desktop Nav Links -->
+        <div class="hidden items-center gap-8 md:flex nav-links">
+            <a href="{{ url_for('catalog.index') }}"
+                class="relative text-sm font-medium uppercase tracking-[0.2em] transition-colors duration-300 {% if request.endpoint == 'catalog.index' %}text-primary{% else %}text-[#f5f5f5]/80 hover:text-[#f5f5f5]{% endif %}">
+                Inicio
+                {% if request.endpoint == 'catalog.index' %}
+                <span class="absolute -bottom-1 left-0 right-0 h-px bg-primary"></span>
+                {% endif %}
+            </a>
+            <a href="{{ url_for('catalog.catalog_view') }}"
+                class="relative text-sm font-medium uppercase tracking-[0.2em] transition-colors duration-300 {% if request.endpoint == 'catalog.catalog_view' %}text-primary{% else %}text-[#f5f5f5]/80 hover:text-[#f5f5f5]{% endif %}">
+                Catálogo
+                {% if request.endpoint == 'catalog.catalog_view' %}
+                <span class="absolute -bottom-1 left-0 right-0 h-px bg-primary"></span>
+                {% endif %}
+            </a>
+            <a href="{{ url_for('checkout.checkout_view') }}"
+                class="relative text-sm font-medium uppercase tracking-[0.2em] transition-colors duration-300 {% if request.endpoint == 'checkout.checkout_view' %}text-primary{% else %}text-[#f5f5f5]/80 hover:text-[#f5f5f5]{% endif %}">
+                Pago
+                {% if request.endpoint == 'checkout.checkout_view' %}
+                <span class="absolute -bottom-1 left-0 right-0 h-px bg-primary"></span>
+                {% endif %}
+            </a>
+        </div>
+
+        <!-- Right side icons -->
+        <div class="flex items-center gap-4">
+            <button class="relative text-[#f5f5f5]/80 transition-colors hover:text-primary" aria-label="Favoritos">
+                <i data-lucide="heart" class="h-5 w-5"></i>
+                <!-- Add logic to show favorites count -->
+            </button>
+
+            <button data-toggle-cart class="relative text-[#f5f5f5]/80 transition-colors hover:text-primary"
+                aria-label="Carrito de compras">
+                <i data-lucide="shopping-bag" class="h-5 w-5"></i>
+                <span data-cart-count
+                    class="hidden absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-[#ffffff]">
+                    0
+                </span>
+            </button>
+
+            <!-- Mobile menu toggle -->
+            <button id="mobile-menu-btn" class="text-[#f5f5f5] md:hidden" aria-label="Menu">
+                <i data-lucide="menu" id="menu-icon-open" class="h-6 w-6"></i>
+                <i data-lucide="x" id="menu-icon-close" class="h-6 w-6 hidden"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu"
+        class="max-h-0 opacity-0 border-t-transparent overflow-hidden border-t border-[#ffffff]/5 bg-[#000000]/80 backdrop-blur-xl transition-all duration-300 md:hidden">
+        <div class="flex flex-col gap-1 px-4 py-4">
+            <a href="{{ url_for('catalog.index') }}"
+                class="py-3 text-left text-sm font-medium uppercase tracking-[0.2em] transition-colors {% if request.endpoint == 'catalog.index' %}text-primary{% else %}text-[#f5f5f5]/70 hover:text-[#f5f5f5]{% endif %}">
+                Inicio
+            </a>
+            <a href="{{ url_for('catalog.catalog_view') }}"
+                class="py-3 text-left text-sm font-medium uppercase tracking-[0.2em] transition-colors {% if request.endpoint == 'catalog.catalog_view' %}text-primary{% else %}text-[#f5f5f5]/70 hover:text-[#f5f5f5]{% endif %}">
+                Catálogo
+            </a>
+            <a href="{{ url_for('checkout.checkout_view') }}"
+                class="py-3 text-left text-sm font-medium uppercase tracking-[0.2em] transition-colors {% if request.endpoint == 'checkout.checkout_view' %}text-primary{% else %}text-[#f5f5f5]/70 hover:text-[#f5f5f5]{% endif %}">
+                Pago
+            </a>
+        </div>
+    </div>
+</nav>
+
+<script>
+    // Navbar Scroll Logic
+    document.addEventListener('DOMContentLoaded', () => {
+        const navbar = document.getElementById('navbar');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const iconOpen = document.getElementById('menu-icon-open');
+        const iconClose = document.getElementById('menu-icon-close');
+
+        let mobileMenuOpen = false;
+        let lastScrollY = window.scrollY;
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenuOpen = !mobileMenuOpen;
+            if (mobileMenuOpen) {
+                mobileMenu.classList.remove('max-h-0', 'opacity-0', 'border-t-transparent');
+                mobileMenu.classList.add('max-h-60', 'opacity-100');
+                iconOpen.classList.add('hidden');
+                iconClose.classList.remove('hidden');
+            } else {
+                mobileMenu.classList.add('max-h-0', 'opacity-0', 'border-t-transparent');
+                mobileMenu.classList.remove('max-h-60', 'opacity-100');
+                iconOpen.classList.remove('hidden');
+                iconClose.classList.add('hidden');
+            }
+        });
+
+        window.addEventListener('scroll', () => {
+            const currentY = window.scrollY;
+
+            if (currentY < 20) {
+                navbar.classList.add('bg-transparent', 'border-transparent');
+                navbar.classList.remove('bg-[#000000]/60', 'backdrop-blur-xl', 'border-[#ffffff]/5');
+            } else {
+                navbar.classList.remove('bg-transparent', 'border-transparent');
+                navbar.classList.add('bg-[#000000]/60', 'backdrop-blur-xl', 'border-[#ffffff]/5');
+            }
+
+            if (currentY < 80) {
+                navbar.classList.remove('-translate-y-full');
+            } else if (currentY > lastScrollY && currentY > 200) {
+                navbar.classList.add('-translate-y-full');
+                // Hide mobile menu on scroll down
+                if (mobileMenuOpen) mobileMenuBtn.click();
+            } else if (currentY < lastScrollY) {
+                navbar.classList.remove('-translate-y-full');
+            }
+
+            lastScrollY = currentY;
+        }, { passive: true });
+    });
+</script>
