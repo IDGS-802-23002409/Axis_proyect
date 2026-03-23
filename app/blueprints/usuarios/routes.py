@@ -6,3 +6,8 @@ from app.models.usuarios import Usuario
 def index():
     usuarios = Usuario.query.all()
     return render_template('usuarios/index.html', usuarios=usuarios)
+
+@usuarios_bp.route('/usuario/registro',methods=[ 'POST'])
+def registroUser():
+    
+    return render_template('usuarios/registro_usuario.html')

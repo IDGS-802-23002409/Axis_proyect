@@ -13,18 +13,18 @@
       theme: {
         extend: {
           colors: {
-            background: '#09090b',
-            foreground: '#ffffff',
-            border: '#27272a',
-            input: '#18181b',
-            primary: '#ffffff',
-            secondary: '#27272a',
-            muted: '#27272a',
-            'muted-foreground': '#a1a1aa',
-            success: '#1e8a3a',
-            destructive: '#7f1d1d',
-            card: '#09090b',
-            sidebar: '#000000'
+            background: '#ffffff',
+            foreground: '#09090b',
+            border: '#e4e4e7',
+            input: '#f4f4f5',
+            primary: '#09090b',
+            secondary: '#f4f4f5',
+            muted: '#f4f4f5',
+            'muted-foreground': '#71717a',
+            success: '#166534',
+            destructive: '#dc2626',
+            card: '#ffffff',
+            sidebar: '#fafafa'
           }
         }
       }
@@ -54,7 +54,7 @@
         Administración
       </p>
 
-      <a href="#" class="flex items-center gap-3 px-4 h-12 rounded-md bg-white/10 text-white">
+      <a href="#" class="flex items-center gap-3 px-4 h-12 rounded-md bg-black text-white">
         <i data-lucide="users" class="w-5 h-5"></i>
         Usuarios
       </a>
@@ -72,7 +72,7 @@
       <div class="flex items-center gap-4">
 
         <!-- Button -->
-        <button class="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-md text-sm">
+        <button class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
           <i data-lucide="plus" class="w-4 h-4"></i>
           Nuevo Usuario
         </button>
@@ -152,73 +152,73 @@
             </tr>
           </thead>
 
-        <tbody>
-  {% for user in usuarios %}
-  <tr class="border-b border-border">
+          <tbody>
+          {% for user in usuarios %}
+          <tr class="border-b border-border hover:bg-muted transition">
 
-    <!-- Usuario -->
-    <td class="px-6 py-4">
-      <div class="flex items-center gap-3">
-        
-        <!-- Avatar fake (puedes cambiarlo luego) -->
-        <div class="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs">
-          {{ user.nombre_completo[0] }}
-        </div>
+            <!-- Usuario -->
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                
+                <div class="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs">
+                  {{ user.nombre_completo[0] }}
+                </div>
 
-        <div>
-          <p class="font-medium">{{ user.nombre_completo }}</p>
-          <p class="text-xs text-muted-foreground">{{ user.email }}</p>
-        </div>
-      </div>
-    </td>
+                <div>
+                  <p class="font-medium">{{ user.nombre_completo }}</p>
+                  <p class="text-xs text-muted-foreground">{{ user.email }}</p>
+                </div>
+              </div>
+            </td>
 
-    <!-- Rol -->
-<td class="px-6 py-4">
-  {% if user.rol == 'Admin' %}
-    <span class="text-purple-400">Admin</span>
-  {% elif user.rol == 'Gerente' %}
-    <span class="text-blue-400">Gerente</span>
-  {% elif user.rol == 'Producción' %}
-    <span class="text-yellow-400">Producción</span>
-  {% else %}
-    <span class="text-gray-400">Cliente</span>
-  {% endif %}
-</td>
+            <!-- Rol -->
+            <td class="px-6 py-4">
+              {% if user.rol == 'Admin' %}
+                <span class="text-purple-600">Admin</span>
+              {% elif user.rol == 'Gerente' %}
+                <span class="text-blue-600">Gerente</span>
+              {% elif user.rol == 'Producción' %}
+                <span class="text-yellow-600">Producción</span>
+              {% else %}
+                <span class="text-gray-500">Cliente</span>
+              {% endif %}
+            </td>
 
-    <!-- Estado -->
-    <td class="px-6 py-4">
-      {% if user.estatus %}
-        <span class="px-3 py-1 rounded-full text-xs bg-green-900/30 text-green-400">
-          Activo
-        </span>
-      {% else %}
-        <span class="px-3 py-1 rounded-full text-xs bg-red-900/30 text-red-400">
-          Inactivo
-        </span>
-      {% endif %}
-    </td>
+            <!-- Estado -->
+            <td class="px-6 py-4">
+              {% if user.estatus %}
+                <span class="px-3 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                  Activo
+                </span>
+              {% else %}
+                <span class="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
+                  Inactivo
+                </span>
+              {% endif %}
+            </td>
 
-    <!-- Última actualización -->
-    <td class="px-6 py-4 text-muted-foreground">
-      {{ user.fecha_actualizacion.strftime('%d %b %Y') if user.fecha_actualizacion else '—' }}
-    </td>
+            <!-- Fecha -->
+            <td class="px-6 py-4 text-muted-foreground">
+              {{ user.fecha_actualizacion.strftime('%d %b %Y') if user.fecha_actualizacion else '—' }}
+            </td>
 
-    <!-- Acciones -->
-    <td class="px-6 py-4 text-right flex justify-end gap-4">
-      
-      <a href="{{ url_for('usuarios.editar', id=user.uuid_usuario) }}">
-        <i data-lucide="pencil" class="w-4 h-4 cursor-pointer"></i>
-      </a>
+            <!-- Acciones -->
+            <td class="px-6 py-4 text-right flex justify-end gap-4">
+              
+              <a href="{{ url_for('usuarios.editar', id=user.uuid_usuario) }}">
+                <i data-lucide="pencil" class="w-4 h-4 cursor-pointer hover:text-primary"></i>
+              </a>
 
-      <a href="{{ url_for('usuarios.eliminar', id=user.uuid_usuario) }}">
-        <i data-lucide="trash-2" class="w-4 h-4 text-red-500 cursor-pointer"></i>
-      </a>
+              <a href="{{ url_for('usuarios.eliminar', id=user.uuid_usuario) }}">
+                <i data-lucide="trash-2" class="w-4 h-4 text-red-500 cursor-pointer"></i>
+              </a>
 
-    </td>
+            </td>
 
-  </tr>
-  {% endfor %}
-</tbody>
+          </tr>
+          {% endfor %}
+          </tbody>
+
         </table>
 
       </div>
