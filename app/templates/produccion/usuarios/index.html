@@ -8,26 +8,25 @@
 
         <div class="bg-card border border-border rounded-lg p-6">
             <p class="text-sm text-muted-foreground">Total Usuarios</p>
-            <p class="text-3xl font-bold">14</p>
+            <p class="text-3xl font-bold">{{ total_usuarios }}</p>
         </div>
 
         <div class="bg-card border border-border rounded-lg p-6">
             <p class="text-sm text-muted-foreground">Administradores</p>
-            <p class="text-3xl font-bold">3</p>
+            <p class="text-3xl font-bold">{{ administradores }}</p>
         </div>
 
         <div class="bg-card border border-border rounded-lg p-6">
-            <p class="text-sm text-muted-foreground">Personal Taller</p>
-            <p class="text-3xl font-bold">8</p>
+            <p class="text-sm text-muted-foreground">Personal Produccion</p>
+            <p class="text-3xl font-bold">{{ personal_produccion }}</p>
         </div>
 
         <div class="bg-card border border-border rounded-lg p-6">
             <p class="text-sm text-muted-foreground">Inactivos</p>
-            <p class="text-3xl font-bold">2</p>
+            <p class="text-3xl font-bold">{{ inactivos }}</p>
         </div>
 
     </div>
-
     <!-- TABLE CARD -->
     <div class="bg-card border border-border rounded-lg overflow-hidden">
 
@@ -70,87 +69,135 @@
             </thead>
 
             <tbody>
-{% for user in usuarios %}
-<tr class="border-b border-border hover:bg-muted transition">
+                {% for user in usuarios %}
+                <tr class="border-b border-border hover:bg-muted transition">
 
-    <!-- Usuario -->
-    <td class="px-6 py-4">
-        <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs">
-                {{ user.nombre_completo[0] }}
-            </div>
+                    <!-- Usuario -->
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs">
+                                {{ user.nombre_completo[0] }}
+                            </div>
 
-            <div>
-                <p class="font-medium">{{ user.nombre_completo }}</p>
-                <p class="text-xs text-muted-foreground">{{ user.email }}</p>
-            </div>
-        </div>
-    </td>
+                            <div>
+                                <p class="font-medium">{{ user.nombre_completo }}</p>
+                                <p class="text-xs text-muted-foreground">{{ user.email }}</p>
+                            </div>
+                        </div>
+                    </td>
 
-    <!-- Rol -->
-    <td class="px-6 py-4">
-        {% set role = user.roles[0].name if user.roles else 'Sin rol' %}
+                    <!-- Rol -->
+                    <td class="px-6 py-4">
+                        {% set role = user.roles[0].name if user.roles else 'Sin rol' %}
 
-        {% if role == 'Admin' %}
-            <span class="text-purple-600">Admin</span>
-        {% elif role == 'Gerente' %}
-            <span class="text-blue-600">Gerente</span>
-        {% elif role == 'Producción' %}
-            <span class="text-yellow-600">Producción</span>
-        {% else %}
-            <span class="text-gray-500">Cliente</span>
-        {% endif %}
-    </td>
+                        {% if role == 'admin' %}
+                        <span class="text-purple-600">Admin</span>
+                        {% elif role == 'gerente' %}
+                        <span class="text-blue-600">Gerente</span>
+                        {% elif role == 'producción' %}
+                        <span class="text-yellow-600">Producción</span>
+                        {% else %}
+                        <span class="text-gray-500">Cliente</span>
+                        {% endif %}
+                    </td>
 
-    <!-- Estado -->
-    <td class="px-6 py-4">
-        {% if user.active %}
-        <span class="px-3 py-1 rounded-full text-xs bg-green-100 text-green-700">
-            Activo
-        </span>
-        {% else %}
-        <span class="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
-            Inactivo
-        </span>
-        {% endif %}
-    </td>
+                    <!-- Estado -->
+                    <td class="px-6 py-4">
+                        {% if user.active %}
+                        <span class="px-3 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                            Activo
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
+                            Inactivo
+                        </span>
+                        {% endif %}
+                    </td>
 
-    <!-- Fecha -->
-    <td class="px-6 py-4 text-muted-foreground">
-        {{ user.fecha_actualizacion.strftime('%d %b %Y') if user.fecha_actualizacion else '—' }}
-    </td>
+                    <!-- Fecha -->
+                    <td class="px-6 py-4 text-muted-foreground">
+                        {{ user.fecha_actualizacion.strftime('%d %b %Y') if user.fecha_actualizacion else '—' }}
+                    </td>
 
-    <!-- Acciones -->
-    <td class="px-6 py-4 text-right flex justify-end gap-4 items-center">
+                    <!-- Acciones -->
+                    <td class="px-6 py-4 text-right flex justify-end gap-4 items-center">
 
-        <!-- Editar -->
-        <a href="{{ url_for('usuarios.updateUser', uuid=user.uuid_usuario) }}">
-            <i data-lucide="pencil" class="w-4 h-4 cursor-pointer hover:text-primary"></i>
-        </a>
+                        <!-- Editar -->
+                        <a href="{{ url_for('usuarios.updateUser', uuid=user.uuid_usuario) }}">
+                            <i data-lucide="pencil" class="w-4 h-4 cursor-pointer hover:text-primary"></i>
+                        </a>
 
-        <!-- Eliminar lógico -->
-        {% set is_admin = user.roles | selectattr("name", "equalto", "Admin") | list %}
+                        <!-- Eliminar lógico -->
+                        {% set is_admin = user.roles | selectattr("name", "equalto", "Admin") | list %}
 
-        {% if not is_admin %}
-        <form method="POST" action="{{ url_for('usuarios.deleteUser', uuid=user.uuid_usuario) }}">
-            <button type="submit">
-                <i data-lucide="trash-2" class="w-4 h-4 text-red-500 cursor-pointer"></i>
-            </button>
-        </form>
-        {% else %}
-        <i class="w-4 h-4 text-gray-300 cursor-not-allowed" data-lucide="trash-2"></i>
-        {% endif %}
+                        {% if not is_admin %}
+                        <form method="POST" action="{{ url_for('usuarios.deleteUser', uuid=user.uuid_usuario) }}">
 
-    </td>
+                            <button type="button" onclick="openDeleteModal('{{ user.uuid_usuario }}')">
+                                <i data-lucide="trash-2" class="w-4 h-4 text-red-500 cursor-pointer"></i>
+                            </button>
+                        </form>
+                        {% else %}
+                        <i class="w-4 h-4 text-gray-300 cursor-not-allowed" data-lucide="trash-2"></i>
+                        {% endif %}
 
-</tr>
-{% endfor %}
-</tbody>
+                    </td>
+
+                    <div id="deleteModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center">
+
+                        <div class="bg-white rounded-lg p-6 w-96">
+
+                            <h2 class="text-lg font-bold mb-4">Confirmar eliminación</h2>
+
+                            <p class="text-sm text-gray-600 mb-6">
+                                ¿Estás seguro de eliminar este usuario?
+                            </p>
+
+                            <form id="deleteForm" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="flex justify-end gap-3">
+
+                                    <button type="button" onclick="closeDeleteModal()"
+                                        class="px-4 py-2 border rounded-md text-sm">
+                                        Cancelar
+                                    </button>
+
+                                    <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-md text-sm">
+                                        Eliminar
+                                    </button>
+
+                                </div>
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                </tr>
+                {% endfor %}
+            </tbody>
 
         </table>
 
     </div>
 
 </div>
+
+<script>
+    function openDeleteModal(uuid) {
+        const modal = document.getElementById("deleteModal");
+        const form = document.getElementById("deleteForm");
+
+        form.action = `/usuario/eliminar/${uuid}`;
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+    }
+
+    function closeDeleteModal() {
+        const modal = document.getElementById("deleteModal");
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }
+</script>
 
 {% endblock %}

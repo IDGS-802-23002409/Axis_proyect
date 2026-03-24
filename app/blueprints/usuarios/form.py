@@ -32,10 +32,9 @@ class UserForm(FlaskForm):
     ], coerce=bool, default=True)
 
     def __init__(self, *args, obj=None, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, obj=obj, **kwargs)
         self.obj = obj
-
-        self.rol.choices = [(r.name, r.name) for r in Role.query.all()]
+        self.rol.choices = [(r.name, r.name) for r in Role.query.all()] 
 
     def validate_email(self, field):
         user = Usuario.query.filter_by(email=field.data).first()
