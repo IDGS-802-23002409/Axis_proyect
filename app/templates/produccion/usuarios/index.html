@@ -1,0 +1,156 @@
+{% extends "produccion/layout.html" %}
+{% block container %}
+<!-- CONTENT -->
+<div class="px-10 pb-10 flex flex-col gap-8">
+
+    <!-- STATS -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+        <div class="bg-card border border-border rounded-lg p-6">
+            <p class="text-sm text-muted-foreground">Total Usuarios</p>
+            <p class="text-3xl font-bold">14</p>
+        </div>
+
+        <div class="bg-card border border-border rounded-lg p-6">
+            <p class="text-sm text-muted-foreground">Administradores</p>
+            <p class="text-3xl font-bold">3</p>
+        </div>
+
+        <div class="bg-card border border-border rounded-lg p-6">
+            <p class="text-sm text-muted-foreground">Personal Taller</p>
+            <p class="text-3xl font-bold">8</p>
+        </div>
+
+        <div class="bg-card border border-border rounded-lg p-6">
+            <p class="text-sm text-muted-foreground">Inactivos</p>
+            <p class="text-3xl font-bold">2</p>
+        </div>
+
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="bg-card border border-border rounded-lg overflow-hidden">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center p-5 border-b border-border">
+            <h3 class="font-semibold">Directorio de Equipo</h3>
+
+            <div class="flex items-center gap-3">
+                <!-- Button -->
+                <button onclick="window.location.href='usuario/registro';"
+                    class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Nuevo Usuario
+                </button>
+
+                <div
+                    class="flex items-center gap-2 bg-input border border-border px-3 h-9 rounded-md text-sm text-muted-foreground">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                    Buscar...
+                </div>
+
+                <button class="flex items-center gap-2 border border-border px-3 h-9 rounded-md text-sm">
+                    <i data-lucide="filter" class="w-4 h-4"></i>
+                    Filtros
+                </button>
+
+            </div>
+        </div>
+
+        <!-- Table -->
+        <table class="w-full text-sm">
+            <thead class="bg-secondary text-muted-foreground uppercase text-xs">
+                <tr>
+                    <th class="text-left px-6 py-4">Usuario</th>
+                    <th class="text-left px-6 py-4">Rol</th>
+                    <th class="text-left px-6 py-4">Estado</th>
+                    <th class="text-left px-6 py-4">Último acceso</th>
+                    <th class="text-right px-6 py-4">Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+{% for user in usuarios %}
+<tr class="border-b border-border hover:bg-muted transition">
+
+    <!-- Usuario -->
+    <td class="px-6 py-4">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-xs">
+                {{ user.nombre_completo[0] }}
+            </div>
+
+            <div>
+                <p class="font-medium">{{ user.nombre_completo }}</p>
+                <p class="text-xs text-muted-foreground">{{ user.email }}</p>
+            </div>
+        </div>
+    </td>
+
+    <!-- Rol -->
+    <td class="px-6 py-4">
+        {% set role = user.roles[0].name if user.roles else 'Sin rol' %}
+
+        {% if role == 'Admin' %}
+            <span class="text-purple-600">Admin</span>
+        {% elif role == 'Gerente' %}
+            <span class="text-blue-600">Gerente</span>
+        {% elif role == 'Producción' %}
+            <span class="text-yellow-600">Producción</span>
+        {% else %}
+            <span class="text-gray-500">Cliente</span>
+        {% endif %}
+    </td>
+
+    <!-- Estado -->
+    <td class="px-6 py-4">
+        {% if user.active %}
+        <span class="px-3 py-1 rounded-full text-xs bg-green-100 text-green-700">
+            Activo
+        </span>
+        {% else %}
+        <span class="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
+            Inactivo
+        </span>
+        {% endif %}
+    </td>
+
+    <!-- Fecha -->
+    <td class="px-6 py-4 text-muted-foreground">
+        {{ user.fecha_actualizacion.strftime('%d %b %Y') if user.fecha_actualizacion else '—' }}
+    </td>
+
+    <!-- Acciones -->
+    <td class="px-6 py-4 text-right flex justify-end gap-4 items-center">
+
+        <!-- Editar -->
+        <a href="{{ url_for('usuarios.updateUser', uuid=user.uuid_usuario) }}">
+            <i data-lucide="pencil" class="w-4 h-4 cursor-pointer hover:text-primary"></i>
+        </a>
+
+        <!-- Eliminar lógico -->
+        {% set is_admin = user.roles | selectattr("name", "equalto", "Admin") | list %}
+
+        {% if not is_admin %}
+        <form method="POST" action="{{ url_for('usuarios.deleteUser', uuid=user.uuid_usuario) }}">
+            <button type="submit">
+                <i data-lucide="trash-2" class="w-4 h-4 text-red-500 cursor-pointer"></i>
+            </button>
+        </form>
+        {% else %}
+        <i class="w-4 h-4 text-gray-300 cursor-not-allowed" data-lucide="trash-2"></i>
+        {% endif %}
+
+    </td>
+
+</tr>
+{% endfor %}
+</tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

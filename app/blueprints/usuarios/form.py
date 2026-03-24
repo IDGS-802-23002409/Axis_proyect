@@ -1,8 +1,10 @@
-from wtforms import Form, StringField, PasswordField, SelectField, RadioField, EmailField
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SelectField, RadioField, EmailField
 from wtforms import validators
-from app.models.usuarios import Usuario
+from app.models.usuarios import Usuario, Role
 
-class UserForm(Form):
+
+class UserForm(FlaskForm):
 
     nombre_completo = StringField('Nombre completo', [
         validators.DataRequired(message="El nombre es requerido"),
@@ -20,30 +22,27 @@ class UserForm(Form):
         validators.Length(min=8, message="Mínimo 8 caracteres")
     ])
 
-    rol = SelectField('Rol', choices=[
-        ('Admin', 'Admin'),
-        ('Producción', 'Producción'),
-        ('Gerente', 'Gerente'),
-        ('Cliente', 'Cliente')
-    ], validators=[
+    rol = SelectField('Rol', coerce=str, validators=[
         validators.DataRequired(message="El rol es requerido")
     ])
 
-    estatus = RadioField('Estatus', choices=[
+    active = RadioField('Estatus', choices=[
         (True, 'Activo'),
         (False, 'Inactivo')
     ], coerce=bool, default=True)
 
-def __init__(self, *args, obj=None, **kwargs):
-    super().__init__(*args, **kwargs)
-    self.obj = obj
+    def __init__(self, *args, obj=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.obj = obj
 
-def validate_email(self, field):
-    user = Usuario.query.filter_by(email=field.data).first()
+        self.rol.choices = [(r.name, r.name) for r in Role.query.all()]
 
-    if user and (not self.obj or user.uuid_usuario != self.obj.uuid_usuario):
-        raise validators.ValidationError("Este correo ya está registrado")
-    
-def validate_password(self, field):
-    if not self.obj and not field.data:
-        raise validators.ValidationError("La contraseña es requerida")
+    def validate_email(self, field):
+        user = Usuario.query.filter_by(email=field.data).first()
+
+        if user and (not self.obj or user.uuid_usuario != self.obj.uuid_usuario):
+            raise validators.ValidationError("Este correo ya está registrado")
+
+    def validate_password(self, field):
+        if not self.obj and not field.data:
+            raise validators.ValidationError("La contraseña es requerida")

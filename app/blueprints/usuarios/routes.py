@@ -1,47 +1,80 @@
-from flask import redirect, render_template, request, url_for
+from flask import flash, redirect, render_template, request, url_for
 from app.blueprints.usuarios import usuarios_bp
 from app.blueprints.usuarios.form import UserForm
-from app.models.usuarios import Usuario
-from werkzeug.security import generate_password_hash
+from app.models.usuarios import Usuario, Role
+from flask_security.utils import hash_password
 from app.utils.database_connection import db
+
 
 @usuarios_bp.route("/")
 def index():
     usuarios = Usuario.query.all()
-    return render_template("usuarios/index.html", usuarios=usuarios)
-
+    return render_template("produccion/usuarios/index.html", usuarios=usuarios)
 
 @usuarios_bp.route("/usuario/registro", methods=["GET", "POST"])
 def registroUser():
-    form = UserForm(request.form)
-
+    form = UserForm()
     if request.method == "POST" and form.validate():
+        existing_user = Usuario.query.filter_by(email=form.email.data).first()
+        if existing_user:
+            flash("El correo ya está registrado", "error")
+            return render_template("usuarios/registro_usuario.html", form=form)
+
         user = Usuario(
             nombre_completo=form.nombre_completo.data,
             email=form.email.data,
-            password_hash=generate_password_hash(form.password.data),
-            rol=form.rol.data,
-            estatus=form.estatus.data,
+            password=hash_password(form.password.data)
         )
+
+        role = Role.query.filter_by(name=form.rol.data).first()
+        if role:
+            user.roles.append(role)
+
         db.session.add(user)
         db.session.commit()
+        flash("Usuario creado correctamente", "success")
         return redirect(url_for('usuarios.index'))
-    return render_template("usuarios/registro_usuario.html", form=form)
+
+    return render_template("produccion/usuarios/registro_usuario.html", form=form)
 
 @usuarios_bp.route("/usuario/editar/<uuid>", methods=["GET", "POST"])
 def updateUser(uuid):
     user = Usuario.query.get_or_404(uuid)
-    if request.method == "GET":
-        form = UserForm(obj=user)
-    else:
-        form = UserForm(request.form, obj=user)
-        if form.validate():
-            user.nombre_completo = form.nombre_completo.data
-            user.email = form.email.data
-            user.rol = form.rol.data
-            user.estatus = form.estatus.data
-            if form.password.data:
-                user.password_hash = generate_password_hash(form.password.data)
-            db.session.commit()
-            return redirect(url_for('usuarios.index'))
-    return render_template("usuarios/update_user.html", form=form)
+    form = UserForm(obj=user)
+    if request.method == "POST" and form.validate():
+        existing_user = Usuario.query.filter_by(email=form.email.data).first()
+        if existing_user and existing_user.uuid_usuario != user.uuid_usuario:
+            flash("El correo ya está en uso", "error")
+            return render_template("usuarios/update_user.html", form=form)
+
+        user.nombre_completo = form.nombre_completo.data
+        user.email = form.email.data
+        user.active = form.active.data
+
+        role = Role.query.filter_by(name=form.rol.data).first()
+        if role:
+            user.roles = [role]  # reemplaza roles anteriores
+
+        if form.password.data:
+            user.password = hash_password(form.password.data)
+
+        db.session.commit()
+
+        flash("Usuario actualizado correctamente", "success")
+        return redirect(url_for('usuarios.index'))
+
+    return render_template("produccion/usuarios/update_user.html", form=form)
+
+@usuarios_bp.route("/usuario/eliminar/<uuid>", methods=["POST"])
+def deleteUser(uuid):
+    user = Usuario.query.get_or_404(uuid)
+
+    if any(role.name == "Admin" for role in user.roles):
+        flash("No se puede eliminar un administrador", "error")
+        return redirect(url_for('usuarios.index'))
+
+    db.session.delete(user)
+    db.session.commit()
+
+    flash("Usuario eliminado correctamente", "success")
+    return redirect(url_for('usuarios.index'))
