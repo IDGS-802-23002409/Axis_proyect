@@ -1,4 +1,12 @@
 {% extends "produccion/layout.html" %}
+
+{% block title %}
+Gestión de Usuarios
+{% endblock %}
+
+{% block header %}
+Gestión de Usuarios
+{% endblock %}
 {% block container %}
 {% import "produccion/usuarios/_macros.html" as macros %}
 
@@ -15,7 +23,7 @@
     </div>
 
     <!-- FORM -->
-    <form method="post" class="flex flex-col gap-5">
+    <form method="post" class="flex flex-col gap-5" novalidate>
 
       {{ form.hidden_tag() }}
 

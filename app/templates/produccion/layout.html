@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AXIS - Gestión de Usuarios</title>
+  <title>AXIS - {% block title %}{% endblock %}</title>
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -68,7 +68,9 @@
 
       <!-- TOPBAR -->
       <div class="h-20 px-10 flex items-center justify-between">
-        <h2 class="uppercase font-bold text-lg">Gestión de Usuarios</h2>
+        <h2 class="uppercase font-bold text-lg">
+  {% block header %}{% endblock %}
+</h2>
 
         <div class="flex items-center gap-4">
 
