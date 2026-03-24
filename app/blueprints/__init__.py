@@ -8,7 +8,7 @@ def create_app():
     app.config.from_object(Config)
 
     db.init_app(app)
-    Migrate(app, db)
+    Migrate(app, db) 
 
     # Registro del módulo Proveedores
     from app.blueprints.proveedores.routes import proveedores_bp

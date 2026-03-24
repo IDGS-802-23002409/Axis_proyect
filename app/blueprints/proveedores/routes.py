@@ -4,7 +4,7 @@ from .forms import ProveedorForm
 from app.models.proveedores import Proveedor
 from app.utils.database_connection import db 
 import uuid
-
+# Rutas de CREAR, ACTUALIZAR, DETALLES y ELIMINAR de proveedores
 # --- CONSULTAR (LISTADO PRINCIPAL) ---
 @proveedores_bp.route('/')
 def index():
@@ -22,7 +22,7 @@ def index():
 @proveedores_bp.route('/editar/<string:uid>', methods=['POST'])
 def guardar(uid=None):
     form = ProveedorForm()
-    
+     
     if form.validate_on_submit():
         if uid:
             proveedor = Proveedor.query.get_or_404(uid)

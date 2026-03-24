@@ -6,5 +6,5 @@ proveedores_bp = Blueprint(
     template_folder='templates',
     static_folder='static'
 )
-
-from . import routes
+# Inicialización del blueprint
+from . import routes 
