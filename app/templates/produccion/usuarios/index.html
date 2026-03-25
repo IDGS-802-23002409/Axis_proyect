@@ -101,7 +101,7 @@ Gestión de Usuarios
                         <span class="text-purple-600">Admin</span>
                         {% elif role == 'gerente' %}
                         <span class="text-blue-600">Gerente</span>
-                        {% elif role == 'producción' %}
+                        {% elif role == 'produccion' %}
                         <span class="text-yellow-600">Producción</span>
                         {% else %}
                         <span class="text-gray-500">Cliente</span>
@@ -132,6 +132,11 @@ Gestión de Usuarios
                         <!-- Editar -->
                         <a href="{{ url_for('usuarios.updateUser', uuid=user.uuid_usuario) }}">
                             <i data-lucide="pencil" class="w-4 h-4 cursor-pointer hover:text-primary"></i>
+                        </a>
+
+                        <!-- Detalles -->
+                        <a href="{{ url_for('usuarios.userDetail', uuid=user.uuid_usuario) }}" title="Ver detalles">
+                            <i data-lucide="info" class="w-4 h-4 cursor-pointer hover:text-blue-600"></i>
                         </a>
 
                         <!-- Eliminar lógico -->

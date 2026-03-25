@@ -1,6 +1,6 @@
 # Import all models so SQLAlchemy registers them when db.create_all() is called.
 from app.models.categorias import Categoria  # noqa: F401
-from app.models.usuarios import Usuario  # noqa: F401
+from app.models.usuarios import Usuario, Role  # noqa: F401
 from app.models.clientes import Cliente  # noqa: F401
 from app.models.proveedores import Proveedor  # noqa: F401
 from app.models.insumos import Insumo  # noqa: F401

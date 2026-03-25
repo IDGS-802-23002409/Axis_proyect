@@ -1,5 +1,6 @@
 from flask import flash, redirect, render_template, request, url_for
 from sqlalchemy import func
+from werkzeug.security import generate_password_hash
 from app.blueprints.usuarios import usuarios_bp
 from app.blueprints.usuarios.form import UserForm
 from app.models.usuarios import Usuario, Role,roles_usuarios
@@ -46,7 +47,7 @@ def registroUser():
         user = Usuario(
             nombre_completo=form.nombre_completo.data,
             email=form.email.data,
-            password=hash_password(form.password.data)
+            password = generate_password_hash(form.password.data)
         )
 
         role = Role.query.filter_by(name=form.rol.data).first()
@@ -83,7 +84,7 @@ def updateUser(uuid):
                 user.roles = [role]
 
             if form.password.data:
-                user.password = hash_password(form.password.data)
+                user.password = generate_password_hash(form.password.data)
 
             db.session.commit()
 
@@ -111,3 +112,9 @@ def deleteUser(uuid):
 
     flash("Usuario eliminado correctamente", "success")
     return redirect(url_for('usuarios.index'))
+
+
+@usuarios_bp.route("/usuario/detalle/<uuid>")
+def userDetail(uuid):
+    user = Usuario.query.get_or_404(uuid)
+    return render_template("produccion/usuarios/detalle_usuario.html", user=user)
