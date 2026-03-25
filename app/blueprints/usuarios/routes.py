@@ -4,14 +4,31 @@ from werkzeug.security import generate_password_hash
 from app.blueprints.usuarios import usuarios_bp
 from app.blueprints.usuarios.form import UserForm
 from app.models.usuarios import Usuario, Role,roles_usuarios
-from flask_security.utils import hash_password
 from app.utils.database_connection import db
 
 
 @usuarios_bp.route("/")
 def index():
-    usuarios = Usuario.query.all()
+    nombre_busqueda = request.args.get('q', '').strip()
+    rol_filtro = request.args.get('rol', '').strip()
+    estado_filtro = request.args.get('estado', '').strip()
+    usuarios = Usuario.query
+
+    if nombre_busqueda:
+        usuarios = usuarios.filter(Usuario.nombre_completo.ilike(f"%{nombre_busqueda}%"))
+
+    if rol_filtro:
+        usuarios = usuarios.join(roles_usuarios).join(Role).filter(Role.name == rol_filtro)
+
+    if estado_filtro:
+        if estado_filtro.lower() == 'activo':
+            usuarios = usuarios.filter(Usuario.active.is_(True))
+        elif estado_filtro.lower() == 'inactivo':
+            usuarios = usuarios.filter(Usuario.active.is_(False))
+
+    usuarios = usuarios.all()
     total_usuarios = Usuario.query.count()
+
     administradores = (
         db.session.query(func.count(Usuario.uuid_usuario))
         .join(roles_usuarios)
@@ -29,11 +46,17 @@ def index():
     )
     inactivos = Usuario.query.filter_by(active=False).count()
 
-    return render_template("produccion/usuarios/index.html", usuarios=usuarios,
-                           total_usuarios=total_usuarios,
-                            administradores=administradores,
-                            personal_produccion=personal_produccion,
-                            inactivos=inactivos)
+    return render_template(
+        "produccion/usuarios/index.html",
+        usuarios=usuarios,
+        total_usuarios=total_usuarios,
+        administradores=administradores,
+        personal_produccion=personal_produccion,
+        inactivos=inactivos,
+        q=nombre_busqueda,
+        rol=rol_filtro,
+        estado=estado_filtro,
+    )
 
 @usuarios_bp.route("/usuario/registro", methods=["GET", "POST"])
 def registroUser():
