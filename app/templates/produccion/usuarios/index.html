@@ -168,7 +168,7 @@ Gestión de Usuarios
                         <!-- Eliminar lógico -->
                         {% set is_admin = user.roles | selectattr("name", "equalto", "admin") | list %}
 
-                        {% if not is_admin %}
+                        {% if not is_admin and user.active %}
                         <form method="POST" action="{{ url_for('usuarios.deleteUser', uuid=user.uuid_usuario) }}">
 
                             <button type="button" onclick="openDeleteModal('{{ user.uuid_usuario }}')">
@@ -176,7 +176,7 @@ Gestión de Usuarios
                             </button>
                         </form>
                         {% else %}
-                        <i class="w-4 h-4 text-gray-300 cursor-not-allowed" data-lucide="trash-2"></i>
+                        <i class="w-4 h-4 text-gray-300 cursor-not-allowed" data-lucide="trash-2" title="{% if is_admin %}Admin no puede ser eliminado{% else %}Usuario inactivo no puede ser eliminado{% endif %}"></i>
                         {% endif %}
 
                     </td>
