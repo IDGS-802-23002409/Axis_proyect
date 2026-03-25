@@ -27,9 +27,9 @@ class UserForm(FlaskForm):
     ])
 
     active = RadioField('Estatus', choices=[
-        (True, 'Activo'),
-        (False, 'Inactivo')
-    ], coerce=bool, default=True)
+        ('1', 'Activo'),
+        ('0', 'Inactivo')
+    ], coerce=int, default='1')
 
     def __init__(self, *args, obj=None, **kwargs):
         super().__init__(*args, obj=obj, **kwargs)
