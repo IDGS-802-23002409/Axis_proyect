@@ -127,8 +127,10 @@ Gestión de Usuarios
                         <span class="text-blue-600">Gerente</span>
                         {% elif role == 'produccion' %}
                         <span class="text-yellow-600">Producción</span>
-                        {% else %}
+                        {% elif role == 'cliente' %}
                         <span class="text-gray-500">Cliente</span>
+                        {% else %}
+                        <span class="text-gray-400">{{ role }}</span>
                         {% endif %}
                     </td>
 
@@ -164,7 +166,7 @@ Gestión de Usuarios
                         </a>
 
                         <!-- Eliminar lógico -->
-                        {% set is_admin = user.roles | selectattr("name", "equalto", "Admin") | list %}
+                        {% set is_admin = user.roles | selectattr("name", "equalto", "admin") | list %}
 
                         {% if not is_admin %}
                         <form method="POST" action="{{ url_for('usuarios.deleteUser', uuid=user.uuid_usuario) }}">

@@ -65,7 +65,7 @@ def registroUser():
         existing_user = Usuario.query.filter_by(email=form.email.data).first()
         if existing_user:
             flash("El correo ya está registrado", "error")
-            return render_template("usuarios/registro_usuario.html", form=form)
+            return render_template("produccion/usuarios/registro_usuario.html", form=form)
 
         user = Usuario(
             nombre_completo=form.nombre_completo.data,
