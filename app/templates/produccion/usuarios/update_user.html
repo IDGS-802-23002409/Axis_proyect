@@ -56,6 +56,12 @@ Gestión de Usuarios
           {{ form.active.label }}
         </label>
 
+        {% if is_admin %}
+        <div class="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <i data-lucide="info" class="w-4 h-4 text-blue-600"></i>
+          <p class="text-sm text-blue-700">No se puede cambiar el estado de un administrador</p>
+        </div>
+        {% else %}
         <div class="flex gap-6">
           {% for subfield in form.active %}
             <label class="flex items-center gap-2 text-sm">
@@ -64,6 +70,7 @@ Gestión de Usuarios
             </label>
           {% endfor %}
         </div>
+        {% endif %}
 
         {% if form.active.errors %}
           {% for error in form.active.errors %}
