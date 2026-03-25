@@ -33,3 +33,26 @@ def index():
         filtro_modelo=modelo_id,
         filtro_talla=talla,
     )
+
+
+@productos_bp.route('/registro', methods=['GET', 'POST'])
+def registro_producto():
+    form = ProductoTerminadoForm()
+
+    if form.validate_on_submit():
+        producto = ProductoTerminado(
+            uuid_modelo=form.modelo.data,
+            sku_especifico=form.sku_especifico.data.strip(),
+            talla=form.talla.data,
+            precio_venta=form.precio_venta.data,
+            stock_fisico_actual=form.stock_fisico_actual.data,
+            stock_minimo_alerta=form.stock_minimo_alerta.data,
+        )
+        db.session.add(producto)
+        db.session.commit()
+
+        flash('Producto terminado creado correctamente', 'success')
+        return redirect(url_for('productos.index'))
+
+    return render_template('produccion/productos_terminados/registro_producto.html', form=form)
+
