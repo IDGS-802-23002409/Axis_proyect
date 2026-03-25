@@ -96,11 +96,16 @@ def updateUser(uuid):
             existing_user = Usuario.query.filter_by(email=form.email.data).first()
             if existing_user and existing_user.uuid_usuario != user.uuid_usuario:
                 flash("El correo ya está en uso", "error")
-                return render_template("produccion/usuarios/update_user.html", form=form)
+                is_admin = any(role.name == "admin" for role in user.roles)
+                return render_template("produccion/usuarios/update_user.html", form=form, user=user, is_admin=is_admin)
 
             user.nombre_completo = form.nombre_completo.data
             user.email = form.email.data
-            user.active = form.active.data
+            
+            # No permitir cambiar el estado de un admin
+            is_admin = any(role.name == "admin" for role in user.roles)
+            if not is_admin:
+                user.active = bool(int(form.active.data))
 
             role = Role.query.filter_by(name=form.rol.data).first()
             if role:
@@ -119,8 +124,11 @@ def updateUser(uuid):
 
         if user.roles:
             form.rol.data = user.roles[0].name
+        
+        form.active.data = 1 if user.active else 0
 
-    return render_template("produccion/usuarios/update_user.html", form=form)
+    is_admin = any(role.name == "admin" for role in user.roles)
+    return render_template("produccion/usuarios/update_user.html", form=form, user=user, is_admin=is_admin)
 
 @usuarios_bp.route("/usuario/eliminar/<uuid>", methods=["POST"])
 def deleteUser(uuid):
