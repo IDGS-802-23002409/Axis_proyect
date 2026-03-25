@@ -56,3 +56,31 @@ def registro_producto():
 
     return render_template('produccion/productos_terminados/registro_producto.html', form=form)
 
+
+@productos_bp.route('/editar/<uuid>', methods=['GET', 'POST'])
+def editar_producto(uuid):
+    producto = ProductoTerminado.query.get_or_404(uuid)
+    form = ProductoTerminadoForm(obj=producto)
+
+    if form.validate_on_submit():
+        producto.uuid_modelo = form.modelo.data
+        producto.sku_especifico = form.sku_especifico.data.strip()
+        producto.talla = form.talla.data
+        producto.precio_venta = form.precio_venta.data
+
+        if form.stock_fisico_actual.data is not None:
+            producto.stock_fisico_actual = form.stock_fisico_actual.data
+
+        if form.stock_minimo_alerta.data is not None:
+            producto.stock_minimo_alerta = form.stock_minimo_alerta.data
+
+        db.session.commit()
+
+        flash('Producto terminado actualizado correctamente', 'success')
+        return redirect(url_for('productos.index'))
+
+    # Asegurar valores existentes para evitar que se pierdan en la edición
+    form.stock_fisico_actual.data = producto.stock_fisico_actual
+    form.stock_minimo_alerta.data = producto.stock_minimo_alerta
+
+    return render_template('produccion/productos_terminados/update_producto.html', form=form, producto=producto)

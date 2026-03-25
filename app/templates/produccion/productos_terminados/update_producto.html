@@ -4,5 +4,25 @@
 {% block header %}Editar Producto Terminado{% endblock %}
 
 {% block container %}
+<div class="px-10 pb-10">
+  <div class="max-w-2xl mx-auto bg-card border border-border rounded-lg p-8">
+    <h2 class="text-xl font-bold mb-4">Editar Producto - {{ producto.sku_especifico }}</h2>
+    <form method="post" class="space-y-4" novalidate>
+      {{ form.hidden_tag() }}
+      {% import "produccion/usuarios/_macros.html" as macros %}
 
+      {{ macros.fieldUser(form.modelo, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+      {{ macros.fieldUser(form.sku_especifico, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+      {{ macros.fieldUser(form.talla, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+      {{ macros.fieldUser(form.precio_venta, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+      {{ macros.fieldUser(form.stock_fisico_actual, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+      {{ macros.fieldUser(form.stock_minimo_alerta, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+
+      <div class="flex justify-end gap-3 pt-4">
+        <a href="{{ url_for('productos.index') }}" class="px-4 py-2 border border-border rounded-md text-sm">Cancelar</a>
+        <button type="submit" class="px-4 py-2 bg-black text-white rounded-md text-sm">Actualizar</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}
