@@ -51,7 +51,7 @@ def guardar(uid=None):
                     proveedor.estatus = request.json.get('estatus')
             else:
                 proveedor.razon_social = form.razon_social.data
-                proveedor.rfc = form.rfc.data
+                proveedor.rfc = form.rfc.data.upper() if form.rfc.data else ""
                 proveedor.contacto_nombre = form.contacto_nombre.data
                 if form.telefono.data:
                     proveedor.telefono = re.sub(r'\D', '', form.telefono.data)     

@@ -12,9 +12,15 @@ class ProveedorForm(FlaskForm):
         DataRequired(message="El RFC es obligatorio"),
         Length(min=12, max=13, message="El RFC debe tener entre 12 y 13 caracteres")
     ])
-    contacto_nombre = StringField('Nombre de Contacto', validators=[Length(max=100)])
+    contacto_nombre = StringField('Nombre de Contacto', validators=[
+        DataRequired(message="El nombre es obligatorio"),
+        Length(max=100)
+        ])
     estatus = BooleanField('Activo')
-    telefono = StringField('Teléfono', validators=[Length(max=10)]) 
+    telefono = StringField('Teléfono', validators=[
+        DataRequired(message="El teléfono es obligatorio"),
+        Length(max=15, message="El campo no puede tener más de 10 dígitos numéricos") 
+    ])    
     categoria_insumo = StringField('Categoría de Insumo', validators=[Length(max=100)])
     submit = SubmitField('Guardar Proveedor') 
 
