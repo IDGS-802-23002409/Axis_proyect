@@ -1,0 +1,11 @@
+Confirma tu cuenta de Axis
+
+Hola,
+
+Para verificar tu cuenta, visita el siguiente enlace:
+
+{{ confirmation_link }}
+
+Si no creaste esta cuenta, ignora este mensaje.
+
+— Axis Urban Apparel

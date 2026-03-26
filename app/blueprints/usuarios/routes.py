@@ -1,16 +1,36 @@
 from flask import flash, redirect, render_template, request, url_for
 from sqlalchemy import func
+from flask_security import login_required, roles_required, hash_password
 from app.blueprints.usuarios import usuarios_bp
 from app.blueprints.usuarios.form import UserForm
-from app.models.usuarios import Usuario, Role,roles_usuarios
-from flask_security.utils import hash_password
+from app.models.usuarios import Usuario, Role, roles_usuarios
 from app.utils.database_connection import db
 
 
 @usuarios_bp.route("/")
+@login_required
+@roles_required('admin')
 def index():
-    usuarios = Usuario.query.all()
+    nombre_busqueda = request.args.get('q', '').strip()
+    rol_filtro = request.args.get('rol', '').strip()
+    estado_filtro = request.args.get('estado', '').strip()
+    usuarios = Usuario.query
+
+    if nombre_busqueda:
+        usuarios = usuarios.filter(Usuario.nombre_completo.ilike(f"%{nombre_busqueda}%"))
+
+    if rol_filtro:
+        usuarios = usuarios.join(roles_usuarios).join(Role).filter(Role.name == rol_filtro)
+
+    if estado_filtro:
+        if estado_filtro.lower() == 'activo':
+            usuarios = usuarios.filter(Usuario.active.is_(True))
+        elif estado_filtro.lower() == 'inactivo':
+            usuarios = usuarios.filter(Usuario.active.is_(False))
+
+    usuarios = usuarios.all()
     total_usuarios = Usuario.query.count()
+
     administradores = (
         db.session.query(func.count(Usuario.uuid_usuario))
         .join(roles_usuarios)
@@ -28,20 +48,28 @@ def index():
     )
     inactivos = Usuario.query.filter_by(active=False).count()
 
-    return render_template("produccion/usuarios/index.html", usuarios=usuarios,
-                           total_usuarios=total_usuarios,
-                            administradores=administradores,
-                            personal_produccion=personal_produccion,
-                            inactivos=inactivos)
+    return render_template(
+        "produccion/usuarios/index.html",
+        usuarios=usuarios,
+        total_usuarios=total_usuarios,
+        administradores=administradores,
+        personal_produccion=personal_produccion,
+        inactivos=inactivos,
+        q=nombre_busqueda,
+        rol=rol_filtro,
+        estado=estado_filtro,
+    )
 
 @usuarios_bp.route("/usuario/registro", methods=["GET", "POST"])
+@login_required
+@roles_required('admin')
 def registroUser():
     form = UserForm()
     if request.method == "POST" and form.validate():
         existing_user = Usuario.query.filter_by(email=form.email.data).first()
         if existing_user:
             flash("El correo ya está registrado", "error")
-            return render_template("usuarios/registro_usuario.html", form=form)
+            return render_template("produccion/usuarios/registro_usuario.html", form=form)
 
         user = Usuario(
             nombre_completo=form.nombre_completo.data,
@@ -61,6 +89,8 @@ def registroUser():
     return render_template("produccion/usuarios/registro_usuario.html", form=form)
 
 @usuarios_bp.route("/usuario/editar/<uuid>", methods=["GET", "POST"])
+@login_required
+@roles_required('admin')
 def updateUser(uuid):
     user = Usuario.query.get_or_404(uuid)
 
@@ -72,11 +102,16 @@ def updateUser(uuid):
             existing_user = Usuario.query.filter_by(email=form.email.data).first()
             if existing_user and existing_user.uuid_usuario != user.uuid_usuario:
                 flash("El correo ya está en uso", "error")
-                return render_template("produccion/usuarios/update_user.html", form=form)
+                is_admin = any(role.name == "admin" for role in user.roles)
+                return render_template("produccion/usuarios/update_user.html", form=form, user=user, is_admin=is_admin)
 
             user.nombre_completo = form.nombre_completo.data
             user.email = form.email.data
-            user.active = form.active.data
+            
+            # No permitir cambiar el estado de un admin
+            is_admin = any(role.name == "admin" for role in user.roles)
+            if not is_admin:
+                user.active = bool(int(form.active.data))
 
             role = Role.query.filter_by(name=form.rol.data).first()
             if role:
@@ -95,10 +130,15 @@ def updateUser(uuid):
 
         if user.roles:
             form.rol.data = user.roles[0].name
+        
+        form.active.data = 1 if user.active else 0
 
-    return render_template("produccion/usuarios/update_user.html", form=form)
+    is_admin = any(role.name == "admin" for role in user.roles)
+    return render_template("produccion/usuarios/update_user.html", form=form, user=user, is_admin=is_admin)
 
 @usuarios_bp.route("/usuario/eliminar/<uuid>", methods=["POST"])
+@login_required
+@roles_required('admin')
 def deleteUser(uuid):
     user = Usuario.query.get_or_404(uuid)
 
@@ -106,8 +146,20 @@ def deleteUser(uuid):
         flash("No se puede eliminar un administrador", "error")
         return redirect(url_for('usuarios.index'))
 
+    if not user.active:
+        flash("Este usuario ya está inactivo", "error")
+        return redirect(url_for('usuarios.index'))
+
     user.active = False
     db.session.commit()
 
     flash("Usuario eliminado correctamente", "success")
     return redirect(url_for('usuarios.index'))
+
+
+@usuarios_bp.route("/usuario/detalle/<uuid>")
+@login_required
+@roles_required('admin')
+def userDetail(uuid):
+    user = Usuario.query.get_or_404(uuid)
+    return render_template("produccion/usuarios/detalle_usuario.html", user=user)
