@@ -12,7 +12,7 @@
     <div class="security-container">
         <div class="side-logo">
             <div class="urban-bg-text pos-1">AXIS</div>
-            <img src="{{ url_for('static', filename='images/urban-bg.png') }}" alt="Axis Urban">
+            <img src="{{ url_for('static', filename='images/login.png') }}" alt="Axis Login">
             <div class="graffiti-drip" style="left: 30%; animation-delay: 0.5s;"></div>
             <div class="graffiti-drip" style="left: 60%; animation-delay: 1.2s;"></div>
         </div>
@@ -20,22 +20,50 @@
             <div class="urban-bg-text pos-2">STREET</div>
             <div class="form-wrapper">
                 <h1>LOGIN</h1>
-                <form action="#" method="POST">
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                    <div class="flash-msg flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <form action="{{ url_for('security.login') }}" method="POST">
+                    {{ login_user_form.hidden_tag() }}
                     <div class="form-group">
-                        <label for="username">Usuario / Email</label>
-                        <input type="text" id="username" name="username" class="form-control"
-                            placeholder="Escribe tu usuario" required>
+                        <label for="email">Email</label>
+                        {{ login_user_form.email(class="form-control", placeholder="tu@email.com", id="email") }}
+                        {% if login_user_form.email.errors %}
+                        <div class="field-errors">
+                            {% for error in login_user_form.email.errors %}
+                            <span class="field-error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="form-group">
                         <label for="password">Contraseña</label>
-                        <input type="password" id="password" name="password" class="form-control" placeholder="********"
-                            required>
+                        {{ login_user_form.password(class="form-control", placeholder="********", id="password") }}
+                        {% if login_user_form.password.errors %}
+                        <div class="field-errors">
+                            {% for error in login_user_form.password.errors %}
+                            <span class="field-error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
-                    <button type="submit" class="btn-urban">ENTRAR</button>
+                    {{ login_user_form.submit(class="btn-urban") }}
                     <div style="margin-top: 20px; text-align: center; font-size: 0.8rem;">
-                        <a href="/security/register-preview"
+                        <a href="{{ url_for('security.register') }}"
                             style="color: #fff; text-decoration: none; opacity: 0.7;">¿No tienes cuenta? <span
                                 style="text-decoration: underline;">Regístrate</span></a>
+                    </div>
+                    <div style="margin-top: 10px; text-align: center; font-size: 0.8rem;">
+                        <a href="{{ url_for('security.forgot_password') }}"
+                            style="color: #fff; text-decoration: none; opacity: 0.5;">¿Olvidaste tu contraseña?</a>
                     </div>
                 </form>
             </div>

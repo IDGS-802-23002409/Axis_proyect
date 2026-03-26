@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación 2FA | Axis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/security.css') }}">
+    <style>
+        .code-inputs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .code-input {
+            width: 50px;
+            height: 60px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-family: var(--font-urban);
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+        }
+
+        .code-input:focus {
+            border-color: #fff;
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="security-container">
+        <div class="side-logo">
+            <div class="urban-bg-text pos-1">VERIFY</div>
+            <img src="{{ url_for('static', filename='images/urban-bg.png') }}" alt="Axis">
+        </div>
+        <div class="side-form">
+            <div class="urban-bg-text pos-2">IDENTITY</div>
+            <div class="form-wrapper">
+                <h1>2FA AUTH</h1>
+                <p style="text-align: center; margin-bottom: 30px; font-size: 0.9rem; opacity: 0.8;">
+                    Ingresa el código de verificación
+                </p>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                    <div class="flash-msg flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <form action="{{ url_for('security.two_factor_token_validation') }}" method="POST">
+                    {{ two_factor_verify_code_form.hidden_tag() }}
+
+                    <!-- Visual code inputs -->
+                    <div class="code-inputs">
+                        <input type="text" maxlength="1" class="code-input" inputmode="numeric" autocomplete="off">
+                        <input type="text" maxlength="1" class="code-input" inputmode="numeric" autocomplete="off">
+                        <input type="text" maxlength="1" class="code-input" inputmode="numeric" autocomplete="off">
+                        <input type="text" maxlength="1" class="code-input" inputmode="numeric" autocomplete="off">
+                        <input type="text" maxlength="1" class="code-input" inputmode="numeric" autocomplete="off">
+                        <input type="text" maxlength="1" class="code-input" inputmode="numeric" autocomplete="off">
+                    </div>
+
+                    <!-- Hidden real input for Flask-Security -->
+                    <input type="hidden" name="code" id="real-code-input" value="">
+
+                    <button type="submit" class="btn-urban">VERIFICAR</button>
+
+                    {% if two_factor_verify_code_form.code.errors %}
+                    <div class="field-errors" style="text-align: center; margin-top: 15px;">
+                        {% for error in two_factor_verify_code_form.code.errors %}
+                        <span class="field-error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div style="margin-top: 20px; text-align: center; font-size: 0.8rem;">
+                        <p style="opacity: 0.5;">¿Problemas con el código?<br>
+                            <a href="{{ url_for('security.two_factor_rescue') }}"
+                                style="color: #fff; text-decoration: underline;">Necesito ayuda</a>
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const codeInputs = document.querySelectorAll('.code-input');
+            const realInput = document.getElementById('real-code-input');
+
+            function syncCode() {
+                realInput.value = Array.from(codeInputs).map(i => i.value).join('');
+            }
+
+            codeInputs.forEach((input, index) => {
+                input.addEventListener('input', (e) => {
+                    // Only allow digits
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                    if (e.target.value.length === 1 && index < codeInputs.length - 1) {
+                        codeInputs[index + 1].focus();
+                    }
+                    syncCode();
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && e.target.value.length === 0 && index > 0) {
+                        codeInputs[index - 1].focus();
+                    }
+                });
+
+                // Handle paste
+                input.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+                    for (let i = 0; i < Math.min(pasted.length, codeInputs.length - index); i++) {
+                        codeInputs[index + i].value = pasted[i];
+                    }
+                    const nextIndex = Math.min(index + pasted.length, codeInputs.length - 1);
+                    codeInputs[nextIndex].focus();
+                    syncCode();
+                });
+            });
+
+            // Auto-focus first input
+            codeInputs[0].focus();
+        });
+    </script>
+</body>
+
+</html>

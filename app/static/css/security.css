@@ -199,3 +199,61 @@ h2 {
     right: -10%;
     transform: rotate(10deg);
 }
+
+/* Flash Messages */
+.flash-messages {
+    margin-bottom: 20px;
+}
+
+.flash-msg {
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.flash-msg.flash-error,
+.flash-msg.flash-danger {
+    border-color: #ff4444;
+    color: #ff6666;
+    background: rgba(255, 0, 0, 0.1);
+}
+
+.flash-msg.flash-success {
+    border-color: #44ff44;
+    color: #66ff66;
+    background: rgba(0, 255, 0, 0.1);
+}
+
+.flash-msg.flash-info,
+.flash-msg.flash-message {
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #ccc;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Utilities */
+.hidden-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    height: 0;
+    width: 0;
+}
+
+/* Box sizing fix for form-control */
+.form-control {
+    box-sizing: border-box;
+}
+
+/* Field Errors (inline under inputs) */
+.field-errors {
+    margin-top: 5px;
+}
+
+.field-error {
+    display: block;
+    color: #ff6666;
+    font-size: 0.75rem;
+    margin-top: 3px;
+}

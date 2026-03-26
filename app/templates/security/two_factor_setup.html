@@ -9,7 +9,7 @@
     <style>
         .method-card {
             background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             padding: 20px;
             margin-bottom: 15px;
             display: flex;
@@ -19,10 +19,15 @@
             transition: all 0.3s ease;
         }
 
-        .method-card:hover {
-            background: rgba(255, 255, 255, 0.1);
+        .method-card:hover,
+        .method-card.active {
+            background: rgba(255, 255, 255, 0.12);
             border-color: #fff;
             transform: translateX(10px);
+        }
+
+        .method-card.active {
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
         }
 
         .method-info h3 {
@@ -36,6 +41,29 @@
             font-size: 0.8rem;
             opacity: 0.6;
         }
+
+        .qr-container {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .qr-container img,
+        .qr-container svg {
+            width: 200px;
+            height: 200px;
+        }
+
+        .setup-step {
+            display: none;
+        }
+
+        .setup-step.visible {
+            display: block;
+        }
     </style>
 </head>
 
@@ -43,45 +71,128 @@
     <div class="security-container">
         <div class="side-logo">
             <div class="urban-bg-text pos-1">SECURE</div>
-            <img src="{{ url_for('static', filename='images/urban-bg.png') }}" alt="Axis Urban">
+            <img src="{{ url_for('static', filename='images/urban-bg.png') }}" alt="Axis">
         </div>
         <div class="side-form">
             <div class="urban-bg-text pos-2">SHIELD</div>
             <div class="form-wrapper">
                 <h1>2FA SETUP</h1>
-                <p style="text-align: center; margin-bottom: 30px; font-size: 0.9rem; opacity: 0.8;">Elige tu método de
-                    seguridad</p>
+                <p style="text-align: center; margin-bottom: 30px; font-size: 0.9rem; opacity: 0.8;">
+                    Configura tu segundo factor de seguridad
+                </p>
 
-                <div class="method-card">
-                    <div class="method-info">
-                        <h3>Email</h3>
-                        <p>Recibe el código en tu correo</p>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                    <div class="flash-msg flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <form action="{{ url_for('security.two_factor_setup') }}" method="POST" id="two-factor-setup-form">
+                    {{ two_factor_setup_form.hidden_tag() }}
+
+                    {# Hidden field for the method — Flask-Security expects 'setup' #}
+                    <input type="hidden" name="setup" id="setup-method" value="">
+
+                    {# Step 1: Select method (only if QR not already showing) #}
+                    <div id="step-select" class="setup-step {% if not authr_qrcode %}visible{% endif %}">
+                        <div class="method-card" data-method="email" onclick="selectMethod('email')">
+                            <div class="method-info">
+                                <h3>✉ Email</h3>
+                                <p>Recibe el código en tu correo</p>
+                            </div>
+                            <div style="font-size: 1.5rem;">→</div>
+                        </div>
+
+                        <div class="method-card" data-method="authenticator" onclick="selectMethod('authenticator')">
+                            <div class="method-info">
+                                <h3>📱 App Authenticator</h3>
+                                <p>Google Auth / Authy / Microsoft Auth</p>
+                            </div>
+                            <div style="font-size: 1.5rem;">→</div>
+                        </div>
                     </div>
-                    <div class="btn-select">→</div>
-                </div>
 
-                <div class="method-card">
-                    <div class="method-info">
-                        <h3>App Authenticator</h3>
-                        <p>Google Auth / Authy</p>
+                    {# Step 2: Authenticator QR code #}
+                    <div id="step-qr" class="setup-step {% if authr_qrcode %}visible{% endif %}"
+                        style="text-align: center;">
+                        {% if authr_qrcode %}
+                        <p style="margin-bottom: 15px; font-size: 0.9rem;">
+                            Escanea este código QR con tu app:
+                        </p>
+                        <div class="qr-container">
+                            {{ authr_qrcode | safe }}
+                        </div>
+                        {% endif %}
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label for="code">Ingresa el código de la app</label>
+                            <input type="text" name="code" id="code" class="form-control" placeholder="123456"
+                                maxlength="6" inputmode="numeric" autocomplete="off">
+                        </div>
+                        <button type="submit" class="btn-urban">VERIFICAR CÓDIGO</button>
+                        <div style="margin-top: 15px;">
+                            <a href="#" onclick="goBack(); return false;"
+                                style="color: #fff; opacity: 0.6; font-size: 0.85rem; text-decoration: underline;">
+                                ← Cambiar método
+                            </a>
+                        </div>
                     </div>
-                    <div class="btn-select">→</div>
-                </div>
 
-                <div class="method-card">
-                    <div class="method-info" style="opacity: 0.5;">
-                        <h3>SMS</h3>
-                        <p>(Próximamente)</p>
+                    {# Step 3: Email confirmation #}
+                    <div id="step-email" class="setup-step" style="text-align: center;">
+                        <div style="margin-bottom: 20px;">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="4" width="20" height="16" rx="2" />
+                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                            </svg>
+                        </div>
+                        <p style="margin-bottom: 20px; font-size: 0.9rem; opacity: 0.8;">
+                            Se enviará un código a tu correo cada vez que inicies sesión.
+                        </p>
+                        <button type="submit" class="btn-urban">CONFIGURAR EMAIL 2FA</button>
+                        <div style="margin-top: 15px;">
+                            <a href="#" onclick="goBack(); return false;"
+                                style="color: #fff; opacity: 0.6; font-size: 0.85rem; text-decoration: underline;">
+                                ← Cambiar método
+                            </a>
+                        </div>
                     </div>
-                </div>
-
-                <div style="margin-top: 30px; text-align: center;">
-                    <a href="/security/login-preview" class="btn-urban"
-                        style="text-decoration: none; display: block;">GUARDAR</a>
-                </div>
+                </form>
             </div>
         </div>
     </div>
+
+    <script>
+        function selectMethod(method) {
+            document.getElementById('setup-method').value = method;
+
+            // Update visual
+            document.querySelectorAll('.method-card').forEach(card => card.classList.remove('active'));
+            document.querySelector('[data-method="' + method + '"]').classList.add('active');
+
+            // Hide select, show correct step
+            document.getElementById('step-select').classList.remove('visible');
+
+            if (method === 'authenticator') {
+                // Submit form to get QR code from server
+                document.getElementById('two-factor-setup-form').submit();
+            } else {
+                document.getElementById('step-email').classList.add('visible');
+                document.getElementById('step-qr').classList.remove('visible');
+            }
+        }
+
+        function goBack() {
+            document.getElementById('step-select').classList.add('visible');
+            document.getElementById('step-qr').classList.remove('visible');
+            document.getElementById('step-email').classList.remove('visible');
+            document.getElementById('setup-method').value = '';
+        }
+    </script>
 </body>
 
 </html>
