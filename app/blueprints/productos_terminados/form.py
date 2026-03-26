@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, DecimalField, IntegerField
+from wtforms import StringField, SelectField, DecimalField, IntegerField, RadioField
 from wtforms import validators
 from app.models.modelos_productos import ModeloRopa
 
@@ -33,6 +33,11 @@ class ProductoTerminadoForm(FlaskForm):
         validators.DataRequired(message='Stock mínimo requerido'),
         validators.NumberRange(min=0, message='Stock mínimo debe ser >= 0')
     ])
+
+    active = RadioField('Estatus', choices=[
+        ('1', 'Activo'),
+        ('0', 'Inactivo')
+    ], coerce=int, default='1')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

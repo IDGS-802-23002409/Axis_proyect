@@ -6,15 +6,15 @@
 {% block container %}
 <div class="px-10 pb-10">
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-    <div class="p-4 bg-card border border-border rounded-lg">
+    <div class="p-4 bg-card border border-border rounded-lg cursor-pointer hover:bg-secondary transition-colors" onclick="filterByStock('todos')">
       <p class="text-xs text-muted-foreground">Total Productos</p>
       <p class="text-2xl font-bold">{{ total }}</p>
     </div>
-    <div class="p-4 bg-card border border-border rounded-lg">
+    <div class="p-4 bg-card border border-border rounded-lg cursor-pointer hover:bg-secondary transition-colors" onclick="filterByStock('bajo')">
       <p class="text-xs text-muted-foreground">Bajo Stock</p>
       <p class="text-2xl font-bold text-amber-500">{{ en_bajo_stock }}</p>
     </div>
-    <div class="p-4 bg-card border border-border rounded-lg">
+    <div class="p-4 bg-card border border-border rounded-lg cursor-pointer hover:bg-secondary transition-colors" onclick="filterByStock('agotado')">
       <p class="text-xs text-muted-foreground">Agotados</p>
       <p class="text-2xl font-bold text-rose-500">{{ agotados }}</p>
     </div>
@@ -42,7 +42,12 @@
     </div>
 
     <div id="filterPanel" class="p-4 border-b border-border bg-surface hidden">
-      <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <form method="GET" class="grid grid-cols-1 md:grid-cols-6 gap-3">
+        <div>
+          <label class="text-xs text-muted-foreground" for="sku">SKU</label>
+          <input type="text" name="sku" id="sku" placeholder="Buscar SKU" class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm" value="{{ filtro_sku }}">
+        </div>
+
         <div>
           <label class="text-xs text-muted-foreground" for="modelo">Modelo</label>
           <select name="modelo" id="modelo" class="w-full border border-border bg-input rounded-md px-3 py-2">
@@ -60,6 +65,15 @@
             {% for t in ['XSS','XS','S','M','L','XL','XXL','Unica'] %}
             <option value="{{ t }}" {% if filtro_talla == t %}selected{% endif %}>{{ t }}</option>
             {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs text-muted-foreground" for="estatus">Estatus</label>
+          <select name="estatus" id="estatus" class="w-full border border-border bg-input rounded-md px-3 py-2">
+            <option value="">Todos</option>
+            <option value="activo" {% if filtro_estatus == 'activo' %}selected{% endif %}>Activo</option>
+            <option value="inactivo" {% if filtro_estatus == 'inactivo' %}selected{% endif %}>Inactivo</option>
           </select>
         </div>
 
@@ -99,9 +113,9 @@
               <a href="{{ url_for('productos.editar_producto', uuid=p.uuid_producto) }}" class="text-blue-500 hover:text-blue-700">
                 <i data-lucide="edit-2" class="w-4 h-4"></i>
               </a>
-              <form method="POST" action="{{ url_for('productos.eliminar_producto', uuid=p.uuid_producto) }}" onsubmit="return confirm('¿Eliminar producto? Esto no se puede revertir.')">
-                <button type="submit" class="text-red-500 hover:text-red-700"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-              </form>
+              <button type="button" onclick="openDeleteModal('{{ p.uuid_producto }}')" class="text-red-500 hover:text-red-700 {% if not p.active %}opacity-50 cursor-not-allowed{% endif %}" {% if not p.active %}disabled{% endif %}>
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
             </td>
           </tr>
           {% else %}
@@ -115,6 +129,27 @@
   </div>
 </div>
 
+<!-- Modal de eliminación -->
+<div id="deleteModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-96">
+    <h2 class="text-lg font-bold mb-4">Confirmar desactivación</h2>
+    <p class="text-sm text-gray-600 mb-6">
+      ¿Estás seguro de desactivar este producto? Esto no se puede revertir.
+    </p>
+    <form id="deleteForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="flex justify-end gap-3">
+        <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 border rounded-md text-sm">
+          Cancelar
+        </button>
+        <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-md text-sm">
+          Desactivar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
   // Toggle para mostrar/ocultar filtros
   document.getElementById('filterToggle').addEventListener('click', function() {
@@ -125,6 +160,34 @@
   // Inicializar iconos de Lucide
   if (typeof lucide !== 'undefined') {
     lucide.createIcons();
+  }
+
+  function openDeleteModal(uuid) {
+    const modal = document.getElementById("deleteModal");
+    const form = document.getElementById("deleteForm");
+
+    form.action = `/productos/eliminar/${uuid}`;
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  }
+
+  function closeDeleteModal() {
+    const modal = document.getElementById("deleteModal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+
+  function filterByStock(type) {
+    if (type === 'todos') {
+      // Mostrar todos los productos sin filtro de stock
+      window.location.href = `{{ url_for('productos.index') }}`;
+    } else if (type === 'bajo') {
+      // Filtrar por bajo stock: stock <= stock_minimo_alerta y > 0
+      window.location.href = `{{ url_for('productos.index') }}?filtro=bajo_stock`;
+    } else if (type === 'agotado') {
+      // Filtrar por agotados: stock <= 0
+      window.location.href = `{{ url_for('productos.index') }}?filtro=agotado`;
+    }
   }
 </script>
 {% endblock %}

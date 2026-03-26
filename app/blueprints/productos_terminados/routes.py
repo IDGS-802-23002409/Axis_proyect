@@ -8,8 +8,20 @@ from app.utils.database_connection import db
 def index():
     modelo_id = request.args.get('modelo', '').strip()
     talla = request.args.get('talla', '').strip()
+    sku = request.args.get('sku', '').strip()
+    estatus = request.args.get('estatus', '').strip()
+    filtro = request.args.get('filtro', '').strip()
 
     productos = ProductoTerminado.query.join(ModeloRopa)
+
+    # Filtro por estatus
+    if estatus.lower() == 'activo':
+        productos = productos.filter(ProductoTerminado.active.is_(True))
+    elif estatus.lower() == 'inactivo':
+        productos = productos.filter(ProductoTerminado.active.is_(False))
+    else:
+        # Por defecto mostrar solo activos
+        productos = productos.filter(ProductoTerminado.active.is_(True))
 
     if modelo_id:
         productos = productos.filter(ProductoTerminado.uuid_modelo == modelo_id)
@@ -17,21 +29,35 @@ def index():
     if talla:
         productos = productos.filter(ProductoTerminado.talla == talla)
 
+    if sku:
+        productos = productos.filter(ProductoTerminado.sku_especifico.ilike(f"%{sku}%"))
+
     productos = productos.order_by(ProductoTerminado.fecha_actualizacion.desc()).all()
-    total = len(productos)
-    en_bajo_stock = len([p for p in productos if p.stock_fisico_actual <= p.stock_minimo_alerta])
-    agotados = len([p for p in productos if p.stock_fisico_actual <= 0])
+    
+    # Calcular stats ANTES de aplicar filtros de stock (para que siempre muestren el total neto)
+    total_neto = len(productos)
+    en_bajo_stock_total = len([p for p in productos if p.stock_fisico_actual <= p.stock_minimo_alerta and p.stock_fisico_actual > 0])
+    agotados_total = len([p for p in productos if p.stock_fisico_actual <= 0])
+    
+    # Aplicar filtros por stock solo a los productos mostrados
+    if filtro == 'bajo_stock':
+        productos = [p for p in productos if p.stock_fisico_actual <= p.stock_minimo_alerta and p.stock_fisico_actual > 0]
+    elif filtro == 'agotado':
+        productos = [p for p in productos if p.stock_fisico_actual <= 0]
+    
     modelos = ModeloRopa.query.order_by(ModeloRopa.nombre_modelo).all()
 
     return render_template(
         'produccion/productos_terminados/index.html',
         productos=productos,
-        total=total,
-        en_bajo_stock=en_bajo_stock,
-        agotados=agotados,
+        total=total_neto,
+        en_bajo_stock=en_bajo_stock_total,
+        agotados=agotados_total,
         modelos=modelos,
         filtro_modelo=modelo_id,
         filtro_talla=talla,
+        filtro_sku=sku,
+        filtro_estatus=estatus,
     )
 
 
@@ -63,10 +89,18 @@ def editar_producto(uuid):
     form = ProductoTerminadoForm(obj=producto)
 
     if form.validate_on_submit():
+        nuevo_active = bool(form.active.data)
+        nuevo_stock = form.stock_fisico_actual.data if form.stock_fisico_actual.data is not None else producto.stock_fisico_actual
+
+        if nuevo_stock > 0 and not nuevo_active:
+            flash('No se puede desactivar un producto con stock físico > 0', 'error')
+            return redirect(url_for('productos.editar_producto', uuid=uuid))
+
         producto.uuid_modelo = form.modelo.data
         producto.sku_especifico = form.sku_especifico.data.strip()
         producto.talla = form.talla.data
         producto.precio_venta = form.precio_venta.data
+        producto.active = nuevo_active
 
         if form.stock_fisico_actual.data is not None:
             producto.stock_fisico_actual = form.stock_fisico_actual.data
@@ -79,12 +113,16 @@ def editar_producto(uuid):
         flash('Producto terminado actualizado correctamente', 'success')
         return redirect(url_for('productos.index'))
 
-    # Asegurar valores existentes para evitar que se pierdan en la edición
+    # Cargar datos actuales en GET
     form.stock_fisico_actual.data = producto.stock_fisico_actual
     form.stock_minimo_alerta.data = producto.stock_minimo_alerta
+    form.active.data = 1 if producto.active else 0
 
-    return render_template('produccion/productos_terminados/update_producto.html', form=form, producto=producto)
-
+    return render_template(
+        'produccion/productos_terminados/update_producto.html',
+        form=form,
+        producto=producto
+    )
 
 @productos_bp.route('/productos/eliminar/<uuid>', methods=['POST'])
 def eliminar_producto(uuid):
@@ -94,10 +132,10 @@ def eliminar_producto(uuid):
         flash('No se puede eliminar un producto con stock físico > 0', 'error')
         return redirect(url_for('productos.index'))
 
-    db.session.delete(producto)
+    producto.active = False
     db.session.commit()
 
-    flash('Producto terminado eliminado correctamente', 'success')
+    flash('Producto terminado desactivado correctamente', 'success')
     return redirect(url_for('productos.index'))
 
 

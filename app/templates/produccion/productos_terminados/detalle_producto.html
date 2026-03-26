@@ -46,6 +46,7 @@
         <div class="flex justify-between"><dt class="font-medium">Categoría</dt><dd>{{ modelo.categoria.nombre or 'No asignada' }}</dd></div>
         <div class="flex justify-between"><dt class="font-medium">Creado</dt><dd>{{ producto.fecha_creacion.strftime('%d/%m/%Y') }}</dd></div>
         <div class="flex justify-between"><dt class="font-medium">Última actualización</dt><dd>{{ producto.fecha_actualizacion.strftime('%d/%m/%Y') }}</dd></div>
+        <div class="flex justify-between"><dt class="font-medium">Estatus</dt><dd>{% if producto.active %}Activo{% else %}Inactivo{% endif %}</dd></div>
       </dl>
     </div>
 
