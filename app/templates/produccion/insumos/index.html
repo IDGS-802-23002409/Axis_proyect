@@ -1,0 +1,231 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="flex min-h-screen bg-white text-neutral-900 font-sans">
+
+    <main class="flex-1 p-8 xl:p-12">
+
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h1 class="text-xl font-bold tracking-tight uppercase text-black">Insumos</h1>
+            </div>
+
+            <div class="flex items-center gap-4">
+
+
+                <a href="/insumos/create"
+                    class="bg-black text-white px-8 py-3 rounded-lg text-xs font-black tracking-widest hover:bg-neutral-800 transition-all shadow-md uppercase">
+                    + Registrar Insumo
+                </a>
+                <a href="{{ url_for('insumos_bp.trash') }}"
+                    class="flex items-center gap-2 bg-neutral-200 text-black px-6 py-3 rounded-lg text-xs font-black tracking-widest hover:bg-neutral-300 transition-all uppercase">
+
+                    <i class="fas fa-trash text-xs"></i>
+                    Ver eliminados
+                </a>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div
+                class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm hover:border-neutral-300 transition-all">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Total Insumos</span>
+                    <i class="fas fa-box text-neutral-300"></i>
+                </div>
+                <div class="text-4xl font-bold mb-1 text-black">{{ insumos|length }}</div>
+                <div class="text-[10px] text-neutral-400 font-medium">+{{ insumos|length }} esta semana</div>
+            </div>
+
+            <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest text-red-500">Stock
+                        Crítico</span>
+                    <i class="fas fa-exclamation-circle text-red-200"></i>
+                </div>
+                {% set criticos = insumos | selectattr('stock_total_acumulado', 'lt', 10) | list %}
+                <div class="text-4xl font-bold mb-1 text-black">{{ criticos|length }}</div>
+                <div class="text-[10px] text-neutral-400 uppercase">Requieren reposición</div>
+            </div>
+
+            <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Valorizado
+                        (MX)</span>
+                    <i class="fas fa-dollar-sign text-neutral-300"></i>
+                </div>
+                \
+                <div class="text-[10px] text-neutral-400 uppercase">Costo total insumos</div>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center mb-8 gap-4">
+
+    <!-- 🔎 IZQUIERDA: buscador -->
+    <form method="GET" action="{{ url_for('insumos_bp.index') }}" class="flex items-center gap-4">
+
+        <div class="relative flex-1 max-w-md group">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 text-xs"></i>
+
+            <input 
+                type="text" 
+                name="q" 
+                value="{{ request.args.get('q', '') }}" 
+                placeholder="SKU o Nombre..."
+                class="w-full pl-12 pr-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs">
+        </div>
+
+        <!-- 🔘 botón -->
+        <button type="submit"
+            class="px-4 py-3 bg-black text-white rounded-xl text-xs">
+            Buscar
+        </button>
+
+        <!-- 🔥 importante: mantener categoria -->
+        <input type="hidden" name="categoria" value="{{ request.args.get('categoria','') }}">
+
+    </form>
+
+    <!-- 🏷 DERECHA: filtro -->
+    <form method="GET" action="{{ url_for('insumos_bp.index') }}">
+
+        <!-- 🔥 importante: mantener búsqueda -->
+        <input type="hidden" name="q" value="{{ request.args.get('q','') }}">
+
+        <div class="flex items-center gap-2">
+            <i class="fas fa-filter text-xs text-neutral-500"></i>
+
+            <select name="categoria" onchange="this.form.submit()"
+                class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest cursor-pointer">
+
+                <option value="">Todas</option>
+
+                {% for cat in categorias %}
+                <option value="{{ cat }}" 
+                    {% if request.args.get('categoria') == cat %}selected{% endif %}>
+                    {{ cat }}
+                </option>
+                {% endfor %}
+
+            </select>
+        </div>
+
+    </form>
+
+</div>
+
+        <div class="w-full overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-[10px] uppercase tracking-[0.2em] text-neutral-400 border-b border-neutral-100">
+                        <th class="px-4 py-6 font-bold">SKU</th>
+                        <th class="px-4 py-6 font-bold">Nombre</th>
+                        <th class="px-4 py-6 font-bold">Categoría</th>
+                        <th class="px-4 py-6 font-bold">Unidad Medida</th>
+                        <th class="px-4 py-6 font-bold text-right">Costo promedio</th>
+                        <th class="px-4 py-6 font-bold text-right">Stock</th>
+                        <th class="px-4 py-6 font-bold text-right">Mínimo</th>
+                        <th class="px-4 py-6 font-bold text-center">Estado</th>
+                        <th class="px-4 py-6 font-bold text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-neutral-50">
+                    {% for insumo in insumos %}
+                    {% set es_critico = insumo.stock_total_acumulado < insumo.stock_minimo_alerta %} <tr
+                        class="group hover:bg-neutral-50 transition-colors">
+
+                        <!-- SKU -->
+                        <td class="px-4 py-6 text-xs font-bold text-neutral-500 uppercase">
+                            {{ insumo.sku or 'SIN-SKU' }}
+                        </td>
+
+                        <!-- Nombre -->
+                        <td class="px-4 py-6">
+                            <div class="text-sm font-bold text-neutral-800">{{ insumo.nombre }}</div>
+                        </td>
+
+                        <!-- Categoría -->
+                        <td class="px-4 py-6 text-xs text-neutral-500">
+                            {{ insumo.categoria.nombre if insumo.categoria else 'General' }}
+                        </td>
+
+                        <!-- unidad medida -->
+                        <td class="px-4 py-6 text-xs  text-neutral-700">
+                            {{ insumo.unidad_medida }}
+                        </td>
+
+                        <!-- Costo promedio (por ahora 0) -->
+                        <td class="px-4 py-6 text-xs text-right text-neutral-400">
+                            $0.00
+                        </td>
+
+                        <!-- STOCK -->
+                        <td class="px-4 py-6 text-xs font-bold text-neutral-700 text-right tabular-nums">
+                            {{ insumo.stock_total_acumulado | float }}
+                        </td>
+
+                        <!-- MÍNIMO -->
+                        <td class="px-4 py-6 text-xs text-neutral-400 text-right tabular-nums">
+                            {{ insumo.stock_minimo_alerta | float }}
+                        </td>
+
+                        <!-- ESTADO -->
+                        <td class="px-4 py-6 text-center">
+                            {% if es_critico %}
+                            <span
+                                class="px-3 py-1 rounded text-[9px] font-black bg-red-50 text-red-600 border border-red-100 uppercase">
+                                Crítico
+                            </span>
+                            {% else %}
+                            <span
+                                class="px-3 py-1 rounded text-[9px] font-black bg-neutral-100 text-neutral-500 border border-neutral-200 uppercase">
+                                Estable
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- ACCIONES -->
+                        <td class="px-4 py-6 text-right">
+                            <div class="flex justify-end gap-3">
+
+                                <a href="/insumos/ver/{{ insumo.uuid_insumo }}"
+                                    class="flex items-center gap-2 px-5 py-3 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-800 rounded-lg text-[10px] font-bold tracking-wider border border-blue-200 transition-all">
+                                    <i class="fas fa-eye text-[10px]"></i>
+                                    Ver
+                                </a>
+
+                                <a href="{{ url_for('insumos_bp.edit', uuid_insumo=insumo.uuid_insumo) }}"
+                                    class="flex items-center gap-2 px-5 py-3 bg-purple-50 hover:bg-purple-100 text-purple-600 hover:text-purple-800 rounded-lg text-[10px] font-bold tracking-wider border border-purple-200 transition-all">
+
+                                    <i class="fas fa-pen text-[10px]"></i>
+                                    Editar
+                                </a>
+
+                                <form method="POST"
+                                    action="{{ url_for('insumos_bp.delete', uuid_insumo=insumo.uuid_insumo) }}"
+                                    onsubmit="return confirmDelete('{{ insumo.nombre }}')" class="inline">
+
+                                    <button
+                                        class="flex items-center gap-2 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 rounded-lg text-[10px] font-bold tracking-wider border border-red-200 transition-all">
+                                        <i class="fas fa-trash text-[10px]"></i>
+                                        Eliminar
+                                    </button>
+                                </form>
+
+                            </div>
+                        </td>
+
+                        </tr>
+                        {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+</div>
+{% endblock %}
+<script>
+    function confirmDelete(nombre) {
+        return confirm(`¿Estás seguro de desactivar el insumo "${nombre}"?`);
+    }
+</script>

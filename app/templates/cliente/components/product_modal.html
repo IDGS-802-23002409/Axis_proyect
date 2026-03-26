@@ -1,0 +1,243 @@
+<div id="product-overlay" class="fixed inset-0 z-50 bg-[#000000]/85 backdrop-blur-sm hidden"
+    onclick="closeProductModal()"></div>
+
+<div id="product-modal"
+    class="fixed inset-4 z-50 m-auto flex max-h-[90vh] max-w-4xl flex-col overflow-hidden border border-border bg-[#0a0a0a] md:inset-8 lg:flex-row hidden">
+    <!-- Image section -->
+    <div class="relative h-64 flex-shrink-0 md:h-80 lg:h-auto lg:w-1/2">
+        <img id="modal-product-image" src="" alt="" class="object-cover w-full h-full" />
+        <!-- Watermark -->
+        <div class="absolute inset-0 flex items-center justify-center opacity-[0.06] pointer-events-none">
+            <img src="{{ url_for('static', filename='images/axis-logo.png') }}" alt="" width="200" height="130"
+                class="h-auto w-40" />
+        </div>
+        <!-- Badges -->
+        <div id="modal-badges" class="absolute left-4 top-4 flex gap-2">
+            <!-- Injected by JS -->
+        </div>
+        <!-- Close Mobile -->
+        <button onclick="closeProductModal()"
+            class="absolute right-4 top-4 flex h-8 w-8 items-center justify-center bg-[#000000]/50 text-foreground backdrop-blur-sm transition-colors hover:bg-primary lg:hidden"
+            aria-label="Cerrar">
+            <i data-lucide="x" class="h-4 w-4"></i>
+        </button>
+    </div>
+
+    <!-- Details section -->
+    <div class="flex flex-1 flex-col overflow-y-auto p-6 lg:p-8 relative">
+        <!-- Close desktop -->
+        <button onclick="closeProductModal()"
+            class="absolute right-4 top-4 hidden h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:text-foreground lg:flex"
+            aria-label="Cerrar">
+            <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+
+        <span id="modal-product-category"
+            class="text-[10px] font-medium uppercase tracking-[0.3em] text-primary"></span>
+
+        <h2 id="modal-product-name" class="mt-2 text-2xl font-black uppercase tracking-wide text-foreground"></h2>
+
+        <!-- Price -->
+        <div class="mt-3 flex items-center gap-3">
+            <span id="modal-product-price" class="text-2xl font-black text-primary"></span>
+            <span id="modal-product-original-price" class="text-lg text-muted-foreground line-through hidden"></span>
+        </div>
+
+        <!-- Description -->
+        <p id="modal-product-description" class="mt-4 text-sm leading-relaxed text-muted-foreground"></p>
+
+        <!-- Size selector -->
+        <div class="mt-6">
+            <label class="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-foreground">Talla</label>
+            <div id="modal-size-container" class="flex flex-wrap gap-2">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- Color selector -->
+        <div class="mt-5">
+            <label class="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-foreground">Color</label>
+            <div id="modal-color-container" class="flex flex-wrap gap-2">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- Quantity -->
+        <div class="mt-5">
+            <label class="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-foreground">Cantidad</label>
+            <div class="flex w-fit items-center border border-border">
+                <button onclick="updateModalQuantity(-1)"
+                    class="flex h-10 w-10 items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    aria-label="Reducir cantidad">
+                    <i data-lucide="minus" class="h-3.5 w-3.5"></i>
+                </button>
+                <span id="modal-quantity"
+                    class="flex h-10 w-12 items-center justify-center text-sm font-bold text-foreground">1</span>
+                <button onclick="updateModalQuantity(1)"
+                    class="flex h-10 w-10 items-center justify-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    aria-label="Aumentar cantidad">
+                    <i data-lucide="plus" class="h-3.5 w-3.5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-8 flex gap-3">
+            <button onclick="addToCartFromModal()"
+                class="flex flex-1 items-center justify-center gap-2 bg-primary py-4 text-sm font-bold uppercase tracking-[0.15em] text-primary-foreground transition-colors hover:bg-primary/80">
+                <i data-lucide="shopping-bag" class="h-4 w-4"></i>
+                Agregar al carrito
+            </button>
+            <button id="modal-favorite-btn" onclick="toggleFavoriteFromModal()"
+                class="flex h-14 w-14 items-center justify-center border transition-all border-border text-muted-foreground hover:border-primary hover:text-primary">
+                <i data-lucide="heart" id="modal-favorite-icon" class="h-5 w-5"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Modal Logic Setup (To be appended or included in main.js, but keeping it co-located here for component modularity)
+    let modalState = {
+        product: null,
+        quantity: 1,
+        selectedSize: '',
+        selectedColor: ''
+    };
+
+    function openProductModal(productStr) {
+        // Decode the product object
+        const product = JSON.parse(decodeURIComponent(productStr));
+        modalState.product = product;
+        modalState.quantity = 1;
+        modalState.selectedSize = product.sizes[0];
+        modalState.selectedColor = product.colors[0];
+
+        const modal = document.getElementById('product-modal');
+        const overlay = document.getElementById('product-overlay');
+
+        // Populate info
+        document.getElementById('modal-product-image').src = product.image;
+        document.getElementById('modal-product-category').textContent = product.category;
+        document.getElementById('modal-product-name').textContent = product.name;
+        document.getElementById('modal-product-price').textContent = '$' + product.price.toFixed(2);
+
+        const originalPriceEl = document.getElementById('modal-product-original-price');
+        if (product.originalPrice && product.originalPrice > product.price) {
+            originalPriceEl.textContent = '$' + product.originalPrice.toFixed(2);
+            originalPriceEl.classList.remove('hidden');
+        } else {
+            originalPriceEl.classList.add('hidden');
+        }
+
+        document.getElementById('modal-product-description').textContent = product.description;
+
+        // Badges
+        let badgesHtml = '';
+        if (product.isNew) {
+            badgesHtml += '<span class="bg-primary px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">Nuevo</span>';
+        }
+        if (product.originalPrice && product.originalPrice > product.price) {
+            badgesHtml += '<span class="bg-[#dc2626] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground">Oferta</span>';
+        }
+        document.getElementById('modal-badges').innerHTML = badgesHtml;
+
+        renderModalOptions();
+        updateModalQuantityRender();
+        renderFavoriteStatus();
+
+        // Show modal
+        modal.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeProductModal() {
+        const modal = document.getElementById('product-modal');
+        const overlay = document.getElementById('product-overlay');
+        modal.classList.add('hidden');
+        overlay.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function selectModalSize(size) {
+        modalState.selectedSize = size;
+        renderModalOptions();
+    }
+
+    function selectModalColor(color) {
+        modalState.selectedColor = color;
+        renderModalOptions();
+    }
+
+    function renderModalOptions() {
+        const product = modalState.product;
+
+        // Sizes
+        let sizeHtml = '';
+        product.sizes.forEach(size => {
+            const isSelected = size === modalState.selectedSize;
+            sizeHtml += `
+      <button onclick="selectModalSize('${size}')" class="flex h-10 min-w-[40px] items-center justify-center px-3 text-xs font-bold uppercase transition-all ${isSelected ? 'bg-primary text-primary-foreground' : 'border border-border text-muted-foreground hover:border-primary hover:text-primary'}">
+        ${size}
+      </button>
+    `;
+        });
+        document.getElementById('modal-size-container').innerHTML = sizeHtml;
+
+        // Colors
+        let colorHtml = '';
+        product.colors.forEach(color => {
+            const isSelected = color === modalState.selectedColor;
+            colorHtml += `
+      <button onclick="selectModalColor('${color}')" class="px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${isSelected ? 'bg-primary text-primary-foreground' : 'border border-border text-muted-foreground hover:border-primary hover:text-primary'}">
+        ${color}
+      </button>
+    `;
+        });
+        document.getElementById('modal-color-container').innerHTML = colorHtml;
+    }
+
+    function updateModalQuantity(change) {
+        modalState.quantity = Math.max(1, modalState.quantity + change);
+        updateModalQuantityRender();
+    }
+
+    function updateModalQuantityRender() {
+        document.getElementById('modal-quantity').textContent = modalState.quantity;
+    }
+
+    function renderFavoriteStatus() {
+        const isFav = window.axisStore.favorites.includes(modalState.product.id);
+        const btn = document.getElementById('modal-favorite-btn');
+        const icon = document.getElementById('modal-favorite-icon');
+
+        if (isFav) {
+            btn.classList.add('border-primary', 'bg-primary/10', 'text-primary');
+            btn.classList.remove('border-border', 'text-muted-foreground', 'hover:border-primary', 'hover:text-primary');
+            icon.classList.add('fill-primary');
+        } else {
+            btn.classList.remove('border-primary', 'bg-primary/10', 'text-primary');
+            btn.classList.add('border-border', 'text-muted-foreground', 'hover:border-primary', 'hover:text-primary');
+            icon.classList.remove('fill-primary');
+        }
+    }
+
+    function toggleFavoriteFromModal() {
+        const id = modalState.product.id;
+        if (window.axisStore.favorites.includes(id)) {
+            window.axisStore.favorites = window.axisStore.favorites.filter(fid => fid !== id);
+        } else {
+            window.axisStore.favorites.push(id);
+        }
+        renderFavoriteStatus();
+    }
+
+    function addToCartFromModal() {
+        for (let i = 0; i < modalState.quantity; i++) {
+            window.addToCart(modalState.product, modalState.selectedSize, modalState.selectedColor);
+        }
+        closeProductModal();
+        window.toggleCart();
+    }
+</script>

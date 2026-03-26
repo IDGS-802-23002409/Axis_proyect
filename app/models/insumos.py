@@ -1,7 +1,18 @@
 import uuid
 from app.utils.database_connection import db
 from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, func
+from sqlalchemy import Enum
 
+unidad_medida_enum = Enum(
+    'METRO',
+    'PIEZA',
+    name='unidad_medida_enum'
+)
+estatus_enum = Enum(
+    'ACTIVO',
+    'INACTIVO',
+    name='estatus_insumo_enum'
+)
 
 class Insumo(db.Model):
     __tablename__ = 'insumos'
@@ -10,11 +21,13 @@ class Insumo(db.Model):
     sku = Column(String(50), unique=True)
     nombre = Column(String(100), nullable=False)
     uuid_categoria = Column(String(36), ForeignKey('categorias.uuid_categoria'))
-    costo_unitario_individual = Column(Numeric(12, 4), nullable=False, default=0)
+    # costo_unitario_individual = Column(Numeric(12, 4), nullable=False, default=0) 
+    unidad_medida = Column(unidad_medida_enum, nullable=False)
     stock_total_acumulado = Column(Numeric(12, 4), default=0)
     stock_minimo_alerta = Column(Numeric(12, 4), default=0)
     fecha_creacion = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    estatus = Column(estatus_enum, default='ACTIVO')
     usuario_actualizo_uuid = Column(String(36))
 
     categoria = db.relationship('Categoria', backref=db.backref('insumos', lazy=True))

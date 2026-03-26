@@ -1,0 +1,1 @@
+from app.blueprints.insumos import insumos_bp

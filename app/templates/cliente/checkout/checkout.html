@@ -1,0 +1,291 @@
+{% extends "layout.html" %}
+
+{% block title %}Checkout - AXIS Streetwear{% endblock %}
+
+{% block content %}
+<!-- Logic for Rendering Checkout State -->
+<div id="checkout-root"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const renderCheckout = () => {
+            const root = document.getElementById('checkout-root');
+            const cart = window.axisStore.cart;
+
+            // Derived values
+            const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+            // Setup state (persisted across re-renders in this scope)
+            if (typeof window.checkoutState === 'undefined') {
+                window.checkoutState = {
+                    step: 'review',
+                    deliveryMethod: 'online',
+                    formData: {
+                        name: "", email: "", phone: "", address: "", city: "", zip: "", cardNumber: "", cardExpiry: "", cardCvv: ""
+                    }
+                };
+            }
+            const state = window.checkoutState;
+            const shippingCost = state.deliveryMethod === "online" ? 99.0 : 0;
+            const total = cartTotal + shippingCost;
+
+            window.updateCheckoutField = function (field, val) {
+                state.formData[field] = val;
+            };
+            window.setCheckoutStep = function (step) {
+                state.step = step;
+                renderCheckout();
+            };
+            window.setDeliveryMethod = function (method) {
+                state.deliveryMethod = method;
+                renderCheckout();
+            };
+            window.confirmOrder = function () {
+                state.step = 'confirmation';
+                window.axisStore.cart = []; // clear cart
+                window.updateCartCount();
+                renderCheckout();
+            };
+
+            if (cart.length === 0 && state.step !== "confirmation") {
+                root.innerHTML = `
+        <section class="watermark-bg relative min-h-screen bg-[#000000] pt-24 pb-16">
+          <div class="relative z-10 mx-auto flex max-w-7xl flex-col items-center justify-center px-4 py-32 lg:px-8">
+            <i data-lucide="shopping-bag" class="mb-4 h-16 w-16 text-muted-foreground/30"></i>
+            <h2 class="mb-2 text-2xl font-black uppercase tracking-wide text-foreground">Carrito vacío</h2>
+            <p class="mb-8 text-sm text-muted-foreground">Agrega productos a tu carrito para continuar</p>
+            <a href="{{ url_for('catalog.catalog_view') }}" class="border border-primary px-8 py-3 text-sm font-bold uppercase tracking-[0.2em] text-primary transition-colors hover:bg-primary hover:text-primary-foreground">
+              Ir al catálogo
+            </a>
+          </div>
+        </section>
+      `;
+                if (window.lucide) window.lucide.createIcons();
+                return;
+            }
+
+            if (state.step === "confirmation") {
+                const isOnline = state.deliveryMethod === 'online';
+                root.innerHTML = `
+        <section class="watermark-bg relative min-h-screen bg-[#000000] pt-24 pb-16">
+          <div class="relative z-10 mx-auto flex max-w-lg flex-col items-center justify-center px-4 py-32 text-center lg:px-8">
+            <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary bg-primary/10 animate-pulse-purple">
+              <i data-lucide="check" class="h-10 w-10 text-primary"></i>
+            </div>
+            <h2 class="mb-3 text-3xl font-black uppercase tracking-wide text-foreground">Pedido confirmado</h2>
+            <p class="mb-2 text-sm text-muted-foreground">
+              ${isOnline ? "Tu pedido será enviado a la dirección proporcionada. Recibirás un correo de confirmación." : "Tu pedido estará listo para recoger en tienda. Te notificaremos cuando esté disponible."}
+            </p>
+            <p class="mb-8 text-xs uppercase tracking-[0.2em] text-primary">
+              Orden #${Math.random().toString(36).substring(2, 10).toUpperCase()}
+            </p>
+            <a href="{{ url_for('catalog.catalog_view') }}" class="bg-primary px-8 py-3 text-sm font-bold uppercase tracking-[0.2em] text-primary-foreground transition-colors hover:bg-primary/80">
+              Seguir comprando
+            </a>
+          </div>
+        </section>
+      `;
+                if (window.lucide) window.lucide.createIcons();
+                return;
+            }
+
+            const steps = ["review", "delivery", "payment"];
+            const stepRenderHTML = steps.map((s, i) => {
+                const isActive = state.step === s;
+                const isPast = steps.indexOf(s) < steps.indexOf(state.step);
+                const btnClass = isActive ? "bg-primary text-primary-foreground" : (isPast ? "bg-primary/30 text-primary" : "border border-border text-muted-foreground");
+                const textClass = isActive ? "text-primary" : "text-muted-foreground";
+                const lineHTML = i < 2 ? `<div class="h-px w-8 bg-border sm:w-16"></div>` : '';
+                const stepName = s === "review" ? "Revisión" : s === "delivery" ? "Entrega" : "Pago";
+                return `
+        <div class="flex items-center gap-2">
+          <button onclick="setCheckoutStep('${s}')" class="flex h-8 w-8 items-center justify-center text-xs font-bold transition-all ${btnClass}">${i + 1}</button>
+          <span class="hidden text-xs font-bold uppercase tracking-wider sm:block ${textClass}">${stepName}</span>
+          ${lineHTML}
+        </div>
+      `;
+            }).join('');
+
+            let leftHTML = '';
+            if (state.step === "review") {
+                leftHTML = `
+        <div class="border border-border bg-card p-6">
+          <h3 class="mb-6 text-sm font-bold uppercase tracking-[0.2em] text-foreground">Resumen del pedido</h3>
+          <div class="flex flex-col gap-4">
+            ${cart.map(item => `
+              <div class="flex items-center gap-4 border-b border-border pb-4 last:border-0 last:pb-0">
+                <div class="relative h-16 w-14 flex-shrink-0 overflow-hidden">
+                  <img src="${item.image}" alt="${item.name}" class="object-cover w-full h-full" />
+                </div>
+                <div class="flex-1">
+                  <p class="text-xs font-bold uppercase tracking-wide text-foreground">${item.name}</p>
+                  <p class="text-[10px] uppercase tracking-wider text-muted-foreground">${item.selectedSize} / ${item.selectedColor} / x${item.quantity}</p>
+                </div>
+                <span class="text-sm font-bold text-primary">$${(item.price * item.quantity).toFixed(2)}</span>
+              </div>
+            `).join('')}
+          </div>
+          <button onclick="setCheckoutStep('delivery')" class="mt-6 w-full bg-primary py-3 text-sm font-bold uppercase tracking-[0.2em] text-primary-foreground transition-colors hover:bg-primary/80">
+            Continuar
+          </button>
+        </div>
+      `;
+            } else if (state.step === "delivery") {
+                const isOnline = state.deliveryMethod === 'online';
+                leftHTML = `
+        <div class="border border-border bg-card p-6">
+          <button onclick="setCheckoutStep('review')" class="mb-6 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">
+            <i data-lucide="chevron-left" class="h-3.5 w-3.5"></i> Volver
+          </button>
+          <h3 class="mb-6 text-sm font-bold uppercase tracking-[0.2em] text-foreground">Método de entrega</h3>
+          <div class="mb-8 flex flex-col gap-3 sm:flex-row">
+            <button onclick="setDeliveryMethod('online')" class="flex flex-1 items-center gap-3 border p-4 transition-all ${isOnline ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}">
+              <i data-lucide="truck" class="h-5 w-5 ${isOnline ? 'text-primary' : 'text-muted-foreground'}"></i>
+              <div class="text-left">
+                <p class="text-xs font-bold uppercase tracking-wide text-foreground">Envío a domicilio</p>
+                <p class="text-[10px] text-muted-foreground">$99.00 MXN</p>
+              </div>
+            </button>
+            <button onclick="setDeliveryMethod('pickup')" class="flex flex-1 items-center gap-3 border p-4 transition-all ${!isOnline ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}">
+              <i data-lucide="store" class="h-5 w-5 ${!isOnline ? 'text-primary' : 'text-muted-foreground'}"></i>
+              <div class="text-left">
+                <p class="text-xs font-bold uppercase tracking-wide text-foreground">Recoger en tienda</p>
+                <p class="text-[10px] text-muted-foreground">Gratis</p>
+              </div>
+            </button>
+          </div>
+
+          <div class="mb-6">
+            <h4 class="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-foreground">Información de contacto</h4>
+            <div class="flex flex-col gap-3">
+              <input type="text" placeholder="Nombre completo" value="${state.formData.name}" onchange="updateCheckoutField('name', this.value)" class="w-full border border-border bg-[#000000] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+              <div class="flex flex-col gap-3 sm:flex-row">
+                <input type="email" placeholder="Email" value="${state.formData.email}" onchange="updateCheckoutField('email', this.value)" class="flex-1 border border-border bg-[#000000] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                <input type="tel" placeholder="Teléfono" value="${state.formData.phone}" onchange="updateCheckoutField('phone', this.value)" class="flex-1 border border-border bg-[#000000] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+              </div>
+            </div>
+          </div>
+
+          ${isOnline ? `
+            <div class="mb-6">
+              <h4 class="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-foreground">Dirección de envío</h4>
+              <div class="flex flex-col gap-3">
+                <input type="text" placeholder="Dirección" value="${state.formData.address}" onchange="updateCheckoutField('address', this.value)" class="w-full border border-border bg-[#000000] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                <div class="flex flex-col gap-3 sm:flex-row">
+                  <input type="text" placeholder="Ciudad" value="${state.formData.city}" onchange="updateCheckoutField('city', this.value)" class="flex-1 border border-border bg-[#000000] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                  <input type="text" placeholder="Código postal" value="${state.formData.zip}" onchange="updateCheckoutField('zip', this.value)" class="w-32 border border-border bg-[#000000] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                </div>
+              </div>
+            </div>
+          ` : `
+            <div class="mb-6 border border-border bg-secondary/50 p-4">
+              <div class="flex items-start gap-3">
+                <i data-lucide="map-pin" class="mt-0.5 h-4 w-4 flex-shrink-0 text-primary"></i>
+                <div>
+                  <p class="text-xs font-bold uppercase tracking-wide text-foreground">AXIS Store - Sucursal Centro</p>
+                  <p class="mt-1 text-xs text-muted-foreground">Av. Principal #123, Col. Centro, Ciudad</p>
+                  <p class="mt-1 text-[10px] uppercase tracking-wider text-primary">Lun-Sab: 10:00 - 21:00</p>
+                </div>
+              </div>
+            </div>
+          `}
+          <button onclick="setCheckoutStep('payment')" class="w-full bg-primary py-3 text-sm font-bold uppercase tracking-[0.2em] text-primary-foreground transition-colors hover:bg-primary/80">
+            Continuar al pago
+          </button>
+        </div>
+      `;
+            } else if (state.step === "payment") {
+                const isOnline = state.deliveryMethod === 'online';
+                leftHTML = `
+        <div class="border border-border bg-card p-6">
+          <button onclick="setCheckoutStep('delivery')" class="mb-6 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary">
+            <i data-lucide="chevron-left" class="h-3.5 w-3.5"></i> Volver
+          </button>
+          <h3 class="mb-6 text-sm font-bold uppercase tracking-[0.2em] text-foreground">Método de pago</h3>
+          ${isOnline ? `
+            <div class="mb-6 flex flex-col gap-3">
+              <div class="relative">
+                <i data-lucide="credit-card" class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"></i>
+                <input type="text" placeholder="Número de tarjeta" value="${state.formData.cardNumber}" onchange="updateCheckoutField('cardNumber', this.value)" class="w-full border border-border bg-[#000000] py-3 pl-12 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+              </div>
+              <div class="flex gap-3">
+                <input type="text" placeholder="MM/AA" value="${state.formData.cardExpiry}" onchange="updateCheckoutField('cardExpiry', this.value)" class="flex-1 border border-border bg-[#000000] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                <input type="text" placeholder="CVV" value="${state.formData.cardCvv}" onchange="updateCheckoutField('cardCvv', this.value)" class="w-24 border border-border bg-[#000000] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+              </div>
+            </div>
+            <div class="mb-6 flex items-center gap-2 text-xs text-muted-foreground">
+              <i data-lucide="lock" class="h-3 w-3"></i><span>Pago seguro con encriptación SSL</span>
+            </div>
+          ` : `
+            <div class="mb-6 border border-border bg-secondary/50 p-4">
+              <p class="text-xs font-bold uppercase tracking-wide text-foreground">Pago al recoger en tienda</p>
+              <p class="mt-2 text-xs leading-relaxed text-muted-foreground">Aceptamos efectivo, tarjeta de crédito/débito y transferencia bancaria al momento de recoger tu pedido en la sucursal.</p>
+            </div>
+          `}
+          <button onclick="confirmOrder()" class="w-full bg-primary py-4 text-sm font-bold uppercase tracking-[0.2em] text-primary-foreground transition-colors hover:bg-primary/80">
+            ${isOnline ? "Pagar ahora" : "Confirmar pedido"} - $${total.toFixed(2)}
+          </button>
+        </div>
+      `;
+            }
+
+            const rightHTML = `
+      <div class="w-full lg:w-80">
+        <div class="sticky top-24 border border-border bg-card p-6">
+          <h3 class="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-foreground">Resumen</h3>
+          <div class="mb-4 flex flex-col gap-2">
+            ${cart.map(item => `
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-muted-foreground">${item.name} x${item.quantity}</span>
+                <span class="text-xs font-bold text-foreground">$${(item.price * item.quantity).toFixed(2)}</span>
+              </div>
+            `).join('')}
+          </div>
+          <div class="h-px bg-border"></div>
+          <div class="mt-3 flex items-center justify-between">
+            <span class="text-xs uppercase tracking-wider text-muted-foreground">Subtotal</span>
+            <span class="text-sm font-bold text-foreground">$${cartTotal.toFixed(2)}</span>
+          </div>
+          <div class="mt-2 flex items-center justify-between">
+            <span class="text-xs uppercase tracking-wider text-muted-foreground">Envío</span>
+            <span class="text-sm font-bold text-foreground">${state.deliveryMethod === "pickup" ? "Gratis" : `$${shippingCost.toFixed(2)}`}</span>
+          </div>
+          <div class="mt-3 h-px bg-border"></div>
+          <div class="mt-3 flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-[0.2em] text-foreground">Total</span>
+            <span class="text-xl font-black text-primary">$${total.toFixed(2)}</span>
+          </div>
+          <div class="mt-6 flex justify-center opacity-10">
+            <img src="{{ url_for('static', filename='images/axis-logo.png') }}" class="h-auto w-20" alt="logo" />
+          </div>
+        </div>
+      </div>
+    `;
+
+            root.innerHTML = `
+      <section class="watermark-bg relative min-h-screen bg-[#000000] pt-24 pb-16">
+        <div class="relative z-10 mx-auto max-w-6xl px-4 lg:px-8">
+          <div class="mb-10 text-center">
+            <span class="mb-2 block text-xs font-medium uppercase tracking-[0.4em] text-primary">Checkout</span>
+            <h2 class="text-4xl font-black uppercase tracking-wide text-foreground">Finalizar compra</h2>
+            <div class="mx-auto mt-4 h-px w-24 bg-primary"></div>
+          </div>
+          <div class="mb-10 flex items-center justify-center gap-2">
+            ${stepRenderHTML}
+          </div>
+          <div class="flex flex-col gap-8 lg:flex-row">
+            <div class="flex-1">${leftHTML}</div>
+            ${rightHTML}
+          </div>
+        </div>
+      </section>
+    `;
+
+            if (window.lucide) window.lucide.createIcons();
+        };
+
+        // Wait briefly for store to be ready, then render
+        setTimeout(renderCheckout, 100);
+    });
+</script>
+{% endblock %}

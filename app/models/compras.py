@@ -1,6 +1,7 @@
 import uuid
 from app.utils.database_connection import db
 from sqlalchemy import Column, String, Numeric, DateTime, Enum, ForeignKey, func
+from sqlalchemy import Enum
 
 
 class CompraEncabezado(db.Model):
@@ -26,8 +27,9 @@ class CompraDetalle(db.Model):
     uuid_detalle_compra = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     uuid_compra = Column(String(36), ForeignKey('compras_encabezado.uuid_compra'), nullable=False)
     uuid_insumo = Column(String(36), ForeignKey('insumos.uuid_insumo'), nullable=False)
+
     cantidad_comprada = Column(Numeric(12, 4), nullable=False)
-    unidad_medida = Column(String(20), nullable=False)
+    #unidad_medida = Column(String(20), nullable=False)
     costo_unitario_compra = Column(Numeric(12, 2), nullable=False)
 
     compra = db.relationship('CompraEncabezado', backref=db.backref('detalles', lazy=True))

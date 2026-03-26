@@ -1,0 +1,59 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="min-h-screen bg-white text-neutral-900 font-sans p-8 xl:p-12">
+
+    <div class="mb-8">
+        <a href="{{ url_for('insumos_bp.index') }}"
+            class="text-xs font-bold text-neutral-400 hover:text-black uppercase">
+            ← Volver a Insumos
+        </a>
+    </div>
+
+    <div class="max-w-3xl mx-auto text-center">
+        <h1 class="text-3xl font-black uppercase mb-6">Detalle del Insumo</h1>
+
+        <div class="bg-neutral-50 border border-neutral-200 rounded-xl p-6 space-y-4">
+
+            <div>
+                <p class="text-xs text-neutral-400 uppercase">Nombre</p>
+                <p class="text-lg font-bold">{{ insumo.nombre }}</p>
+            </div>
+
+            <div>
+                <p class="text-xs text-neutral-400 uppercase">SKU</p>
+                <p class="font-mono">{{ insumo.sku }}</p>
+            </div>
+
+            <div>
+                <p class="text-xs text-neutral-400 uppercase">Categoría</p>
+                <p>{{ insumo.categoria.nombre if insumo.categoria else "Sin categoría" }}</p>
+            </div>
+
+            <div>
+                <p class="text-xs text-neutral-400 uppercase">Unidad de Medida</p>
+                <p>{{ insumo.unidad_medida }}</p>
+            </div>
+
+            <div>
+                <p class="text-xs text-neutral-400 uppercase">Stock Total</p>
+                <p>{{ insumo.stock_total_acumulado }}</p>
+            </div>
+
+            <div>
+                <p class="text-xs text-neutral-400 uppercase">Stock Mínimo</p>
+                <p>{{ insumo.stock_minimo_alerta }}</p>
+            </div>
+
+        </div>
+
+        <div class="mt-6 flex gap-4">
+            <a href="{{ url_for('insumos_bp.edit', uuid_insumo=insumo.uuid_insumo) }}"
+                class="px-6 py-3 bg-black text-white text-xs font-bold rounded-lg uppercase">
+                Editar
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
