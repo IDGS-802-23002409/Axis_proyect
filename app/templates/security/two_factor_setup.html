@@ -19,15 +19,10 @@
             transition: all 0.3s ease;
         }
 
-        .method-card:hover,
-        .method-card.active {
+        .method-card:hover {
             background: rgba(255, 255, 255, 0.12);
             border-color: #fff;
             transform: translateX(10px);
-        }
-
-        .method-card.active {
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
         }
 
         .method-info h3 {
@@ -44,7 +39,7 @@
 
         .qr-container {
             text-align: center;
-            margin: 20px 0;
+            margin: 20px auto;
             padding: 20px;
             background: #fff;
             border-radius: 8px;
@@ -55,14 +50,6 @@
         .qr-container svg {
             width: 200px;
             height: 200px;
-        }
-
-        .setup-step {
-            display: none;
-        }
-
-        .setup-step.visible {
-            display: block;
         }
     </style>
 </head>
@@ -77,7 +64,7 @@
             <div class="urban-bg-text pos-2">SHIELD</div>
             <div class="form-wrapper">
                 <h1>2FA SETUP</h1>
-                <p style="text-align: center; margin-bottom: 30px; font-size: 0.9rem; opacity: 0.8;">
+                <p style="text-align:center;margin-bottom:30px;font-size:0.9rem;opacity:0.8;">
                     Configura tu segundo factor de seguridad
                 </p>
 
@@ -91,108 +78,113 @@
                 {% endif %}
                 {% endwith %}
 
-                <form action="{{ url_for('security.two_factor_setup') }}" method="POST" id="two-factor-setup-form">
+                {# ══════════════════════════════════════════════════════
+                STEP 1 — Method selection (shown when no method chosen yet)
+                ════════════════════════════════════════════════════ #}
+                {% if not chosen_method %}
+
+                {# Email method — its own form so it always submits a valid value #}
+                <form method="POST" action="{{ url_for('security.two_factor_setup') }}">
                     {{ two_factor_setup_form.hidden_tag() }}
-
-                    {# Hidden field for the method — Flask-Security expects 'setup' #}
-                    <input type="hidden" name="setup" id="setup-method" value="">
-
-                    {# Step 1: Select method (only if QR not already showing) #}
-                    <div id="step-select" class="setup-step {% if not authr_qrcode %}visible{% endif %}">
-                        <div class="method-card" data-method="email" onclick="selectMethod('email')">
-                            <div class="method-info">
-                                <h3>✉ Email</h3>
-                                <p>Recibe el código en tu correo</p>
-                            </div>
-                            <div style="font-size: 1.5rem;">→</div>
+                    <input type="hidden" name="setup" value="email">
+                    <div class="method-card" onclick="this.closest('form').submit()">
+                        <div class="method-info">
+                            <h3>✉ Email</h3>
+                            <p>Recibe el código en tu correo</p>
                         </div>
-
-                        <div class="method-card" data-method="authenticator" onclick="selectMethod('authenticator')">
-                            <div class="method-info">
-                                <h3>📱 App Authenticator</h3>
-                                <p>Google Auth / Authy / Microsoft Auth</p>
-                            </div>
-                            <div style="font-size: 1.5rem;">→</div>
-                        </div>
-                    </div>
-
-                    {# Step 2: Authenticator QR code #}
-                    <div id="step-qr" class="setup-step {% if authr_qrcode %}visible{% endif %}"
-                        style="text-align: center;">
-                        {% if authr_qrcode %}
-                        <p style="margin-bottom: 15px; font-size: 0.9rem;">
-                            Escanea este código QR con tu app:
-                        </p>
-                        <div class="qr-container">
-                            {{ authr_qrcode | safe }}
-                        </div>
-                        {% endif %}
-                        <div class="form-group" style="margin-top: 15px;">
-                            <label for="code">Ingresa el código de la app</label>
-                            <input type="text" name="code" id="code" class="form-control" placeholder="123456"
-                                maxlength="6" inputmode="numeric" autocomplete="off">
-                        </div>
-                        <button type="submit" class="btn-urban">VERIFICAR CÓDIGO</button>
-                        <div style="margin-top: 15px;">
-                            <a href="#" onclick="goBack(); return false;"
-                                style="color: #fff; opacity: 0.6; font-size: 0.85rem; text-decoration: underline;">
-                                ← Cambiar método
-                            </a>
-                        </div>
-                    </div>
-
-                    {# Step 3: Email confirmation #}
-                    <div id="step-email" class="setup-step" style="text-align: center;">
-                        <div style="margin-bottom: 20px;">
-                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="4" width="20" height="16" rx="2" />
-                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                            </svg>
-                        </div>
-                        <p style="margin-bottom: 20px; font-size: 0.9rem; opacity: 0.8;">
-                            Se enviará un código a tu correo cada vez que inicies sesión.
-                        </p>
-                        <button type="submit" class="btn-urban">CONFIGURAR EMAIL 2FA</button>
-                        <div style="margin-top: 15px;">
-                            <a href="#" onclick="goBack(); return false;"
-                                style="color: #fff; opacity: 0.6; font-size: 0.85rem; text-decoration: underline;">
-                                ← Cambiar método
-                            </a>
-                        </div>
+                        <div style="font-size:1.5rem;">→</div>
                     </div>
                 </form>
+
+                {# Authenticator method — its own form #}
+                <form method="POST" action="{{ url_for('security.two_factor_setup') }}">
+                    {{ two_factor_setup_form.hidden_tag() }}
+                    <input type="hidden" name="setup" value="authenticator">
+                    <div class="method-card" onclick="this.closest('form').submit()">
+                        <div class="method-info">
+                            <h3>📱 App Authenticator</h3>
+                            <p>Google Auth / Authy / Microsoft Auth</p>
+                        </div>
+                        <div style="font-size:1.5rem;">→</div>
+                    </div>
+                </form>
+
+                {% endif %}
+
+                {# ══════════════════════════════════════════════════════
+                STEP 2 — Authenticator QR code + code verification
+                ════════════════════════════════════════════════════ #}
+                {% if chosen_method == 'authenticator' and authr_qrcode is defined and authr_qrcode %}
+                <div style="text-align:center;">
+                    <p style="margin-bottom:15px;font-size:0.9rem;">Escanea este código QR con tu app:</p>
+                    <div class="qr-container">{{ authr_qrcode | safe }}</div>
+                    {% if authr_key %}
+                    <p style="font-size:0.75rem;opacity:0.5;margin:10px 0;word-break:break-all;">
+                        Clave manual: <code style="color:#fff;">{{ authr_key }}</code>
+                    </p>
+                    {% endif %}
+
+                    {# Verification form — envía al endpoint de validación con state_token #}
+                    <form method="POST"
+                        action="{% if state_token %}{{ url_for('security.two_factor_setup_validate', token=state_token) }}{% else %}{{ url_for('security.two_factor_setup') }}{% endif %}"
+                        style="margin-top:20px;">
+                        {{ two_factor_verify_code_form.hidden_tag() }}
+                        <div class="form-group">
+                            <label for="code">Ingresa el código de la app</label>
+                            {{ two_factor_verify_code_form.code(class="form-control",
+                            placeholder="123456", id="code", maxlength="6",
+                            inputmode="numeric", autocomplete="one-time-code") }}
+                            {% if two_factor_verify_code_form.code.errors %}
+                            <div class="field-errors">
+                                {% for error in two_factor_verify_code_form.code.errors %}
+                                <span class="field-error">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn-urban">VERIFICAR CÓDIGO</button>
+                    </form>
+
+                    <div style="margin-top:15px;">
+                        <a href="{{ url_for('security.two_factor_setup') }}"
+                            style="color:#fff;opacity:0.6;font-size:0.85rem;text-decoration:underline;">
+                            ← Cambiar método
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
+                {# ══════════════════════════════════════════════════════
+                STEP 2 — Email: code already sent, inform user
+                ════════════════════════════════════════════════════ #}
+                {% if chosen_method == 'email' %}
+                <div style="text-align:center;">
+                    <div style="margin-bottom:20px;">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="4" width="20" height="16" rx="2" />
+                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                        </svg>
+                    </div>
+                    <p style="font-size:0.95rem;margin-bottom:20px;">
+                        Te enviamos un código de verificación a tu correo.<br>
+                        Revisa tu bandeja de entrada.
+                    </p>
+                    {# Redirect user to the verification step #}
+                    <a href="{{ url_for('security.two_factor_token_validation') }}" class="btn-urban"
+                        style="display:inline-block;text-decoration:none;">INGRESAR CÓDIGO →</a>
+                    <div style="margin-top:15px;">
+                        <a href="{{ url_for('security.two_factor_setup') }}"
+                            style="color:#fff;opacity:0.6;font-size:0.85rem;text-decoration:underline;">
+                            ← Cambiar método
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
             </div>
         </div>
     </div>
-
-    <script>
-        function selectMethod(method) {
-            document.getElementById('setup-method').value = method;
-
-            // Update visual
-            document.querySelectorAll('.method-card').forEach(card => card.classList.remove('active'));
-            document.querySelector('[data-method="' + method + '"]').classList.add('active');
-
-            // Hide select, show correct step
-            document.getElementById('step-select').classList.remove('visible');
-
-            if (method === 'authenticator') {
-                // Submit form to get QR code from server
-                document.getElementById('two-factor-setup-form').submit();
-            } else {
-                document.getElementById('step-email').classList.add('visible');
-                document.getElementById('step-qr').classList.remove('visible');
-            }
-        }
-
-        function goBack() {
-            document.getElementById('step-select').classList.add('visible');
-            document.getElementById('step-qr').classList.remove('visible');
-            document.getElementById('step-email').classList.remove('visible');
-            document.getElementById('setup-method').value = '';
-        }
-    </script>
 </body>
 
 </html>

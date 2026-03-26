@@ -46,7 +46,7 @@ def create_app():
     application.config['SECURITY_CONFIRMABLE'] = True
     application.config['SECURITY_RECOVERABLE'] = True
     application.config['SECURITY_CHANGEABLE'] = True
-    application.config['SECURITY_SEND_REGISTER_EMAIL'] = True
+    application.config['SECURITY_SEND_REGISTER_EMAIL'] = True  # Enviar correo de confirmación al registrarse
     application.config['SECURITY_PASSWORD_HASH'] = 'argon2'
     application.config['SECURITY_PASSWORD_SCHEMES'] = ['argon2']
 
@@ -86,14 +86,19 @@ def create_app():
 
     # Redirecciones
     application.config['SECURITY_POST_LOGIN_VIEW'] = '/security/post-login'
-    application.config['SECURITY_POST_REGISTER_VIEW'] = '/security/post-register'
+    application.config['SECURITY_POST_REGISTER_VIEW'] = '/confirm'
     application.config['SECURITY_POST_CONFIRM_VIEW'] = '/login'
     application.config['SECURITY_LOGIN_URL'] = '/login'
     application.config['SECURITY_LOGOUT_URL'] = '/logout'
     application.config['SECURITY_REGISTER_URL'] = '/register'
+    application.config['SECURITY_AUTO_LOGIN_AFTER_CONFIRM'] = False
+    application.config['SECURITY_CONFIRM_EMAIL_WITHIN'] = '7 days'
 
     # No redirigir a /login automáticamente si no está autenticado (usamos nuestra lógica)
     application.config['SECURITY_UNAUTHORIZED_VIEW'] = '/login'
+
+    # Forzar que Flask genere URLs con localhost:3030 (no la IP interna de Docker)
+    application.config['SERVER_NAME'] = os.getenv('SERVER_NAME', 'localhost:3030')
 
     # ── Init extensions ───────────────────────────────────────
     csrf.init_app(application)
@@ -109,6 +114,20 @@ def create_app():
         confirm_register_form=ExtendedRegisterForm
     )
 
+    # ── Debug: log confirmation & login events ────────────────
+    from flask_security import user_confirmed, user_authenticated
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger('axis_security')
+
+    @user_confirmed.connect_via(application)
+    def on_user_confirmed(sender, user, **kwargs):
+        logger.info(f'[CONFIRM] Email confirmado para: {user.email} | confirmed_at={user.confirmed_at}')
+
+    @user_authenticated.connect_via(application)
+    def on_user_authenticated(sender, user, **kwargs):
+        logger.info(f'[LOGIN] Login exitoso para: {user.email} | confirmed_at={user.confirmed_at}')
+
     # ── Blueprints ────────────────────────────────────────────
     application.register_blueprint(bp.usuarios_bp)
     application.register_blueprint(bp.security_bp, url_prefix='/security')
@@ -119,6 +138,42 @@ def create_app():
         if current_user.is_authenticated:
             return redirect(url_for('security_bp.post_login'))
         return redirect(url_for('security.login'))
+
+    # ── Debug: verificar estado de usuario (QUITAR EN PRODUCCIÓN) ──
+    @application.route('/debug/check-user/<email>')
+    def debug_check_user(email):
+        user = Usuario.query.filter_by(email=email).first()
+        if not user:
+            return f'Usuario {email} no encontrado', 404
+        return (
+            f'Email: {user.email}<br>'
+            f'confirmed_at: {user.confirmed_at}<br>'
+            f'active: {user.active}<br>'
+            f'tf_primary_method: {user.tf_primary_method}<br>'
+            f'roles: {[r.name for r in user.roles]}'
+        )
+
+    # ── Debug: VERIFICAR POR QUÉ FALLA EL TOKEN ──
+    @application.route('/debug/test-token/<token>')
+    def debug_test_token(token):
+        from itsdangerous import URLSafeTimedSerializer
+        from itsdangerous.exc import BadSignature, SignatureExpired
+        import time
+
+        serializer = URLSafeTimedSerializer(
+            application.config['SECRET_KEY'],
+            salt=application.config['SECURITY_PASSWORD_SALT']
+        )
+        try:
+            # We use 'confirm' salt which is standard for Flask-Security
+            data = serializer.loads(token, salt='confirm-email', max_age=application.config.get('SECURITY_CONFIRM_EMAIL_WITHIN', 86400 * 7))
+            return f"TOKEN VÁLIDO. Apunta al usuario_id o data: {data}"
+        except SignatureExpired as e:
+            return f"TOKEN EXPIRADO: {e}", 400
+        except BadSignature as e:
+            return f"FIRMA INVÁLIDA (SECRET_KEY o PASSWORD_SALT diferente): {e}", 400
+        except Exception as e:
+            return f"OTRO ERROR: {e}", 400
 
     return application
 
