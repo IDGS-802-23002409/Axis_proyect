@@ -1,0 +1,42 @@
+<div id="modal-detalles" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden px-4">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-black text-xl uppercase italic tracking-tighter">Detalles del Proveedor</h3>
+            <button onclick="document.getElementById('modal-detalles').classList.add('hidden')" class="text-muted-foreground hover:text-black">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-[10px] font-bold uppercase text-muted-foreground">Razón Social</p>
+                    <p id="det-razon-social" class="text-sm font-semibold uppercase"></p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold uppercase text-muted-foreground">RFC</p>
+                    <p id="det-rfc" class="text-sm font-mono"></p>
+                </div>
+            </div>
+            <hr class="border-border">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-[10px] font-bold uppercase text-muted-foreground">Teléfono</p>
+                    <p id="det-telefono" class="text-sm font-mono"></p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold uppercase text-muted-foreground">Categoría</p>
+                    <p id="det-categoria" class="text-sm uppercase italic font-medium"></p>
+                </div>
+            </div>
+            <div>
+                <p class="text-[10px] font-bold uppercase text-muted-foreground">Contacto Responsable</p>
+                <p id="det-contacto" class="text-sm font-medium"></p>
+            </div>
+            <div>
+                <p class="text-[10px] font-bold uppercase text-muted-foreground">Estatus</p>
+                <p id="det-estatus" class="text-sm font-medium"></p>
+            </div>
+        </div>
+    </div>
+</div>

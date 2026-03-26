@@ -10,6 +10,7 @@ DB_PASSWORD = os.getenv('DB_PASSWORD', 'flask_password')
 DB_HOST = os.getenv('DB_HOST', 'localhost')
 DB_PORT = os.getenv('DB_PORT', '3306')
 DB_NAME = os.getenv('DB_NAME', 'flask_db')
+SECRET_KEY = os.getenv('clave_secreta_axis')
 
 # # Configuración básica de seguridad
 # app.config['SECURITY_REGISTERABLE'] = True

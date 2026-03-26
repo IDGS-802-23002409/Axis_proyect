@@ -1,0 +1,20 @@
+<div id="modal-delete" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden px-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-8 text-center">
+        <div class="w-16 h-16 bg-red-100 text-destructive rounded-full flex items-center justify-center mx-auto mb-4">
+            <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+        </div>
+        <h3 class="font-black text-lg uppercase mb-2">¿Eliminar Proveedor?</h3>
+        <p class="text-xs text-muted-foreground mb-6 uppercase tracking-tight">Esta acción no se puede deshacer. El registro se borrará permanentemente.</p>
+        
+        <form id="form-delete" action="" method="POST" class="flex gap-3">
+            {{ form.csrf_token }}
+            <button type="button" onclick="document.getElementById('modal-delete').classList.add('hidden')" 
+                class="flex-1 py-3 border border-border rounded-xl font-bold text-[10px] uppercase hover:bg-secondary transition">
+                Cancelar
+            </button>
+            <button type="submit" class="flex-1 py-3 bg-destructive text-white rounded-xl font-bold text-[10px] uppercase hover:bg-red-700 transition shadow-lg">
+                Sí, Eliminar
+            </button>
+        </form>
+    </div>
+</div>

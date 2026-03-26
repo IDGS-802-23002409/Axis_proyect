@@ -1,7 +1,7 @@
 from flask import render_template, jsonify, abort
 from . import dashboard_bp
 from app.models.proveedores import Proveedor 
-import models
+from app import models
 from app.utils.database_connection import db
 from sqlalchemy import func, text
 from datetime import datetime

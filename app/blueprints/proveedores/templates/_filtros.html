@@ -1,0 +1,20 @@
+<div class="flex flex-wrap gap-4 mb-6 items-center justify-between bg-sidebar/50 p-4 rounded-xl border border-border">
+    <!-- Buscador -->
+    <div class="flex flex-1 min-w-[300px] relative">
+        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"></i>
+        <input type="text" id="input-search" placeholder="Buscar por Razón Social o RFC..." 
+            class="w-full pl-10 pr-4 py-2 bg-white border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-black transition">
+    </div>
+
+    <!-- Selector de Estado -->
+    <div class="flex gap-2">
+        <select id="select-status" class="bg-white border border-border px-3 py-2 rounded-lg text-xs font-semibold focus:outline-none cursor-pointer">
+            <option value="all">Todos los Estados</option>
+            <option value="activo">Activos</option>
+            <option value="inactivo">Inactivos</option>
+        </select>
+        <button class="bg-white border border-border p-2 rounded-lg hover:bg-secondary transition">
+            <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+        </button>
+    </div>
+</div>

@@ -1,11 +1,33 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired, Length
+from wtforms import StringField, SubmitField, BooleanField
+from wtforms.validators import DataRequired, Length, ValidationError
+import re
 # Delimitación de mi forms
 class ProveedorForm(FlaskForm):
-    razon_social = StringField('Razón Social', validators=[DataRequired(), Length(max=150)])
-    rfc = StringField('RFC / ID Fiscal', validators=[DataRequired(), Length(max=20)])
+    razon_social = StringField('Razón Social', validators=[
+        DataRequired(message="La razón social es obligatoria"),
+        Length(max=150)
+    ])
+    rfc = StringField('RFC', validators=[
+        DataRequired(message="El RFC es obligatorio"),
+        Length(min=12, max=13, message="El RFC debe tener entre 12 y 13 caracteres")
+    ])
     contacto_nombre = StringField('Nombre de Contacto', validators=[Length(max=100)])
-    telefono = StringField('Teléfono', validators=[Length(max=20)])
+    estatus = BooleanField('Activo')
+    telefono = StringField('Teléfono', validators=[Length(max=10)]) 
     categoria_insumo = StringField('Categoría de Insumo', validators=[Length(max=100)])
     submit = SubmitField('Guardar Proveedor') 
+
+    def validate_telefono(self, field):
+        if field.data:
+            dato_limpio = re.sub(r'\D', '', str(field.data))
+            if not str(field.data).replace("-", "").replace(" ", "").isdigit():
+                raise ValidationError('Solo se permiten números.')
+            if len(dato_limpio) != 10:
+                raise ValidationError('Deben ser exactamente 10 dígitos.')
+                
+    def validate_rfc(self, field):
+        if field.data:
+            pattern = r'^[A-Z&Ñ]{3,4}\d{6}[A-Z0-9]{3}$'
+            if not re.match(pattern, field.data.upper()):
+                raise ValidationError('El formato del RFC es inválido (Ej: ABC123456XYZ)')

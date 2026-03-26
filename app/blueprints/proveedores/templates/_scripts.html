@@ -1,0 +1,105 @@
+<script>
+    // 1. Función para formatear el teléfono (Definida arriba para que esté disponible)
+    function formatearTelefonoDetalle(tel) {
+        if (!tel) return '---';
+        const limpieza = tel.replace(/\D/g, ''); 
+        if (limpieza.length !== 10) return tel; 
+        return `${limpieza.slice(0, 3)}-${limpieza.slice(3, 6)}-${limpieza.slice(6, 8)}-${limpieza.slice(8, 10)}`;
+    }
+
+    // 2. Función de filtrado
+    function filtrarTabla() {
+        const inputSearch = document.getElementById('input-search');
+        const selectStatus = document.getElementById('select-status');
+        const searchText = inputSearch.value.toLowerCase().trim();
+        const statusFilter = selectStatus.value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr:not(#no-results-row)');
+        const noResultsRow = document.getElementById('no-results-row');
+        
+        let visibleCount = 0;
+        rows.forEach(row => {
+            const razonSocial = row.cells[0]?.innerText.toLowerCase() || "";
+            const rfc = row.cells[1]?.innerText.toLowerCase() || "";
+            const statusText = row.querySelector('.status-badge')?.innerText.toLowerCase().trim() || "";
+            const matchesSearch = razonSocial.includes(searchText) || rfc.includes(searchText);
+            let matchesStatus = (statusFilter === 'all') || (statusText === statusFilter);
+
+            if (matchesSearch && matchesStatus) {
+                row.style.display = "";
+                visibleCount++;
+            } else {
+                row.style.display = "none";
+            }
+        });
+        noResultsRow.classList.toggle('hidden', visibleCount > 0);
+    }
+
+    // 3. Eventos principales
+    document.addEventListener('DOMContentLoaded', () => {
+        const inputSearch = document.getElementById('input-search');
+        const selectStatus = document.getElementById('select-status');
+
+        if(inputSearch) inputSearch.addEventListener('input', filtrarTabla);
+        if(selectStatus) selectStatus.addEventListener('change', filtrarTabla);
+
+        // BOTÓN EDITAR
+        document.querySelectorAll('.edit-trigger').forEach(btn => {
+            btn.onclick = async () => {
+                const uid = btn.dataset.uid;
+                const response = await fetch(`/proveedores/${uid}`);
+                const data = await response.json();
+
+                document.getElementById('upd_razon_social').value = data.razon_social;
+                document.getElementById('upd_rfc').value = data.rfc;
+                document.getElementById('upd_contacto').value = data.contacto_nombre || '';
+                document.getElementById('upd_telefono').value = formatearTelefonoDetalle(data.telefono || '');   
+                document.getElementById('upd_categoria').value = data.categoria_insumo || '';
+                document.getElementById('upd_estatus').checked = data.estatus;
+
+                document.getElementById('form-update').action = `/proveedores/editar/${uid}`;
+                document.getElementById('modal-update').classList.remove('hidden');
+            };
+        });
+
+        // BOTÓN DETALLES
+        document.querySelectorAll('.details-trigger').forEach(btn => {
+            btn.onclick = async () => {
+                const uid = btn.dataset.uid;
+                const response = await fetch(`/proveedores/${uid}`);
+                const data = await response.json();
+
+                document.getElementById('det-razon-social').innerText = data.razon_social;
+                document.getElementById('det-rfc').innerText = data.rfc;
+                document.getElementById('det-categoria').innerText = data.categoria_insumo || '---';
+                document.getElementById('det-contacto').innerText = data.contacto_nombre || '---';
+                document.getElementById('det-telefono').innerText = formatearTelefonoDetalle(data.telefono || '');
+
+                const detEstatus = document.getElementById('det-estatus');
+                detEstatus.innerHTML = data.estatus 
+                    ? `<span class="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded-full border border-green-200">Activo</span>`
+                    : `<span class="px-3 py-1 bg-zinc-100 text-zinc-400 text-[10px] font-bold uppercase rounded-full border border-zinc-200">Inactivo</span>`;
+
+                document.getElementById('modal-detalles').classList.remove('hidden');
+            };
+        });
+
+        // BOTÓN ELIMINAR
+        document.querySelectorAll('.delete-trigger').forEach(btn => {
+            btn.onclick = () => {
+                const uid = btn.dataset.uid;
+                document.getElementById('form-delete').action = `/proveedores/eliminar/${uid}`;
+                document.getElementById('modal-delete').classList.remove('hidden');
+            };
+        });
+
+        lucide.createIcons();
+
+        // --- LÓGICA PARA REABRIR MODAL SI HAY ERRORES ---
+        {% if form.errors %}
+            const modalReg = document.getElementById('modal-registro');
+            if (modalReg) {
+                modalReg.classList.remove('hidden');
+            }
+        {% endif %}
+    });
+</script>

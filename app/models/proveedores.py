@@ -1,6 +1,6 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import Column, String, DateTime, func
+from sqlalchemy import Column, String, DateTime, func, Boolean
 
 
 class Proveedor(db.Model):
@@ -13,6 +13,8 @@ class Proveedor(db.Model):
     fecha_creacion = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
     usuario_creo_uuid = Column(String(36))
-
+    estatus = Column(Boolean, default=True)
+    telefono = Column(String(20), nullable=False)
+    categoria_insumo = Column(String(30), nullable=False )
     def __repr__(self):
         return f'<Proveedor {self.razon_social}>'
