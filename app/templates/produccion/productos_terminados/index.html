@@ -21,14 +21,27 @@
     <div class="p-4 bg-card border border-border rounded-lg flex items-center justify-between">
       <div>
         <p class="text-xs text-muted-foreground">Acción</p>
-        <p class="font-bold">Nuevo producto</p>
+        <button onclick="window.location.href='productos/registro';"
+      class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
+      <i data-lucide="plus" class="w-4 h-4"></i>
+      Nuevo Producto
+  </button>
       </div>
-      <a href="{{ url_for('productos.registro_producto') }}" class="px-3 py-2 bg-primary text-primary-foreground rounded-md text-xs">Agregar</a>
+
     </div>
   </div>
 
   <div class="bg-card border border-border rounded-lg overflow-hidden">
-    <div class="p-4 border-b border-border">
+    <div class="flex justify-between items-center p-4 border-b border-border">
+      <h3 class="font-semibold">Catálogo de Productos</h3>
+
+      <button id="filterToggle" type="button"
+        class="h-9 w-9 p-2 bg-card border border-border rounded-md text-muted-foreground hover:bg-secondary" title="Mostrar/Ocultar filtros">
+        <i data-lucide="filter" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <div id="filterPanel" class="p-4 border-b border-border bg-surface hidden">
       <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-3">
         <div>
           <label class="text-xs text-muted-foreground" for="modelo">Modelo</label>
@@ -50,7 +63,7 @@
           </select>
         </div>
 
-        <div class="md:col-span-2 flex items-end justify-end gap-2">
+        <div class="flex items-end gap-2">
           <button type="submit" class="px-4 py-2 rounded-md bg-black text-white text-sm">Filtrar</button>
           <a href="{{ url_for('productos.index') }}" class="px-4 py-2 rounded-md border border-border text-sm">Limpiar</a>
         </div>
@@ -80,6 +93,9 @@
             </td>
             <td class="px-4 py-3">${{ '%.2f'|format(p.precio_venta) }}</td>
             <td class="px-4 py-3 text-right flex justify-end items-center gap-2">
+              <a href="{{ url_for('productos.detalle_producto', uuid=p.uuid_producto) }}" class="text-primary hover:text-primary/80 transition-colors" title="Ver detalles">
+                 <i data-lucide="info" class="w-4 h-4 cursor-pointer hover:text-blue-600"></i>
+              </a>
               <a href="{{ url_for('productos.editar_producto', uuid=p.uuid_producto) }}" class="text-blue-500 hover:text-blue-700">
                 <i data-lucide="edit-2" class="w-4 h-4"></i>
               </a>
@@ -98,4 +114,17 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Toggle para mostrar/ocultar filtros
+  document.getElementById('filterToggle').addEventListener('click', function() {
+    const filterPanel = document.getElementById('filterPanel');
+    filterPanel.classList.toggle('hidden');
+  });
+
+  // Inicializar iconos de Lucide
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+</script>
 {% endblock %}

@@ -4,7 +4,7 @@ from app.blueprints.productos_terminados.form import ProductoTerminadoForm
 from app.models.modelos_productos import ProductoTerminado, ModeloRopa
 from app.utils.database_connection import db
 
-@productos_bp.route('/')
+@productos_bp.route('/productos')
 def index():
     modelo_id = request.args.get('modelo', '').strip()
     talla = request.args.get('talla', '').strip()
@@ -35,7 +35,7 @@ def index():
     )
 
 
-@productos_bp.route('/registro', methods=['GET', 'POST'])
+@productos_bp.route('/productos/registro', methods=['GET', 'POST'])
 def registro_producto():
     form = ProductoTerminadoForm()
 
@@ -57,7 +57,7 @@ def registro_producto():
     return render_template('produccion/productos_terminados/registro_producto.html', form=form)
 
 
-@productos_bp.route('/editar/<uuid>', methods=['GET', 'POST'])
+@productos_bp.route('/productos/editar/<uuid>', methods=['GET', 'POST'])
 def editar_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
     form = ProductoTerminadoForm(obj=producto)
@@ -84,3 +84,26 @@ def editar_producto(uuid):
     form.stock_minimo_alerta.data = producto.stock_minimo_alerta
 
     return render_template('produccion/productos_terminados/update_producto.html', form=form, producto=producto)
+
+
+@productos_bp.route('/productos/eliminar/<uuid>', methods=['POST'])
+def eliminar_producto(uuid):
+    producto = ProductoTerminado.query.get_or_404(uuid)
+
+    if producto.stock_fisico_actual > 0:
+        flash('No se puede eliminar un producto con stock físico > 0', 'error')
+        return redirect(url_for('productos.index'))
+
+    db.session.delete(producto)
+    db.session.commit()
+
+    flash('Producto terminado eliminado correctamente', 'success')
+    return redirect(url_for('productos.index'))
+
+
+@productos_bp.route('/productos/detalle/<uuid>')
+def detalle_producto(uuid):
+    producto = ProductoTerminado.query.get_or_404(uuid)
+    modelo = producto.modelo
+    
+    return render_template('produccion/productos_terminados/detalle_producto.html', producto=producto, modelo=modelo)
