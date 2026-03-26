@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro | Axis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/security.css') }}">
+</head>
+
+<body>
+    <div class="security-container">
+        <div class="side-logo">
+            <div class="urban-bg-text pos-1">JOIN</div>
+            <img src="{{ url_for('static', filename='images/urban-bg.png') }}" alt="Axis Urban">
+            <div class="graffiti-drip" style="left: 45%; animation-delay: 0.2s;"></div>
+        </div>
+        <div class="side-form">
+            <div class="urban-bg-text pos-2">THE CREW</div>
+            <div class="form-wrapper">
+                <h1>REGISTER</h1>
+                <form action="#" method="POST">
+                    <div class="form-group">
+                        <label for="username">Usuario</label>
+                        <input type="text" id="username" name="username" class="form-control" placeholder="Tu alias"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="email@ejemplo.com"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="********"
+                            required>
+                    </div>
+                    <button type="submit" class="btn-urban">CREAR CUENTA</button>
+                    <div style="margin-top: 20px; text-align: center; font-size: 0.8rem;">
+                        <a href="/security/login-preview" style="color: #fff; text-decoration: none; opacity: 0.7;">¿Ya
+                            tienes cuenta? <span style="text-decoration: underline;">Entra aquí</span></a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

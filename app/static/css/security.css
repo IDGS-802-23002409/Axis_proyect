@@ -1,0 +1,201 @@
+@import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Outfit:wght@300;400;700&display=swap');
+
+:root {
+    --bg-color: #000000;
+    --text-color: #ffffff;
+    --accent-color: #ffffff;
+    --font-urban: 'Permanent Marker', cursive;
+    --font-main: 'Outfit', sans-serif;
+}
+
+body,
+html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-main);
+    overflow: hidden;
+}
+
+.security-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+.side-logo {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #000;
+    position: relative;
+    overflow: hidden;
+}
+
+.side-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+}
+
+.side-form {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    background: #000;
+}
+
+.form-wrapper {
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+}
+
+h1,
+h2 {
+    font-family: var(--font-urban);
+    font-size: 3rem;
+    margin-bottom: 30px;
+    text-align: center;
+    position: relative;
+    color: transparent;
+    -webkit-text-stroke: 1px #fff;
+    animation: graffitiDraw 1.5s steps(20) forwards;
+}
+
+@keyframes graffitiDraw {
+    0% {
+        clip-path: inset(0 100% 0 0);
+        color: transparent;
+    }
+
+    100% {
+        clip-path: inset(0 0 0 0);
+        color: #fff;
+    }
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    border-radius: 0;
+    font-family: var(--font-main);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #fff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.btn-urban {
+    width: 100%;
+    padding: 15px;
+    background: #fff;
+    color: #000;
+    border: none;
+    font-family: var(--font-urban);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    margin-top: 10px;
+}
+
+.btn-urban:hover {
+    background: #000;
+    color: #fff;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+/* texture overlay removed for clean look */
+
+@keyframes logoFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8) rotate(-5deg);
+        filter: blur(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+        filter: blur(0);
+    }
+}
+
+/* Graffiti drip effect */
+.graffiti-drip {
+    position: absolute;
+    bottom: -20px;
+    left: 10%;
+    width: 2px;
+    background: #fff;
+    height: 0;
+    animation: dripAnim 2s ease-in-out infinite alternate;
+}
+
+@keyframes dripAnim {
+    0% {
+        height: 0;
+        opacity: 0;
+    }
+
+    50% {
+        height: 40px;
+        opacity: 1;
+    }
+
+    100% {
+        height: 60px;
+        opacity: 0.5;
+    }
+}
+
+/* Additional urban touches */
+.urban-bg-text {
+    position: absolute;
+    font-family: var(--font-urban);
+    font-size: 10rem;
+    opacity: 0.05;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.pos-1 {
+    top: 10%;
+    left: -10%;
+    transform: rotate(-15deg);
+}
+
+.pos-2 {
+    bottom: 10%;
+    right: -10%;
+    transform: rotate(10deg);
+}

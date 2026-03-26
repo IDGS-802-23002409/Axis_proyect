@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar 2FA | Axis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/security.css') }}">
+    <style>
+        .method-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .method-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #fff;
+            transform: translateX(10px);
+        }
+
+        .method-info h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+        }
+
+        .method-info p {
+            margin: 5px 0 0;
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="security-container">
+        <div class="side-logo">
+            <div class="urban-bg-text pos-1">SECURE</div>
+            <img src="{{ url_for('static', filename='images/urban-bg.png') }}" alt="Axis Urban">
+        </div>
+        <div class="side-form">
+            <div class="urban-bg-text pos-2">SHIELD</div>
+            <div class="form-wrapper">
+                <h1>2FA SETUP</h1>
+                <p style="text-align: center; margin-bottom: 30px; font-size: 0.9rem; opacity: 0.8;">Elige tu método de
+                    seguridad</p>
+
+                <div class="method-card">
+                    <div class="method-info">
+                        <h3>Email</h3>
+                        <p>Recibe el código en tu correo</p>
+                    </div>
+                    <div class="btn-select">→</div>
+                </div>
+
+                <div class="method-card">
+                    <div class="method-info">
+                        <h3>App Authenticator</h3>
+                        <p>Google Auth / Authy</p>
+                    </div>
+                    <div class="btn-select">→</div>
+                </div>
+
+                <div class="method-card">
+                    <div class="method-info" style="opacity: 0.5;">
+                        <h3>SMS</h3>
+                        <p>(Próximamente)</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; text-align: center;">
+                    <a href="/security/login-preview" class="btn-urban"
+                        style="text-decoration: none; display: block;">GUARDAR</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

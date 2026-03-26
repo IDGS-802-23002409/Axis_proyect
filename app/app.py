@@ -17,6 +17,7 @@ def create_app():
     application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     csrf.init_app(application)
     application.register_blueprint(bp.usuarios_bp)
+    application.register_blueprint(bp.security_bp, url_prefix='/security')
     
     db.init_app(application)
     Migrate(application, db)
