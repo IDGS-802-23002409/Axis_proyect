@@ -1,0 +1,28 @@
+{% extends "security/email/base_email.html" %}
+
+{% block content %}
+<h1
+    style="color: #ffffff; font-size: 24px; margin: 0 0 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">
+    Código de Verificación
+</h1>
+
+<p style="color: #cccccc; font-size: 16px; line-height: 1.6; margin: 0 0 25px;">
+    Tu código de verificación para iniciar sesión en <strong style="color: #fff;">Axis</strong> es:
+</p>
+
+<table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+        <td align="center" style="padding: 10px 0 30px;">
+            <div style="display: inline-block; background-color: #ffffff; color: #000000;
+                        padding: 20px 50px; font-size: 32px; font-weight: bold;
+                        letter-spacing: 12px; font-family: monospace;">
+                {{ token }}
+            </div>
+        </td>
+    </tr>
+</table>
+
+<p style="color: #777; font-size: 13px; line-height: 1.5; margin: 0;">
+    Este código expirará en unos minutos. Si no solicitaste este código, cambia tu contraseña inmediatamente.
+</p>
+{% endblock %}

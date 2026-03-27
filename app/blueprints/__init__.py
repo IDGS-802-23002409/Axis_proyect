@@ -1,22 +1,5 @@
-from flask import Flask
-from app.utils.config import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
-from app.utils.database_connection import db
-from flask_migrate import Migrate
-from .usuarios import usuarios_bp
-
-def create_app():
-    app = Flask(__name__)
-    app.config.from_object(Config)
-
-    db.init_app(app)
-    Migrate(app, db) 
-
-    # Registro del módulo Proveedores
-    from app.blueprints.proveedores.routes import proveedores_bp
-    app.register_blueprint(proveedores_bp, url_prefix='/proveedores')
-    from app.blueprints.usuarios.routes import usuarios_bp
-    app.register_blueprint(usuarios_bp, url_prefix='/usuarios')
-    from app.blueprints.dashboard_administrativo.routes import dashboard_bp
-    app.register_blueprint(dashboard_bp, url_prefix='/dashboard_administrativo')
-
-    return app
+from app.blueprints.usuarios import usuarios_bp
+from app.blueprints.security import security_bp
+from app.blueprints.catalog import catalog_bp
+from app.blueprints.checkout import checkout_bp
+from app.blueprints.productos_terminados import productos_bp

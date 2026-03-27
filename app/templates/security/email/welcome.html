@@ -1,0 +1,34 @@
+{% extends "security/email/base_email.html" %}
+
+{% block content %}
+<h1
+    style="color: #ffffff; font-size: 24px; margin: 0 0 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">
+    Confirma tu cuenta
+</h1>
+
+<p style="color: #cccccc; font-size: 16px; line-height: 1.6; margin: 0 0 25px;">
+    ¡Bienvenido a <strong style="color: #fff;">Axis Urban Apparel</strong>! Para activar tu cuenta, haz clic en el
+    siguiente botón:
+</p>
+
+<table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+        <td align="center" style="padding: 10px 0 30px;">
+            <a href="{{ confirmation_link }}" style="display: inline-block; background-color: #ffffff; color: #000000; text-decoration: none;
+                       padding: 14px 40px; font-size: 14px; font-weight: bold; text-transform: uppercase;
+                       letter-spacing: 2px;">
+                CONFIRMAR EMAIL
+            </a>
+        </td>
+    </tr>
+</table>
+
+<p style="color: #777; font-size: 13px; line-height: 1.5; margin: 0;">
+    Si no creaste esta cuenta, puedes ignorar este mensaje.
+</p>
+
+<p style="color: #555; font-size: 12px; margin: 15px 0 0;">
+    Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+    <a href="{{ confirmation_link }}" style="color: #999; word-break: break-all;">{{ confirmation_link }}</a>
+</p>
+{% endblock %}
