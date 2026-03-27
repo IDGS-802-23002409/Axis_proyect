@@ -146,10 +146,6 @@ def deleteUser(uuid):
         flash("No se puede eliminar un administrador", "error")
         return redirect(url_for('usuarios.index'))
 
-    if not user.active:
-        flash("Este usuario ya está inactivo", "error")
-        return redirect(url_for('usuarios.index'))
-
     user.active = False
     db.session.commit()
 

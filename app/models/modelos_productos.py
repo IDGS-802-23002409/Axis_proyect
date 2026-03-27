@@ -1,6 +1,6 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import Column, String, Integer, Numeric, DateTime, Enum, Text, ForeignKey, func
+from sqlalchemy import Boolean, Column, String, Integer, Numeric, DateTime, Enum, Text, ForeignKey, func
 
 
 class ModeloRopa(db.Model):
@@ -29,6 +29,7 @@ class ProductoTerminado(db.Model):
     precio_venta = Column(Numeric(12, 2), nullable=False)
     stock_fisico_actual = Column(Integer, default=0)
     stock_minimo_alerta = Column(Integer, default=0)
+    active = Column(Boolean(), default=True)
     fecha_creacion = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

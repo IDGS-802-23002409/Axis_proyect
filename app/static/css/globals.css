@@ -99,6 +99,22 @@
   z-index: 0;
 }
 
+/* Flash message animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.flash-message-enter {
+  animation: slideInRight 0.3s ease-out;
+}
+
 /* Graffiti drip animation */
 @keyframes drip {
   0% { transform: translateY(-10px); opacity: 0; }
