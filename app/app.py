@@ -115,7 +115,9 @@ def create_app():
     from app.blueprints.proveedores.routes import proveedores_bp
     application.register_blueprint(proveedores_bp, url_prefix='/proveedores')
     from app.blueprints.dashboard_administrativo.routes import dashboard_bp
-    application.register_blueprint(dashboard_bp, url_prefix='/dashboard')
+    application.register_blueprint(dashboard_bp, url_prefix='/dashboard_administrativo')
+    from app.blueprints.alertas.routes import alertas_bp
+    application.register_blueprint(alertas_bp, url_prefix='/alertas')
 
     # Flask-Security datastore
     user_datastore = SQLAlchemyUserDatastore(db, Usuario, Role)

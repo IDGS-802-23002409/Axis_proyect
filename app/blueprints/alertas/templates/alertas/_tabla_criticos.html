@@ -1,0 +1,62 @@
+<div class="bg-[#111111] border border-gray-800 rounded-2xl overflow-hidden shadow-2xl">
+    <div class="p-6 border-b border-gray-800 flex items-center gap-3">
+        <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500"></i>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-white">Alertas de Insumos Críticos</h2>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead class="text-[10px] uppercase text-gray-500 tracking-widest border-b border-gray-800 bg-gray-900/20">
+                <tr>
+                    <th class="px-8 py-4 font-semibold">Insumo</th>
+                    <th class="px-4 py-4 font-semibold">Proveedor Principal</th>
+                    <th class="px-4 py-4 font-semibold">Stock Actual</th>
+                    <th class="px-4 py-4 font-semibold text-center">Mínimo Requerido</th>
+                    <th class="px-4 py-4 font-semibold">Estado</th>
+                    <th class="px-8 py-4 font-semibold text-right">Acción Sugerida</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800">
+                {% for item in criticos %}
+                <tr class="hover:bg-gray-800/20 transition-all group">
+                    <td class="px-8 py-5">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-gray-900 p-3 rounded-xl border border-gray-800 group-hover:border-gray-700">
+                                <i data-lucide="box" class="w-5 h-5 text-gray-500"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-600 font-mono tracking-tighter">{{ item.sku }}</p>
+                                <p class="text-sm font-bold text-gray-200">{{ item.nombre }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-5 text-xs text-gray-500 italic">Textiles del Norte S.A.</td>
+                    <td class="px-4 py-5">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm font-bold text-white">{{ item.stock }}</span>
+                            <span class="text-[10px] text-gray-600 uppercase font-medium">Metros</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-5 text-center text-xs text-gray-400 font-medium">{{ item.minimo }} Uds.</td>
+                    <td class="px-4 py-5">
+                        {% if item.estado == 'AGOTADO' %}
+                        <span class="bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter italic">
+                            ● AGOTADO
+                        </span>
+                        {% else %}
+                        <span class="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter italic">
+                            ● BAJO STOCK
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-8 py-5 text-right">
+                        <button class="bg-transparent border border-gray-700 hover:bg-white hover:text-black hover:border-white text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">
+                            {{ 'Crear Orden' if item.estado == 'AGOTADO' else 'Contactar' }}
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
