@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Length, ValidationError
+from app.models.proveedores import Proveedor
 import re
 # Delimitación de mi forms
 class ProveedorForm(FlaskForm):
@@ -24,15 +25,27 @@ class ProveedorForm(FlaskForm):
     categoria_insumo = StringField('Categoría de Insumo', validators=[Length(max=100)])
     submit = SubmitField('Guardar Proveedor') 
 
+    def validate_razon_social(self, field):
+        check = Proveedor.query.filter_by(razon_social=field.data.upper()).first()
+        if check:
+            raise ValidationError('Esta Razón Social ya está registrada en el sistema.')
+        
     def validate_telefono(self, field):
         if field.data:
             dato_limpio = re.sub(r'\D', '', str(field.data))
+            check = Proveedor.query.filter_by(telefono=dato_limpio).first()
+            if check:
+                raise ValidationError('Este número de teléfono ya está en uso.')
             if not str(field.data).replace("-", "").replace(" ", "").isdigit():
                 raise ValidationError('Solo se permiten números.')
             if len(dato_limpio) != 10:
                 raise ValidationError('Deben ser exactamente 10 dígitos.')
+            
                 
     def validate_rfc(self, field):
+        check = Proveedor.query.filter_by(rfc=field.data.upper()).first()
+        if check:
+            raise ValidationError('Este RFC ya pertenece a otro proveedor.')
         if field.data:
             pattern = r'^[A-Z&Ñ]{3,4}\d{6}[A-Z0-9]{3}$'
             if not re.match(pattern, field.data.upper()):

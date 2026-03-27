@@ -6,14 +6,17 @@
     <div class="flex justify-between items-center mb-8">
         <div>
             <h3 class="text-xl font-bold uppercase tracking-tight">Directorio de Proveedores</h3>
-            <p class="text-[10px] text-muted-foreground font-mono uppercase">Total: {{ proveedores|length }} registros
-            </p>
+            <p class="text-[10px] text-muted-foreground font-mono uppercase">Total: {{ proveedores|length }} registros</p>
         </div>
+        
+        {# SOLO ADMIN Y GERENTE VEN EL BOTÓN DE NUEVO #}
+        {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
         <button onclick="document.getElementById('modal-registro').classList.remove('hidden')"
             class="bg-black text-white px-6 py-2 rounded-md flex items-center gap-2">
             <i data-lucide="plus-circle" class="w-4 h-4"></i>
             <span class="text-xs font-bold uppercase">Nuevo Proveedor</span>
         </button>
+        {% endif %}
     </div>
 
     {% include "_filtros.html" %}
@@ -36,7 +39,6 @@
                     <td class="px-6 py-4 text-sm font-medium uppercase">{{ p.razon_social }}</td>
                     <td class="px-6 py-4 text-sm font-mono text-muted-foreground">
                         {% if p.telefono and p.telefono|length >= 10 %}
-                        {# Formateo: 123-456-78-90 #}
                         {{ p.telefono[:3] }}-{{ p.telefono[3:6] }}-{{ p.telefono[6:8] }}-{{ p.telefono[8:10] }}
                         {% else %}
                         {{ p.telefono or '---' }}
@@ -45,28 +47,33 @@
                     <td class="px-6 py-4 text-sm font-mono text-muted-foreground">{{ p.rfc }}</td>
                     <td class="px-6 py-4 text-xs italic text-muted-foreground">{{ p.categoria_insumo or '---' }}</td>
                     <td class="px-6 py-4 text-center">
-                        <span
-                            class="status-badge px-3 py-1 text-[10px] font-bold uppercase rounded-full {{ 'bg-green-100 text-green-700' if p.estatus else 'bg-zinc-100 text-zinc-400' }}">
+                        <span class="status-badge px-3 py-1 text-[10px] font-bold uppercase rounded-full {{ 'bg-green-100 text-green-700' if p.estatus else 'bg-zinc-100 text-zinc-400' }}">
                             {{ 'Activo' if p.estatus else 'Inactivo' }}
                         </span>
                     </td>
                     <td class="px-6 py-4">
                         <div class="flex justify-center gap-3">
-                            <!-- Ver Detalles -->
+                            <!-- Ver Detalles (Todos los roles permitidos) -->
                             <button class="details-trigger text-muted-foreground hover:text-primary transition"
                                 data-uid="{{ p.uuid_proveedor }}" title="Ver detalles">
                                 <i data-lucide="eye" class="w-4 h-4"></i>
                             </button>
-                            <!-- Editar -->
+
+                            <!-- Editar (Admin y Gerente) -->
+                            {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
                             <button class="edit-trigger text-muted-foreground hover:text-black transition"
                                 data-uid="{{ p.uuid_proveedor }}" title="Editar">
                                 <i data-lucide="pencil" class="w-4 h-4"></i>
                             </button>
-                            <!-- Eliminar -->
+                            {% endif %}
+
+                            <!-- Eliminar (Solo Admin) -->
+                            {% if current_user.has_role('admin') %}
                             <button class="delete-trigger text-muted-foreground hover:text-destructive transition"
                                 data-uid="{{ p.uuid_proveedor }}" title="Eliminar">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>

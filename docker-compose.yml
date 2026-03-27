@@ -28,6 +28,8 @@ services:
       dockerfile: ./Dockerfile
     container_name: flask_app
     restart: always
+    env_file:       
+      - .env
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
@@ -48,6 +50,7 @@ services:
       - "3030:3030"
     volumes:
       - .:/app
+      - /app/venv
     depends_on:
       mysql:
         condition: service_healthy

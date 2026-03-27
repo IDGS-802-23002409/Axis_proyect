@@ -79,8 +79,11 @@
                     ? `<span class="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded-full border border-green-200">Activo</span>`
                     : `<span class="px-3 py-1 bg-zinc-100 text-zinc-400 text-[10px] font-bold uppercase rounded-full border border-zinc-200">Inactivo</span>`;
 
-                document.getElementById('modal-detalles').classList.remove('hidden');
-            };
+                document.getElementById('det-fecha-creacion').innerText = data.fecha_creacion;
+                document.getElementById('det-fecha-actualizacion').innerText = data.fecha_actualizacion;
+                document.getElementById('det-usuario-creo').innerText = data.usuario_creo;
+
+        document.getElementById('modal-detalles').classList.remove('hidden');            };
         });
 
         // BOTÓN ELIMINAR

@@ -7,14 +7,14 @@ class Proveedor(db.Model):
     __tablename__ = 'proveedores'
 
     uuid_proveedor = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    razon_social = Column(String(150), nullable=False)
-    rfc = Column(String(20), nullable=False)
+    razon_social = Column(String(150), nullable=False, unique=True)
+    rfc = Column(String(20), nullable=False, unique=True)
     contacto_nombre = Column(String(100))
     fecha_creacion = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
     usuario_creo_uuid = Column(String(36))
     estatus = Column(Boolean, default=True)
-    telefono = Column(String(20), nullable=False)
+    telefono = Column(String(20), nullable=False, unique=True)
     categoria_insumo = Column(String(30), nullable=False )
     def __repr__(self):
         return f'<Proveedor {self.razon_social}>'

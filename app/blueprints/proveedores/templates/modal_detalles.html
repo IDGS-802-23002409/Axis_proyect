@@ -1,8 +1,10 @@
-<div id="modal-detalles" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden px-4">
+<div id="modal-detalles"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden px-4">
     <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8">
         <div class="flex justify-between items-center mb-6">
             <h3 class="font-black text-xl uppercase italic tracking-tighter">Detalles del Proveedor</h3>
-            <button onclick="document.getElementById('modal-detalles').classList.add('hidden')" class="text-muted-foreground hover:text-black">
+            <button onclick="document.getElementById('modal-detalles').classList.add('hidden')"
+                class="text-muted-foreground hover:text-black">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
@@ -36,6 +38,24 @@
             <div>
                 <p class="text-[10px] font-bold uppercase text-muted-foreground">Estatus</p>
                 <p id="det-estatus" class="text-sm font-medium"></p>
+            </div>
+
+            <hr class="border-border my-4">
+            <div class="bg-secondary/50 p-4 rounded-xl space-y-3">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase text-muted-foreground">Fecha Registro</p>
+                        <p id="det-fecha-creacion" class="text-[11px] font-mono"></p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase text-muted-foreground">Última Edición</p>
+                        <p id="det-fecha-actualizacion" class="text-[11px] font-mono"></p>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-[10px] uppercase text-muted-foreground font-bold">UUID del Creador</p>
+                    <p id="det-usuario-creo" class="text-[10px] font-mono break-all text-primary"></p>
+                </div>
             </div>
         </div>
     </div>
