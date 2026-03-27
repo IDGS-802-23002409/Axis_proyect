@@ -1,0 +1,59 @@
+﻿{% extends "produccion/layout.html" %}
+{% block title %}Detalle del Producto - {{ producto.sku_especifico }}{% endblock %}
+
+{% block header %}Detalle del Producto{% endblock %}
+
+{% block container %}
+<div class="px-8 pb-10">
+  <div class="mb-6 flex items-center justify-between gap-2">
+    <a href="{{ url_for('productos.index') }}" class="inline-flex items-center gap-2 text-primary hover:text-primary/90 text-sm font-semibold">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i>
+      Volver al listado
+    </a>
+    <span class="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">SKU: {{ producto.sku_especifico }}</span>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+    <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Producto</h3>
+      <p class="text-lg font-bold">{{ modelo.nombre_modelo }}</p>
+      <p class="text-sm text-muted-foreground mt-1">{{ producto.talla }} • {{ modelo.categoria.nombre or 'Sin categoría' }}</p>
+    </div>
+
+    <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Inventario</h3>
+      <p class="text-2xl font-bold">{{ producto.stock_fisico_actual }}</p>
+      <span class="inline-flex items-center rounded-full text-xs font-semibold px-2 py-1 mt-2 {% if producto.stock_fisico_actual == 0 %}bg-rose-500 text-white{% elif producto.stock_fisico_actual <= producto.stock_minimo_alerta %}bg-amber-500 text-gray-900{% else %}bg-emerald-500 text-white{% endif %}">
+        {% if producto.stock_fisico_actual == 0 %}Agotado{% elif producto.stock_fisico_actual <= producto.stock_minimo_alerta %}Bajo Stock{% else %}En Stock{% endif %}
+      </span>
+      <p class="text-xs text-muted-foreground mt-2">Mínimo alerta: {{ producto.stock_minimo_alerta }}</p>
+    </div>
+
+    <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Precio</h3>
+      <p class="text-2xl font-bold text-primary">${{ '%.2f'|format(producto.precio_venta) }}</p>
+      <p class="text-xs text-muted-foreground mt-2">Actualizado: {{ producto.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') }}</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
+      <h4 class="text-sm font-semibold mb-3">Detalles</h4>
+      <dl class="grid grid-cols-1 gap-2 text-sm text-foreground">
+        <div class="flex justify-between"><dt class="font-medium">SKU</dt><dd>{{ producto.sku_especifico }}</dd></div>
+        <div class="flex justify-between"><dt class="font-medium">Modelo</dt><dd>{{ modelo.nombre_modelo }}</dd></div>
+        <div class="flex justify-between"><dt class="font-medium">Talla</dt><dd>{{ producto.talla }}</dd></div>
+        <div class="flex justify-between"><dt class="font-medium">Categoría</dt><dd>{{ modelo.categoria.nombre or 'No asignada' }}</dd></div>
+        <div class="flex justify-between"><dt class="font-medium">Creado</dt><dd>{{ producto.fecha_creacion.strftime('%d/%m/%Y') }}</dd></div>
+        <div class="flex justify-between"><dt class="font-medium">Última actualización</dt><dd>{{ producto.fecha_actualizacion.strftime('%d/%m/%Y') }}</dd></div>
+        <div class="flex justify-between"><dt class="font-medium">Estatus</dt><dd>{% if producto.active %}Activo{% else %}Inactivo{% endif %}</dd></div>
+      </dl>
+    </div>
+
+    <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
+      <h4 class="text-sm font-semibold mb-3">Descripción</h4>
+      <p class="text-sm text-foreground leading-relaxed">{{ modelo.descripcion or 'No hay descripción disponible para este modelo.' }}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

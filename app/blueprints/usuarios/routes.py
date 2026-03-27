@@ -7,7 +7,7 @@ from app.models.usuarios import Usuario, Role,roles_usuarios
 from app.utils.database_connection import db
 
 
-@usuarios_bp.route("/")
+@usuarios_bp.route("/usuario")
 def index():
     nombre_busqueda = request.args.get('q', '').strip()
     rol_filtro = request.args.get('rol', '').strip()
@@ -136,10 +136,6 @@ def deleteUser(uuid):
 
     if any(role.name == "admin" for role in user.roles):
         flash("No se puede eliminar un administrador", "error")
-        return redirect(url_for('usuarios.index'))
-
-    if not user.active:
-        flash("Este usuario ya está inactivo", "error")
         return redirect(url_for('usuarios.index'))
 
     user.active = False

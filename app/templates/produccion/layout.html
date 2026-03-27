@@ -55,10 +55,16 @@
           Administración
         </p>
 
-        <a href="#" class="flex items-center gap-3 px-4 h-12 rounded-md bg-black text-white">
-          <i data-lucide="users" class="w-5 h-5"></i>
-          Usuarios
-        </a>
+        <nav class="space-y-1">
+          <a href="{{ url_for('usuarios.index') }}" class="flex items-center gap-3 px-4 h-12 rounded-md hover:bg-black hover:text-white transition-colors">
+            <i data-lucide="users" class="w-5 h-5"></i>
+            Usuarios
+          </a>
+          <a href="{{ url_for('productos.index') }}" class="flex items-center gap-3 px-4 h-12 rounded-md hover:bg-black hover:text-white transition-colors">
+            <i data-lucide="package" class="w-5 h-5"></i>
+            Productos Terminados
+          </a>
+        </nav>
       </div>
 
     </aside>
@@ -69,8 +75,8 @@
       <!-- TOPBAR -->
       <div class="h-20 px-10 flex items-center justify-between">
         <h2 class="uppercase font-bold text-lg">
-  {% block header %}{% endblock %}
-</h2>
+          {% block header %}{% endblock %}
+        </h2>
 
         <div class="flex items-center gap-4">
 
@@ -89,14 +95,38 @@
 
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-      {% for category, message in messages %}
-      <div class="p-4 mb-4 text-sm rounded-lg z-10
-{% if category == 'success' %} bg-green-100 text-green-800
-{% elif category == 'error' %} bg-red-100 text-red-800
+      <div class="fixed top-4 right-4 z-50 space-y-2">
+        {% for category, message in messages %}
+        <div class="flex items-center p-4 mb-4 text-sm rounded-lg shadow-lg border flash-message-enter
+{% if category == 'success' %} bg-green-50 border-green-200 text-green-800
+{% elif category == 'error' %} bg-red-50 border-red-200 text-red-800
+{% elif category == 'warning' %} bg-yellow-50 border-yellow-200 text-yellow-800
+{% elif category == 'info' %} bg-blue-50 border-blue-200 text-blue-800
+{% else %} bg-gray-50 border-gray-200 text-gray-800
 {% endif %}">
-        {{ message }}
+          <div class="shrink-0 mr-3">
+            {% if category == 'success' %}
+            <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
+            {% elif category == 'error' %}
+            <i data-lucide="x-circle" class="w-5 h-5 text-red-600"></i>
+            {% elif category == 'warning' %}
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-600"></i>
+            {% elif category == 'info' %}
+            <i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
+            {% else %}
+            <i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>
+            {% endif %}
+          </div>
+          <div class="flex-1 font-medium">
+            {{ message }}
+          </div>
+          <button type="button" class="ml-3 shrink-0 text-current hover:opacity-75 transition-opacity"
+            onclick="this.parentElement.remove()">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
       {% endif %}
       {% endwith %}
 
@@ -109,6 +139,14 @@
 
   <script>
     lucide.createIcons();
+
+    // Función para recrear iconos cuando se agregan elementos dinámicamente
+    function refreshIcons() {
+      lucide.createIcons();
+    }
+
+    // Recrear iconos después de un pequeño delay para asegurar que se rendericen
+    setTimeout(refreshIcons, 100);
   </script>
 
 </body>
