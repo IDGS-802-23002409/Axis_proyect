@@ -13,11 +13,11 @@ def index():
 
     query = Insumo.query.filter(Insumo.estatus == 'ACTIVO')
 
-    # 🔹 categorías (desde la tabla relacionada)
+    # categorías (desde la tabla relacionada)
     categorias = db.session.query(Categoria.nombre).distinct().all()
     categorias = [c[0] for c in categorias]
 
-    # 🔎 búsqueda
+    # búsqueda
     if busqueda:
         busqueda_like = f"%{busqueda.lower()}%"
 
@@ -28,7 +28,7 @@ def index():
             )
         )
 
-    # 🏷 filtro por categoría (RELACIÓN)
+    # filtro por categoría (RELACIÓN)
     if categoria:
         query = query.join(Insumo.categoria).filter(
             Categoria.nombre == categoria

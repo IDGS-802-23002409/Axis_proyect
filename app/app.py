@@ -4,6 +4,7 @@ from app.utils.config import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 from app.utils.database_connection import db
 import app.models  # noqa: F401 — ensures all models are registered with SQLAlchemy
 from app.blueprints.insumos import insumos_bp
+from app.blueprints.categorias import categorias_bp
 #
 
 import os
@@ -31,6 +32,7 @@ def create_app():
 
     #INSUMOS
     application.register_blueprint(insumos_bp)
+    application.register_blueprint(categorias_bp)
     return application
     #
 
