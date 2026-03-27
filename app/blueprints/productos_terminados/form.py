@@ -31,7 +31,7 @@ class ProductoTerminadoForm(FlaskForm):
 
     stock_minimo_alerta = IntegerField('Stock mínimo', validators=[
         validators.DataRequired(message='Stock mínimo requerido'),
-        validators.NumberRange(min=0, message='Stock mínimo debe ser > 0')
+        validators.NumberRange(min=1, message='Stock mínimo debe ser > 0')
     ])
 
     active = RadioField('Estatus', choices=[
