@@ -55,16 +55,10 @@
           Administración
         </p>
 
-        <nav class="space-y-1">
-          <a href="{{ url_for('usuarios.index') }}" class="flex items-center gap-3 px-4 h-12 rounded-md hover:bg-black hover:text-white transition-colors">
-            <i data-lucide="users" class="w-5 h-5"></i>
-            Usuarios
-          </a>
-          <a href="{{ url_for('productos.index') }}" class="flex items-center gap-3 px-4 h-12 rounded-md hover:bg-black hover:text-white transition-colors">
-            <i data-lucide="package" class="w-5 h-5"></i>
-            Productos Terminados
-          </a>
-        </nav>
+        <a href="{{ url_for('usuarios.index') }}" class="flex items-center gap-3 px-4 h-12 rounded-md bg-black text-white">
+          <i data-lucide="users" class="w-5 h-5"></i>
+          Usuarios
+        </a>
       </div>
 
     </aside>

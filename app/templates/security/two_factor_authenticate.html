@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación | Axis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/security.css') }}">
+    <script src="{{ url_for('static', filename='js/security.js') }}" defer></script>
+    <style>
+        .code-inputs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .code-input {
+            width: 50px;
+            height: 60px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-family: var(--font-urban);
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+        }
+
+        .code-input:focus {
+            border-color: #fff;
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="security-container">
+        <div class="side-logo">
+            <div class="urban-bg-text pos-1">VERIFY</div>
+            <img src="{{ url_for('static', filename='images/urban-bg.png') }}" alt="Axis Urban">
+        </div>
+        <div class="side-form">
+            <div class="urban-bg-text pos-2">IDENTITY</div>
+            <div class="form-wrapper">
+                <h1>2FA AUTH</h1>
+                <p style="text-align: center; margin-bottom: 30px; font-size: 0.9rem; opacity: 0.8;">Ingresa el código
+                    enviado</p>
+
+                <form action="#" method="POST">
+                    <div class="code-inputs">
+                        <input type="text" maxlength="1" class="code-input">
+                        <input type="text" maxlength="1" class="code-input">
+                        <input type="text" maxlength="1" class="code-input">
+                        <input type="text" maxlength="1" class="code-input">
+                        <input type="text" maxlength="1" class="code-input">
+                        <input type="text" maxlength="1" class="code-input">
+                    </div>
+
+                    <button type="submit" class="btn-urban">VERIFICAR</button>
+
+                    <div style="margin-top: 20px; text-align: center; font-size: 0.8rem;">
+                        <p style="opacity: 0.5;">¿No recibiste el código? <br><a href="#"
+                                style="color: #fff; text-decoration: underline;">Reenviar</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
