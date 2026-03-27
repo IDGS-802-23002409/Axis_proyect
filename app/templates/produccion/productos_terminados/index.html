@@ -6,15 +6,15 @@
 {% block container %}
 <div class="px-10 pb-10">
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-    <div class="p-4 bg-card border border-border rounded-lg cursor-pointer hover:bg-secondary transition-colors" onclick="filterByStock('todos')">
+    <div class="p-4 bg-card border border-border rounded-lg">
       <p class="text-xs text-muted-foreground">Total Productos</p>
       <p class="text-2xl font-bold">{{ total }}</p>
     </div>
-    <div class="p-4 bg-card border border-border rounded-lg cursor-pointer hover:bg-secondary transition-colors" onclick="filterByStock('bajo')">
+    <div class="p-4 bg-card border border-border rounded-lg">
       <p class="text-xs text-muted-foreground">Bajo Stock</p>
       <p class="text-2xl font-bold text-amber-500">{{ en_bajo_stock }}</p>
     </div>
-    <div class="p-4 bg-card border border-border rounded-lg cursor-pointer hover:bg-secondary transition-colors" onclick="filterByStock('agotado')">
+    <div class="p-4 bg-card border border-border rounded-lg">
       <p class="text-xs text-muted-foreground">Agotados</p>
       <p class="text-2xl font-bold text-rose-500">{{ agotados }}</p>
     </div>
@@ -74,6 +74,15 @@
             <option value="">Todos</option>
             <option value="activo" {% if filtro_estatus == 'activo' %}selected{% endif %}>Activo</option>
             <option value="inactivo" {% if filtro_estatus == 'inactivo' %}selected{% endif %}>Inactivo</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs text-muted-foreground" for="filtro">Filtro de Stock</label>
+          <select name="filtro" id="filtro" class="w-full border border-border bg-input rounded-md px-3 py-2">
+            <option value="">Todos</option>
+            <option value="bajo_stock" {% if filtro_stock == 'bajo_stock' %}selected{% endif %}>Bajo stock</option>
+            <option value="agotado" {% if filtro_stock == 'agotado' %}selected{% endif %}>Agotado</option>
           </select>
         </div>
 
@@ -175,19 +184,6 @@
     const modal = document.getElementById("deleteModal");
     modal.classList.add("hidden");
     modal.classList.remove("flex");
-  }
-
-  function filterByStock(type) {
-    if (type === 'todos') {
-      // Mostrar todos los productos sin filtro de stock
-      window.location.href = `{{ url_for('productos.index') }}`;
-    } else if (type === 'bajo') {
-      // Filtrar por bajo stock: stock <= stock_minimo_alerta y > 0
-      window.location.href = `{{ url_for('productos.index') }}?filtro=bajo_stock`;
-    } else if (type === 'agotado') {
-      // Filtrar por agotados: stock <= 0
-      window.location.href = `{{ url_for('productos.index') }}?filtro=agotado`;
-    }
   }
 </script>
 {% endblock %}

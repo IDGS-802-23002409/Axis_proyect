@@ -20,18 +20,18 @@ class ProductoTerminadoForm(FlaskForm):
     ], validators=[validators.DataRequired(message='La talla es requerida')])
 
     precio_venta = DecimalField('Precio de venta', places=2, rounding=None, validators=[
-        validators.DataRequired(message='Precio requerido'),
+        validators.InputRequired(message='Precio requerido'),
         validators.NumberRange(min=0, message='Precio debe ser >= 0')
     ])
 
     stock_fisico_actual = IntegerField('Stock físico actual', validators=[
-        validators.DataRequired(message='Stock requerido'),
+        validators.InputRequired(message='Stock requerido'),
         validators.NumberRange(min=0, message='Stock debe ser >= 0')
     ])
 
     stock_minimo_alerta = IntegerField('Stock mínimo', validators=[
         validators.DataRequired(message='Stock mínimo requerido'),
-        validators.NumberRange(min=0, message='Stock mínimo debe ser >= 0')
+        validators.NumberRange(min=0, message='Stock mínimo debe ser > 0')
     ])
 
     active = RadioField('Estatus', choices=[

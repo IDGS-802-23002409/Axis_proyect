@@ -58,6 +58,7 @@ def index():
         filtro_talla=talla,
         filtro_sku=sku,
         filtro_estatus=estatus,
+        filtro_stock=filtro,
     )
 
 
@@ -74,6 +75,12 @@ def registro_producto():
             stock_fisico_actual=form.stock_fisico_actual.data,
             stock_minimo_alerta=form.stock_minimo_alerta.data,
         )
+        uniqueSKU = ProductoTerminado.query.filter_by(
+            sku_especifico = form.sku_especifico.data.strip()
+            ).first()
+        if uniqueSKU:
+            flash('El sku debe ser unico', 'error')
+            return redirect(url_for('productos.registro_producto'))
         db.session.add(producto)
         db.session.commit()
 
@@ -91,13 +98,23 @@ def editar_producto(uuid):
     if form.validate_on_submit():
         nuevo_active = bool(form.active.data)
         nuevo_stock = form.stock_fisico_actual.data if form.stock_fisico_actual.data is not None else producto.stock_fisico_actual
+        nuevo_sku = form.sku_especifico.data.strip()
+
+        sku_duplicado = ProductoTerminado.query.filter(
+            ProductoTerminado.sku_especifico == nuevo_sku,
+            ProductoTerminado.uuid_producto != producto.uuid_producto
+        ).first()
+
+        if sku_duplicado:
+            flash('El SKU ya existe en otro producto', 'error')
+            return redirect(url_for('productos.editar_producto', uuid=uuid))
 
         if nuevo_stock > 0 and not nuevo_active:
             flash('No se puede desactivar un producto con stock físico > 0', 'error')
             return redirect(url_for('productos.editar_producto', uuid=uuid))
 
         producto.uuid_modelo = form.modelo.data
-        producto.sku_especifico = form.sku_especifico.data.strip()
+        producto.sku_especifico = nuevo_sku
         producto.talla = form.talla.data
         producto.precio_venta = form.precio_venta.data
         producto.active = nuevo_active
