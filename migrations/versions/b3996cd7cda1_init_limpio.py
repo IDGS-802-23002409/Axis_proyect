@@ -1,8 +1,8 @@
-"""primer migracion
+"""init limpio
 
-Revision ID: 3d37ca1d555a
+Revision ID: b3996cd7cda1
 Revises: 
-Create Date: 2026-03-23 17:41:06.838763
+Create Date: 2026-03-26 20:20:17.298126
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '3d37ca1d555a'
+revision = 'b3996cd7cda1'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -39,17 +39,29 @@ def upgrade():
     sa.Column('usuario_creo_uuid', sa.String(length=36), nullable=True),
     sa.PrimaryKeyConstraint('uuid_proveedor')
     )
+    op.create_table('role',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=80), nullable=True),
+    sa.Column('description', sa.String(length=255), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name')
+    )
     op.create_table('usuarios',
     sa.Column('uuid_usuario', sa.String(length=36), nullable=False),
     sa.Column('nombre_completo', sa.String(length=150), nullable=False),
     sa.Column('email', sa.String(length=120), nullable=False),
-    sa.Column('password_hash', sa.String(length=255), nullable=False),
-    sa.Column('rol', sa.Enum('Admin', 'Producción', 'Gerente', 'Cliente'), nullable=False),
-    sa.Column('estatus', sa.Boolean(), nullable=True),
+    sa.Column('password', sa.String(length=255), nullable=False),
+    sa.Column('active', sa.Boolean(), nullable=True),
     sa.Column('fecha_creacion', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.Column('fecha_actualizacion', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+    sa.Column('fs_uniquifier', sa.String(length=64), nullable=False),
+    sa.Column('confirmed_at', sa.DateTime(), nullable=True),
+    sa.Column('tf_primary_method', sa.String(length=64), nullable=True),
+    sa.Column('tf_totp_secret', sa.String(length=255), nullable=True),
+    sa.Column('password_changed_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.PrimaryKeyConstraint('uuid_usuario'),
-    sa.UniqueConstraint('email')
+    sa.UniqueConstraint('email'),
+    sa.UniqueConstraint('fs_uniquifier')
     )
     op.create_table('clientes',
     sa.Column('uuid_cliente', sa.String(length=36), nullable=False),
@@ -69,7 +81,7 @@ def upgrade():
     sa.Column('uuid_proveedor', sa.String(length=36), nullable=False),
     sa.Column('uuid_usuario_registro', sa.String(length=36), nullable=False),
     sa.Column('fecha_compra', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
-    sa.Column('estatus', sa.Enum('Pendiente', 'Recibido', 'Cancelado'), nullable=True),
+    sa.Column('estatus', sa.Enum('PENDIENTE', 'RECIBIDO', 'CANCELADO', name='estatus_compra_enum'), nullable=True),
     sa.ForeignKeyConstraint(['uuid_proveedor'], ['proveedores.uuid_proveedor'], ),
     sa.ForeignKeyConstraint(['uuid_usuario_registro'], ['usuarios.uuid_usuario'], ),
     sa.PrimaryKeyConstraint('uuid_compra')
@@ -79,11 +91,14 @@ def upgrade():
     sa.Column('sku', sa.String(length=50), nullable=True),
     sa.Column('nombre', sa.String(length=100), nullable=False),
     sa.Column('uuid_categoria', sa.String(length=36), nullable=True),
-    sa.Column('costo_unitario_individual', sa.Numeric(precision=12, scale=4), nullable=False),
+    sa.Column('unidad_medida', sa.Enum('CAJA', 'ROLLO', name='unidad_compra_enum'), nullable=False),
+    sa.Column('contenido_cantidad', sa.Numeric(precision=12, scale=4), nullable=False),
+    sa.Column('contenido_unidad_medida', sa.Enum('METRO', 'PIEZA', name='unidad_base_enum'), nullable=False),
     sa.Column('stock_total_acumulado', sa.Numeric(precision=12, scale=4), nullable=True),
     sa.Column('stock_minimo_alerta', sa.Numeric(precision=12, scale=4), nullable=True),
     sa.Column('fecha_creacion', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.Column('fecha_actualizacion', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+    sa.Column('estatus', sa.Enum('ACTIVO', 'INACTIVO', name='estatus_insumo_enum'), nullable=True),
     sa.Column('usuario_actualizo_uuid', sa.String(length=36), nullable=True),
     sa.ForeignKeyConstraint(['uuid_categoria'], ['categorias.uuid_categoria'], ),
     sa.PrimaryKeyConstraint('uuid_insumo'),
@@ -99,12 +114,17 @@ def upgrade():
     sa.ForeignKeyConstraint(['uuid_categoria'], ['categorias.uuid_categoria'], ),
     sa.PrimaryKeyConstraint('uuid_modelo')
     )
+    op.create_table('roles_usuarios',
+    sa.Column('usuario_id', sa.String(length=36), nullable=True),
+    sa.Column('role_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['role_id'], ['role.id'], ),
+    sa.ForeignKeyConstraint(['usuario_id'], ['usuarios.uuid_usuario'], )
+    )
     op.create_table('compras_detalle',
     sa.Column('uuid_detalle_compra', sa.String(length=36), nullable=False),
     sa.Column('uuid_compra', sa.String(length=36), nullable=False),
     sa.Column('uuid_insumo', sa.String(length=36), nullable=False),
     sa.Column('cantidad_comprada', sa.Numeric(precision=12, scale=4), nullable=False),
-    sa.Column('unidad_medida', sa.String(length=20), nullable=False),
     sa.Column('costo_unitario_compra', sa.Numeric(precision=12, scale=2), nullable=False),
     sa.ForeignKeyConstraint(['uuid_compra'], ['compras_encabezado.uuid_compra'], ),
     sa.ForeignKeyConstraint(['uuid_insumo'], ['insumos.uuid_insumo'], ),
@@ -158,7 +178,7 @@ def upgrade():
     op.create_table('rollos_inventario',
     sa.Column('uuid_rollo', sa.String(length=36), nullable=False),
     sa.Column('uuid_insumo', sa.String(length=36), nullable=False),
-    sa.Column('uuid_detalle_compra', sa.String(length=36), nullable=True),
+    sa.Column('uuid_detalle_compra', sa.String(length=36), nullable=False),
     sa.Column('metraje_inicial', sa.Numeric(precision=12, scale=4), nullable=False),
     sa.Column('metraje_continuo_actual', sa.Numeric(precision=12, scale=4), nullable=False),
     sa.Column('ancho_real_recibido', sa.Numeric(precision=5, scale=2), nullable=True),
@@ -226,11 +246,13 @@ def downgrade():
     op.drop_table('ventas_encabezado')
     op.drop_table('productos_terminados')
     op.drop_table('compras_detalle')
+    op.drop_table('roles_usuarios')
     op.drop_table('modelos_ropa')
     op.drop_table('insumos')
     op.drop_table('compras_encabezado')
     op.drop_table('clientes')
     op.drop_table('usuarios')
+    op.drop_table('role')
     op.drop_table('proveedores')
     op.drop_table('categorias')
     # ### end Alembic commands ###

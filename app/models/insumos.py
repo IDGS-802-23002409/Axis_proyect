@@ -1,13 +1,22 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, func
-from sqlalchemy import Enum
+from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, func, Enum
 
-unidad_medida_enum = Enum(
-    'METRO',
-    'PIEZA',
-    name='unidad_medida_enum'
+#  cómo se compra el insumo (presentación comercial)
+unidad_compra_enum = Enum(
+    'CAJA',   # Ej: caja de botones, caja de agujas
+    'ROLLO',  # Ej: rollo de tela, rollo de hilo
+    name='unidad_compra_enum'
 )
+
+#  unidad real en la que se usa o consume el insumo
+unidad_base_enum = Enum(
+    'METRO',  # Para telas, hilos, etc.
+    'PIEZA',  # Para botones, agujas, etc.
+    name='unidad_base_enum'
+)
+
+# Estado del insumo
 estatus_enum = Enum(
     'ACTIVO',
     'INACTIVO',
@@ -17,19 +26,53 @@ estatus_enum = Enum(
 class Insumo(db.Model):
     __tablename__ = 'insumos'
 
+    # Identificador único
     uuid_insumo = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+
     sku = Column(String(50), unique=True)
     nombre = Column(String(100), nullable=False)
     uuid_categoria = Column(String(36), ForeignKey('categorias.uuid_categoria'))
-    # costo_unitario_individual = Column(Numeric(12, 4), nullable=False, default=0) 
-    unidad_medida = Column(unidad_medida_enum, nullable=False)
+
+    # 
+    #  CONFIGURACIÓN DE UNIDADES 
+    # 
+
+    #  Cómo compras el insumo (presentación)
+    # Ejemplo:
+    # - Tela → ROLLO
+    # - Botones → CAJA
+    unidad_medida = Column(unidad_compra_enum, nullable=False)
+
+    # Cuánto contiene UNA unidad de compra
+    # Ejemplo:
+    # - 1 rollo de tela = 50 metros
+    # - 1 caja de botones = 100 piezas
+    contenido_cantidad = Column(Numeric(12, 4), nullable=False)
+
+    #  En qué unidad se mide ese contenido
+    # Ejemplo:
+    # - Tela → METRO
+    # - Botones → PIEZA
+    contenido_unidad_medida = Column(unidad_base_enum, nullable=False)
+
+    # 
+    # INVENTARIO REAL
+    # 
+
+    #  Stock total SIEMPRE en unidad base (nunca en cajas o rollos)
+    # Ejemplo:
+    # - Compras 3 rollos de tela de 50m → stock = 150 METROS
+    # - Compras 2 cajas de botones de 100 → stock = 200 PIEZAS
     stock_total_acumulado = Column(Numeric(12, 4), default=0)
+
+    #  Alerta mínima de inventario
     stock_minimo_alerta = Column(Numeric(12, 4), default=0)
+
+
     fecha_creacion = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
     estatus = Column(estatus_enum, default='ACTIVO')
     usuario_actualizo_uuid = Column(String(36))
-
     categoria = db.relationship('Categoria', backref=db.backref('insumos', lazy=True))
 
     def __repr__(self):

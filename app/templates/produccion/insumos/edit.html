@@ -24,6 +24,7 @@
         <form method="POST" class="space-y-12">
             {{ form.hidden_tag() }}
 
+            <!-- 🔹 INFORMACIÓN BÁSICA -->
             <section>
                 <div class="flex items-center gap-3 mb-6">
                     <i class="fas fa-info-circle text-neutral-300 text-sm"></i>
@@ -36,51 +37,68 @@
 
                     <!-- Nombre -->
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-bold uppercase tracking-wider text-neutral-700">
-                            Nombre del Insumo *
-                        </label>
-                        {{ form.nombre(class="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl
-                        text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all")
-                        }}
+                        <label class="text-[10px] font-bold uppercase">Nombre *</label>
+                        {{ form.nombre(class="input") }}
                         {% for error in form.nombre.errors %}
                         <span class="text-xs text-red-500">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <!-- SKU (bloqueado) -->
+                    <!-- SKU -->
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-bold uppercase tracking-wider text-neutral-700">
-                            SKU / Código
-                        </label>
+                        <label class="text-[10px] font-bold uppercase">SKU</label>
                         <p class="text-[10px] text-neutral-400">
                             El SKU no se puede modificar
                         </p>
-                        {{ form.sku(
-                        class="w-full px-4 py-3 bg-neutral-100 border border-neutral-200 rounded-xl text-sm font-mono
-                        cursor-not-allowed",
-                        readonly=True
-                        ) }}
+                        {{ form.sku(class="input bg-neutral-100 cursor-not-allowed", readonly=True) }}
                     </div>
 
                     <!-- Categoría -->
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-bold uppercase tracking-wider text-neutral-700">
-                            Categoría
-                        </label>
-                        {{ form.uuid_categoria(class="w-full px-4 py-3 bg-neutral-50 border border-neutral-200
-                        rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black
-                        transition-all") }}
+                        <label class="text-[10px] font-bold uppercase">Categoría</label>
+                        {{ form.uuid_categoria(class="input") }}
                     </div>
 
-                    <!-- Unidad de Medida -->
+                </div>
+            </section>
+
+            <!-- 🔹 CONFIGURACIÓN DE UNIDADES (LO QUE TE FALTABA) -->
+            <section>
+                <div class="flex items-center gap-3 mb-6">
+                    <i class="fas fa-ruler-combined text-neutral-300 text-sm"></i>
+                    <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-400">
+                        Configuración de Unidades
+                    </h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                    <!-- Unidad de compra -->
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-bold uppercase tracking-wider text-neutral-700">
-                            Unidad de Medida *
+                        <label class="text-[10px] font-bold uppercase">
+                            ¿Cómo lo compras? *
                         </label>
-                        {{ form.unidad_medida(class="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl
-                        text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all")
-                        }}
-                        {% for error in form.unidad_medida.errors %}
+                        {{ form.unidad_medida(class="input") }}
+                    </div>
+
+                    <!-- Cantidad -->
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-bold uppercase">
+                            Cantidad por unidad *
+                        </label>
+                        {{ form.contenido_cantidad(class="input") }}
+                        {% for error in form.contenido_cantidad.errors %}
+                        <span class="text-xs text-red-500">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Unidad base -->
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-bold uppercase">
+                            ¿En qué se usa? *
+                        </label>
+                        {{ form.contenido_unidad_medida(class="input") }}
+                        {% for error in form.contenido_unidad_medida.errors %}
                         <span class="text-xs text-red-500">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -88,8 +106,7 @@
                 </div>
             </section>
 
-            <hr class="border-neutral-100">
-
+            <!-- 🔹 STOCK -->
             <section>
                 <div class="flex items-center gap-3 mb-6">
                     <i class="fas fa-boxes text-neutral-300 text-sm"></i>
@@ -100,14 +117,11 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-                    <!-- Stock Mínimo -->
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-bold uppercase tracking-wider text-neutral-700">
-                            Stock Mínimo (Alerta) *
+                        <label class="text-[10px] font-bold uppercase">
+                            Stock mínimo *
                         </label>
-                        {{ form.stock_minimo_alerta(class="w-full px-4 py-3 bg-neutral-50 border border-neutral-200
-                        rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black
-                        transition-all") }}
+                        {{ form.stock_minimo_alerta(class="input") }}
                         {% for error in form.stock_minimo_alerta.errors %}
                         <span class="text-xs text-red-500">{{ error }}</span>
                         {% endfor %}
@@ -116,13 +130,13 @@
                 </div>
             </section>
 
+            <!-- 🔹 BOTONES -->
             <div class="pt-8 flex items-center gap-4">
 
-                {{ form.submit(class="bg-black text-white px-10 py-4 rounded-xl text-xs font-black tracking-widest
-                hover:bg-neutral-800 transition-all shadow-lg cursor-pointer uppercase") }}
+                {{ form.submit(class="btn-primary") }}
 
                 <a href="{{ url_for('insumos_bp.index') }}"
-                    class="px-10 py-4 rounded-xl text-xs font-black tracking-widest text-neutral-400 hover:text-black hover:bg-neutral-50 transition-all uppercase">
+                    class="btn-cancel">
                     Cancelar
                 </a>
             </div>

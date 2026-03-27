@@ -1,128 +1,124 @@
 {% extends "produccion/layout.html" %}
 
 {% block container %}
-<div class="min-h-screen bg-white text-neutral-900 font-sans p-8 xl:p-12">
+<div class="min-h-screen bg-neutral-50 text-neutral-900 font-sans p-6 md:p-12">
 
-    <div class="mb-8">
+    <div class="mb-10">
         <a href="{{ url_for('insumos_bp.index') }}"
-            class="group flex items-center gap-2 text-[10px] font-bold text-neutral-400 hover:text-black uppercase tracking-widest transition-all">
+            class="group inline-flex items-center gap-2 text-[11px] font-bold text-neutral-400 hover:text-black uppercase tracking-[0.2em] transition-all">
             <i class="fas fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
             Volver a Insumos
         </a>
     </div>
 
-    <div class="max-w-4xl">
+    <div class="max-w-4xl bg-white p-8 md:p-12 rounded-xl shadow-sm border border-neutral-100">
         <header class="mb-12">
-            <h1 class="text-3xl font-black tracking-tighter uppercase text-black mb-2">Registrar Nuevo Insumo</h1>
-            <p class="text-sm text-neutral-500">Completa los detalles para agregar un nuevo material, tela o avío al
-                inventario.</p>
+            <h1 class="text-4xl font-black uppercase tracking-tight mb-2">Registrar Insumo</h1>
+            <p class="text-neutral-500 max-w-lg">
+                Define cómo se compra y cómo se usa el insumo para mantener un control de inventario preciso.
+            </p>
         </header>
 
         <form method="POST" class="space-y-12">
             {{ form.hidden_tag() }}
 
             <section>
-                <div class="flex items-center gap-3 mb-6">
-                    <i class="fas fa-info-circle text-neutral-300 text-sm"></i>
-                    <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-400">Información Básica
-                    </h2>
-                </div>
+                <h2 class="text-[11px] font-black uppercase text-neutral-400 mb-8 border-b border-neutral-100 pb-2">
+                    Información Básica
+                </h2>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-                    <!-- Nombre -->
+                <div class="grid md:grid-cols-2 gap-x-10 gap-y-8">
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-bold uppercase tracking-wider text-neutral-700">Nombre del Insumo
-                            *</label>
-                        {{ form.nombre(class="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl
-                        text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-black/5
-                        focus:border-black transition-all", placeholder="Ej: Frisa Invisible Heavy") }}
+                        <label class="text-xs font-bold uppercase tracking-wider text-neutral-700">Nombre *</label>
+                        {{ form.nombre(class="w-full border-b-2 border-neutral-200 py-2 focus:border-black outline-none
+                        transition-colors", placeholder="Ej. Tela de Algodón") }}
                         {% for error in form.nombre.errors %}
-                        <span class="text-xs text-red-500">{{ error }}</span>
+                        <span class="text-red-500 text-[10px] font-bold uppercase mt-1">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <!-- SKU -->
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-bold uppercase tracking-wider text-neutral-700">SKU / Código
-                            *</label>
-                        {{ form.sku(class="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm
-                        font-mono placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-black/5
-                        focus:border-black transition-all", placeholder="Ej: INS-TEL-012") }}
+                        <label class="text-xs font-bold uppercase tracking-wider text-neutral-700">SKU</label>
+                        {{ form.sku(class="w-full border-b-2 border-neutral-200 py-2 focus:border-black outline-none
+                        transition-colors", placeholder="INS-001") }}
                         {% for error in form.sku.errors %}
-                        <span class="text-xs text-red-500">{{ error }}</span>
+                        <span class="text-red-500 text-[10px] font-bold uppercase mt-1">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <!-- Categoría -->
-                    <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-bold uppercase tracking-wider text-neutral-700">Categoría
-                            *</label>
-                        {{ form.uuid_categoria(class="w-full px-4 py-3 bg-neutral-50 border border-neutral-200
-                        rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black
-                        transition-all") }}
-                        {% for error in form.uuid_categoria.errors %}
-                        <span class="text-xs text-red-500">{{ error }}</span>
-                        {% endfor %}
+                    <div class="flex flex-col gap-2 md:col-span-2">
+                        <label class="text-xs font-bold uppercase tracking-wider text-neutral-700">Categoría</label>
+                        {{ form.uuid_categoria(class="w-full bg-neutral-100 border-none rounded-lg p-3 focus:ring-2
+                        focus:ring-black outline-none transition-all") }}
                     </div>
-                    <!-- Unidad de Medida -->
-                    <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-bold uppercase tracking-wider text-neutral-700">
-                            Unidad de Medida *
-                        </label>
-
-                        {{ form.unidad_medida(
-                        class="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm
-                        focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all"
-                        ) }}
-
-                        {% for error in form.unidad_medida.errors %}
-                        <span class="text-xs text-red-500">{{ error }}</span>
-                        {% endfor %}
-                    </div>
-
                 </div>
             </section>
-
-            <hr class="border-neutral-100">
 
             <section>
-                <div class="flex items-center gap-3 mb-6">
-                    <i class="fas fa-boxes text-neutral-300 text-sm"></i>
-                    <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-400">Control de Stock</h2>
-                </div>
+                <h2 class="text-[11px] font-black uppercase text-neutral-400 mb-8 border-b border-neutral-100 pb-2">
+                    Configuración de Unidades
+                </h2>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-
-                    <!-- Stock Mínimo -->
+                <div class="grid md:grid-cols-3 gap-8 p-6 bg-neutral-50 rounded-xl">
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-bold uppercase tracking-wider text-neutral-700">Stock Mínimo
-                            (Alerta) *</label>
-                        {{ form.stock_minimo_alerta(class="w-full px-4 py-3 bg-neutral-50 border border-neutral-200
-                        rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black
-                        transition-all", placeholder="Cantidad mínima requerida") }}
-                        {% for error in form.stock_minimo_alerta.errors %}
-                        <span class="text-xs text-red-500">{{ error }}</span>
-                        {% endfor %}
+                        <label class="text-xs font-bold uppercase text-neutral-600 italic">¿Cómo se compra?</label>
+
+                        <div
+                            class="flex items-center gap-3 border-b border-neutral-300 focus-within:border-black transition-colors">
+                            <span class="text-lg font-black text-neutral-400 select-none pb-1">1</span>
+
+                            {{ form.unidad_medida(class="w-full bg-transparent py-2 outline-none appearance-none
+                            cursor-pointer") }}
+
+                            <i class="fas fa-chevron-down text-[10px] text-neutral-400"></i>
+                        </div>
+
+                        <span class="text-[10px] text-neutral-400 italic">Indica la unidad principal (Ej: 1 Rollo, 1
+                            Caja)</span>
                     </div>
 
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold uppercase text-neutral-600 italic">Cantidad interna</label>
+                        {{ form.contenido_cantidad(class="w-full border-b border-neutral-300 bg-transparent py-2
+                        focus:border-black outline-none transition-colors", placeholder="100") }}
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold uppercase text-neutral-600 italic">Unidad de uso</label>
+                        {{ form.contenido_unidad_medida(class="w-full border-b border-neutral-300 bg-transparent py-2
+                        focus:border-black outline-none transition-colors") }}
+                        <span class="text-[10px] text-neutral-400 italic">Ej: Metros, Gramos</span>
+                    </div>
                 </div>
             </section>
 
-            <div class="pt-8 flex items-center gap-4">
+            <section>
+                <h2 class="text-[11px] font-black uppercase text-neutral-400 mb-8 border-b border-neutral-100 pb-2">
+                    Control de Alertas
+                </h2>
+                <div class="max-w-xs flex flex-col gap-2">
+                    <label class="text-xs font-bold uppercase tracking-wider text-neutral-700">Stock mínimo
+                        crítico</label>
+                    {{ form.stock_minimo_alerta(class="w-full border-b-2 border-neutral-200 py-2 focus:border-black
+                    outline-none transition-colors") }}
+                </div>
+            </section>
 
-                {{ form.submit(class="bg-black text-white px-10 py-4 rounded-xl text-xs font-black tracking-widest
-                hover:bg-neutral-800 transition-all shadow-lg cursor-pointer uppercase") }}
-
-                {{ form.submit_add(class="bg-neutral-200 text-black px-10 py-4 rounded-xl text-xs font-black
-                tracking-widest hover:bg-neutral-300 transition-all cursor-pointer uppercase") }}
-
+            <div class="pt-10 flex flex-wrap gap-4 border-t border-neutral-100">
+                <button type="submit" name="submit"
+                    class="px-8 py-4 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition-all rounded">
+                    Guardar Insumo
+                </button>
+                <button type="submit" name="submit_add"
+                    class="px-8 py-4 border-2 border-black text-black text-xs font-bold uppercase tracking-widest hover:bg-neutral-50 transition-all rounded">
+                    Guardar y crear otro
+                </button>
                 <a href="{{ url_for('insumos_bp.index') }}"
-                    class="px-10 py-4 rounded-xl text-xs font-black tracking-widest text-neutral-400 hover:text-black hover:bg-neutral-50 transition-all uppercase">
+                    class="px-8 py-4 text-neutral-400 text-xs font-bold uppercase tracking-widest hover:text-red-500 transition-all ml-auto">
                     Cancelar
                 </a>
             </div>
+
         </form>
     </div>
 </div>
