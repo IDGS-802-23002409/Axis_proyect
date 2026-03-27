@@ -7,6 +7,7 @@ from app.utils.database_connection import db
 from app.utils.config import SECRET_KEY
 import app.models  # noqa: F401 — ensures all models are registered with SQLAlchemy
 import app.blueprints as bp
+from app.blueprints import dashboard_administrativo
 from flask_wtf.csrf import CSRFProtect
 csrf = CSRFProtect()
 def create_app():
@@ -24,7 +25,7 @@ def create_app():
 
     from app.blueprints.proveedores.routes import proveedores_bp
     application.register_blueprint(proveedores_bp, url_prefix='/proveedores')
-    from app.blueprints.dashboard.routes import dashboard_bp
+    from app.blueprints.dashboard_administrativo.routes import dashboard_bp
     application.register_blueprint(dashboard_bp, url_prefix='/dashboard')
 
     return application

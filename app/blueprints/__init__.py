@@ -16,5 +16,7 @@ def create_app():
     app.register_blueprint(proveedores_bp, url_prefix='/proveedores')
     from app.blueprints.usuarios.routes import usuarios_bp
     app.register_blueprint(usuarios_bp, url_prefix='/usuarios')
+    from app.blueprints.dashboard_administrativo.routes import dashboard_bp
+    app.register_blueprint(dashboard_bp, url_prefix='/dashboard_administrativo')
 
     return app
