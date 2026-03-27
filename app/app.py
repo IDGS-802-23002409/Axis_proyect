@@ -44,9 +44,10 @@ def create_app():
     )
     application.config['SECURITY_REGISTERABLE'] = True
     application.config['SECURITY_CONFIRMABLE'] = True
+    application.config['SECURITY_LOGIN_WITHOUT_CONFIRMATION'] = False
     application.config['SECURITY_RECOVERABLE'] = True
     application.config['SECURITY_CHANGEABLE'] = True
-    application.config['SECURITY_SEND_REGISTER_EMAIL'] = True  # Enviar correo de confirmación al registrarse
+    application.config['SECURITY_SEND_REGISTER_EMAIL'] = True
     application.config['SECURITY_PASSWORD_HASH'] = 'argon2'
     application.config['SECURITY_PASSWORD_SCHEMES'] = ['argon2']
 
@@ -58,7 +59,10 @@ def create_app():
     application.config['SECURITY_MSG_PASSWORD_NOT_SET'] = ('No se ha establecido una contraseña.', 'error')
     application.config['SECURITY_MSG_USER_DOES_NOT_EXIST'] = ('El usuario no existe.', 'error')
     application.config['SECURITY_MSG_INVALID_EMAIL_ADDRESS'] = ('Dirección de email inválida.', 'error')
-    application.config['SECURITY_MSG_CONFIRMATION_REQUIRED'] = ('Debes confirmar tu email antes de iniciar sesión.', 'error')
+    application.config['SECURITY_MSG_CONFIRMATION_REQUIRED'] = (
+        'Tu cuenta no ha sido verificada. <a href="/confirm">Haz clic aquí para reenviar el correo de confirmación.</a>',
+        'error'
+    )
     application.config['SECURITY_MSG_EMAIL_ALREADY_ASSOCIATED'] = ('Este email ya está registrado.', 'error')
     application.config['SECURITY_MSG_PASSWORD_MISMATCH'] = ('Las contraseñas no coinciden.', 'error')
     application.config['SECURITY_MSG_EMAIL_NOT_PROVIDED'] = ('Debes proporcionar un email.', 'error')
