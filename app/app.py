@@ -128,16 +128,47 @@ def create_app():
     def on_user_authenticated(sender, user, **kwargs):
         logger.info(f'[LOGIN] Login exitoso para: {user.email} | confirmed_at={user.confirmed_at}')
 
-    # ── Blueprints ────────────────────────────────────────────
-    application.register_blueprint(bp.usuarios_bp)
-    application.register_blueprint(bp.security_bp, url_prefix='/security')
+    @application.before_request
+    def ensure_roles():
+        """Asegura que los roles básicos existan en la base de datos."""
+        # Esta es una forma rápida de inicializar roles si no existen
+        if not Role.query.first():
+            roles = ['admin', 'gerente', 'produccion', 'cliente']
+            for r in roles:
+                user_datastore.create_role(name=r)
+            db.session.commit()
 
-    # ── Ruta raíz → login ─────────────────────────────────────
-    @application.route('/')
-    def index():
+    from flask_security import user_registered
+    from flask_security.confirmable import send_confirmation_instructions
+    from flask import session
+
+    @user_registered.connect_via(application)
+    def on_user_registered(sender, user, **kwargs):
+        """Asigna el rol 'cliente' automáticamente a cualquier usuario registrado."""
+        cliente_role = Role.query.filter_by(name='cliente').first()
+        if cliente_role:
+            user_datastore.add_role_to_user(user, cliente_role)
+            db.session.commit()
+            logger.info(f'[REGISTER] Rol "cliente" asignado a: {user.email}')
+
+    # ── Blueprints ────────────────────────────────────────────
+    application.register_blueprint(bp.usuarios_bp, url_prefix='/usuarios')
+    application.register_blueprint(bp.security_bp, url_prefix='/security')
+    application.register_blueprint(bp.catalog_bp, url_prefix='')
+    application.register_blueprint(bp.checkout_bp, url_prefix='')
+
+    # ── Context Processor for Dynamic Layout ──────────────────
+    @application.context_processor
+    def inject_layout():
         if current_user.is_authenticated:
-            return redirect(url_for('security_bp.post_login'))
-        return redirect(url_for('security.login'))
+            if current_user.has_role('cliente'):
+                return {'base_layout': 'client/layout.html'}
+            elif any(current_user.has_role(r) for r in ['admin', 'produccion', 'gerente']):
+                return {'base_layout': 'produccion/layout.html'}
+        return {'base_layout': 'client/layout.html'}
+
+    # ── Catálogo (Ruta Raíz) ──────────────────────────────────
+    # Ya está manejado por client_bp con url_prefix=''
 
     # ── Debug: verificar estado de usuario (QUITAR EN PRODUCCIÓN) ──
     @application.route('/debug/check-user/<email>')

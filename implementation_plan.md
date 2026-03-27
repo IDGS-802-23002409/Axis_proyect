@@ -6,15 +6,17 @@ Este documento detalla el estado actual de la seguridad en el proyecto y proporc
 
 El proyecto utiliza **Flask-Security-Too** para gestionar la autenticación y autorización. Los componentes clave son:
 
-- **Modelos**: [Usuario](file:///c:/Users/damia/Documents/Axis_proyect/app/models/usuarios.py#19-55) y [Role](file:///c:/Users/damia/Documents/Axis_proyect/app/models/usuarios.py#14-18) en [app/models/usuarios.py](file:///c:/Users/damia/Documents/Axis_proyect/app/models/usuarios.py). Un usuario puede tener múltiples roles.
+- **Modelos**: [Usuario](file:///c:/Users/damia/Documents/Axis_proyect/app/models/usuarios.py#19-55) y [Role](file:///c:/Users/damia/Documents/Axis_proyect/app/models/usuarios.py#14-18). **Cada usuario tiene estrictamente un solo rol.**
 - **Protección de Rutas**: Se utilizan decoradores en los controladores (blueprints).
-- **Lógica de Redirección**: En [app/blueprints/security/routes.py](file:///c:/Users/damia/Documents/Axis_proyect/app/blueprints/security/routes.py), la función [post_login](file:///c:/Users/damia/Documents/Axis_proyect/app/blueprints/security/routes.py#6-24) redirige a los usuarios según su rol.
+- **Lógica de Redirección**: En [app/blueprints/security/routes.py](file:///c:/Users/damia/Documents/Axis_proyect/app/blueprints/security/routes.py), la función [post_login](file:///c:/Users/damia/Documents/Axis_proyect/app/blueprints/security/routes.py#6-24) redirige a los usuarios según su rol único.
+- **Registro Automático**: Cualquier usuario nuevo registrado a través de la web recibe automáticamente el rol `cliente`.
+- **Flujo de Verificación**: Si un usuario intenta loguearse sin haber verificado su email, el sistema le enviará automáticamente un nuevo correo de confirmación y lo redirigirá a la página de re-envío de instrucciones.
 
-### Roles Detectados
-- `admin`
-- `gerente`
-- `produccion`
-- `cliente`
+### Roles Disponibles
+- `admin`: Acceso total.
+- `gerente`: Gestión comercial.
+- `produccion`: Acceso al taller.
+- `cliente`: Acceso a la tienda.
 
 ---
 
@@ -94,9 +96,35 @@ Actualmente, el sidebar en [app/templates/produccion/layout.html](file:///c:/Use
 ```
 
 ### Mostrar Información del Usuario Logueado
-Evita usar datos "hardcoded" como "Admin" o "Taller". Usa:
+Evita usar datos "hardcoded". Usa:
 - `{{ current_user.nombre_completo }}`
-- `{{ current_user.roles[0].name if current_user.roles else 'Sin Rol' }}`
+- `{{ current_user.roles[0].name if current_user.roles else 'Sin Rol' }}` (Aunque solo tengan uno, Flask-Security lo maneja como lista).
+
+---
+
+## Creación de Administrador Inicial
+
+Para crear el primer administrador (ya que el registro web solo crea clientes), he creado un script automatizado para evitar errores de importación.
+
+### Opción A: Usar el script (Recomendado)
+Ejecuta esto desde la terminal en la raíz del proyecto:
+```bash
+python create_admin.py
+```
+*Si estás usando Docker:* `docker-compose exec flask_app python create_admin.py`
+
+### Opción B: Manual (Flask Shell)
+Si prefieres hacerlo manualmente, estos son los comandos corregidos (debes usar `hash_password` para que funcione el login):
+```python
+flask shell
+>>> from app.utils.database_connection import db
+>>> from app.models.usuarios import Role
+>>> from flask_security.utils import hash_password
+>>> ds = app.extensions['security'].datastore
+>>> role = Role.query.filter_by(name='admin').first()
+>>> ds.create_user(nombre_completo='Admin', email='admin@axis.com', password=hash_password('password123'), roles=[role])
+>>> db.session.commit()
+```
 
 ---
 
