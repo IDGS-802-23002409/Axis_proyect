@@ -1,5 +1,4 @@
 # Análisis de Protección de Rutas y RBAC
-
 Este documento detalla el estado actual de la seguridad en el proyecto y proporciona una guía para que los desarrolladores limiten rutas y elementos de la interfaz según roles específicos.
 
 ## Estado Actual
