@@ -11,7 +11,6 @@ class RolloInventario(db.Model):
     uuid_detalle_compra = Column(String(36), ForeignKey('compras_detalle.uuid_detalle_compra'))
     metraje_inicial = Column(Numeric(12, 4), nullable=False)
     metraje_continuo_actual = Column(Numeric(12, 4), nullable=False)
-    ancho_real_recibido = Column(Numeric(5, 2))
     fecha_creacion = Column(DateTime, server_default=func.now())
 
     insumo = db.relationship('Insumo', backref=db.backref('rollos', lazy=True))
