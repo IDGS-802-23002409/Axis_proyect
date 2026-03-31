@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "components/_cart_drawer.html" %}
+
+<div id="catalogo-container" class="min-h-screen bg-background">
+    <!-- Hero Section -->
+    <section id="catalogo-hero" class="relative h-[70vh] md:h-[80vh] overflow-hidden">
+        <!-- Background Image -->
+        <div class="catalog-hero-bg absolute inset-0">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&h=1080&fit=crop"
+                alt="AXIS Catalog" class="object-cover w-full h-full" />
+            <div class="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent"></div>
+        </div>
+
+        <!-- Hero Content -->
+        <div class="relative z-10 h-full flex flex-col justify-end pb-20 px-4 lg:px-8">
+            <div class="container mx-auto">
+                <div class="overflow-hidden">
+                    <span
+                        class="catalog-hero-line block text-primary text-sm tracking-[0.4em] uppercase mb-6 opacity-0 translate-y-24"
+                        style="transform: skewY(3deg);">
+                        Colección 2026
+                    </span>
+                </div>
+                <div class="overflow-hidden">
+                    <h1 class="catalog-hero-line font-[var(--font-display)] text-7xl md:text-9xl lg:text-[12rem] tracking-[0.05em] leading-[0.85] opacity-0 translate-y-24"
+                        style="transform: skewY(3deg);">
+                        CATÁLOGO
+                    </h1>
+                </div>
+                <div class="overflow-hidden mt-6">
+                    <p class="catalog-hero-line text-muted-foreground text-lg md:text-xl max-w-xl opacity-0 translate-y-24"
+                        style="transform: skewY(3deg);">
+                        Explora nuestra colección completa. Arte urbano en cada prenda.
+                        Diseños que desafían lo convencional.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll indicator -->
+        <div class="absolute bottom-8 right-8 flex items-center gap-3 text-muted-foreground">
+            <span class="text-xs tracking-[0.2em] uppercase">Scroll</span>
+            <div class="w-px h-12 bg-gradient-to-b from-primary to-transparent"></div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories-section py-16 border-b border-border">
+        <div class="container mx-auto px-4 lg:px-8">
+            <div id="catalog-categories-container" class="flex flex-wrap gap-4 justify-center">
+                {% for cat in categories %}
+                <button data-category="{{ cat.id }}"
+                    class="category-btn group relative px-8 py-4 text-sm md:text-base tracking-[0.15em] uppercase transition-all duration-500 overflow-hidden {{ 'text-primary-foreground' if cat.id == 'all' else 'text-muted-foreground hover:text-foreground' }}">
+                    <span class="relative z-10">{{ cat.name }}</span>
+                    <div
+                        class="category-bg absolute inset-0 bg-primary transition-transform duration-500 origin-left {{ 'scale-x-100' if cat.id == 'all' else 'scale-x-0 group-hover:scale-x-100' }}">
+                    </div>
+                    <div
+                        class="category-indicator absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full {{ 'hidden' if cat.id != 'all' else '' }}">
+                    </div>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Filters & Controls Bar -->
+    <section class="sticky top-16 lg:top-20 z-30 bg-background/95 backdrop-blur-md border-b border-border">
+        <div class="container mx-auto px-4 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Product count -->
+                <div class="flex items-center gap-6">
+                    <p class="font-[var(--font-display)] text-2xl">
+                        <span id="catalog-product-count">{{ products|length }}</span> <span
+                            class="text-muted-foreground text-sm font-sans">productos</span>
+                    </p>
+                    <button id="mobile-filter-btn"
+                        class="lg:hidden flex items-center gap-2 text-sm tracking-[0.1em] uppercase hover:text-primary transition-colors">
+                        <i data-lucide="filter" class="w-4 h-4"></i>
+                        Filtrar
+                    </button>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex items-center gap-4">
+                    <!-- Grid Toggle -->
+                    <div class="hidden md:flex items-center gap-1 p-1 bg-secondary rounded">
+                        <button id="grid-normal-btn" class="p-2 rounded transition-colors bg-background text-primary">
+                            <i data-lucide="grid" class="w-[18px] h-[18px]"></i>
+                        </button>
+                        <button id="grid-large-btn"
+                            class="p-2 rounded transition-colors text-muted-foreground hover:text-foreground">
+                            <i data-lucide="layout-grid" class="w-[18px] h-[18px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Sort Dropdown -->
+                    <div class="relative">
+                        <select id="sort-select"
+                            class="appearance-none bg-secondary border-none px-4 py-2 pr-10 text-sm tracking-[0.1em] uppercase cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary rounded">
+                            <option value="featured">Destacados</option>
+                            <option value="newest">Más Nuevos</option>
+                            <option value="price-asc">Precio: Menor</option>
+                            <option value="price-desc">Precio: Mayor</option>
+                        </select>
+                        <i data-lucide="chevron-down"
+                            class="w-[14px] h-[14px] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Grid -->
+    <section class="py-12 px-4 lg:px-8">
+        <div class="container mx-auto">
+            <div id="catalog-products-container"
+                class="products-container grid gap-6 md:gap-8 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                {% for product in products %}
+                <div class="catalog-item product-item group relative" data-category="{{ product.category }}"
+                    data-price="{{ product.price }}" data-featured="{{ '1' if product.get('featured') else '0' }}"
+                    data-new="{{ '1' if product.get('new') else '0' }}" data-id="{{ product.id }}">
+                    <!-- Product Card -->
+                    <div class="relative">
+                        <!-- Image Container -->
+                        <div class="relative overflow-hidden bg-secondary transition-all duration-500 aspect-[3/4]">
+                            <a href="/producto/{{ product.id }}" class="block absolute inset-0 z-10"><span
+                                    class="sr-only">Ver {{ product.name }}</span></a>
+                            <img src="{{ product.image }}" alt="{{ product.name }}"
+                                class="object-cover w-full h-full transition-all duration-700 group-hover:scale-110"
+                                loading="lazy" />
+
+                            <!-- Overlay gradient -->
+                            <div
+                                class="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none">
+                            </div>
+
+                            <!-- Product Index -->
+                            <div
+                                class="absolute top-4 left-4 font-[var(--font-display)] text-4xl md:text-5xl text-foreground/10 group-hover:text-primary/30 transition-colors duration-500 pointer-events-none">
+                                {{ "%02d"|format(loop.index) }}
+                            </div>
+
+                            <!-- Badges -->
+                            <div class="absolute top-4 right-4 flex flex-col gap-2 pointer-events-none">
+                                {% if product.get('new') %}
+                                <span
+                                    class="bg-primary text-primary-foreground text-[10px] md:text-xs px-2 py-1 tracking-[0.15em] font-bold">
+                                    NEW
+                                </span>
+                                {% endif %}
+                                {% if product.get('featured') and not product.get('new') %}
+                                <span
+                                    class="bg-foreground text-background text-[10px] md:text-xs px-2 py-1 tracking-[0.15em] font-bold">
+                                    HOT
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Quick Actions -->
+                            <div
+                                class="absolute bottom-4 left-4 right-4 flex gap-2 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 z-20">
+                                <a href="/producto/{{ product.id }}"
+                                    class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-foreground text-background text-xs md:text-sm font-medium tracking-[0.1em] hover:bg-primary transition-colors">
+                                    VER DETALLES
+                                    <i data-lucide="arrow-up-right" class="w-[14px] h-[14px]"></i>
+                                </a>
+                                <button
+                                    class="add-to-cart-btn p-3 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                                    data-id="{{ product.id }}" data-name="{{ product.name }}"
+                                    data-price="{{ product.price }}" data-image="{{ product.image }}"
+                                    aria-label="Add to cart">
+                                    <i data-lucide="shopping-bag" class="w-[18px] h-[18px]"></i>
+                                </button>
+                            </div>
+
+                            <!-- Corner accents -->
+                            <div
+                                class="absolute top-0 left-0 w-12 h-12 border-l border-t border-primary/0 group-hover:border-primary transition-colors duration-500 pointer-events-none">
+                            </div>
+                            <div
+                                class="absolute bottom-0 right-0 w-12 h-12 border-r border-b border-primary/0 group-hover:border-primary transition-colors duration-500 pointer-events-none">
+                            </div>
+                        </div>
+
+                        <!-- Product Info -->
+                        <div class="mt-4 space-y-2">
+                            <div class="flex items-start justify-between gap-2">
+                                <a href="/producto/{{ product.id }}">
+                                    <h3
+                                        class="catalog-item-title font-[var(--font-display)] tracking-[0.05em] hover:text-primary transition-colors line-clamp-1 text-base md:text-lg">
+                                        {{ product.name }}
+                                    </h3>
+                                </a>
+                                <p
+                                    class="catalog-item-price text-primary font-[var(--font-display)] shrink-0 text-lg md:text-xl">
+                                    ${{ "%.0f"|format(product.price) }}
+                                </p>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-muted-foreground uppercase tracking-[0.15em]">
+                                    {{ product.category }}
+                                </p>
+                                <!-- Size dots -->
+                                <div class="flex gap-1">
+                                    {% for size in product.sizes[:4] %}
+                                    <span class="text-[10px] text-muted-foreground px-1">{{ size }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- End of Products -->
+            <div id="catalog-end-message" class="mt-20 text-center">
+                <p class="text-muted-foreground text-sm tracking-[0.2em] uppercase mb-4">
+                    Mostrando <span id="catalog-visible-count">{{ products|length }}</span> de {{ products|length }}
+                    productos
+                </p>
+                <div class="w-32 h-px bg-gradient-to-r from-transparent via-primary to-transparent mx-auto"></div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="catalog-empty-state" class="py-20 text-center hidden">
+                <p class="font-[var(--font-display)] text-3xl mb-4">No hay productos</p>
+                <p class="text-muted-foreground">Intenta con otra categoría</p>
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}

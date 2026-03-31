@@ -1,0 +1,110 @@
+<section id="horizontal-scroll-container" class="relative min-h-screen overflow-hidden bg-background">
+    <!-- Background title -->
+    <div class="section-title absolute top-1/2 left-0 -translate-y-1/2 pointer-events-none whitespace-nowrap z-0">
+        <h2 class="font-[var(--font-display)] text-[20vw] tracking-[0.2em] text-foreground/[0.02]">
+            CATEGORÍAS • CATEGORÍAS • CATEGORÍAS
+        </h2>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="fixed bottom-0 left-0 right-0 h-1 bg-border z-50 pointer-events-none">
+        <div id="horizontal-scroll-progress" class="h-full bg-primary origin-left will-change-transform"
+            style="transform: scaleX(0);"></div>
+    </div>
+
+    <!-- Horizontal Scroll Wrapper -->
+    <div id="horizontal-scroll-wrapper"
+        class="flex items-center h-screen gap-6 md:gap-10 px-8 py-16 will-change-transform" style="width: fit-content;">
+        <!-- Intro Card -->
+        <div class="flex-shrink-0 w-[85vw] md:w-[50vw] lg:w-[35vw] h-[70vh] flex flex-col justify-center pr-8">
+            <span class="text-primary text-sm tracking-[0.4em] uppercase mb-4 block">
+                Explora
+            </span>
+            <h3
+                class="font-[var(--font-display)] text-5xl md:text-7xl lg:text-8xl tracking-[0.05em] mb-6 leading-[0.9]">
+                ENCUENTRA<br />TU ESTILO
+            </h3>
+            <p class="text-muted-foreground text-lg leading-relaxed max-w-md mb-8">
+                Cada categoría es una declaración. Cada prenda es una obra de arte urbano.
+            </p>
+            <div class="flex items-center gap-4 text-muted-foreground">
+                <span class="text-sm tracking-[0.2em] uppercase">Desliza</span>
+                <i data-lucide="arrow-right" class="w-5 h-5 animate-pulse"></i>
+            </div>
+        </div>
+
+        <!-- Category Cards -->
+        {% set categories = [
+        {"title": "HOODIES", "image": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&h=1000&fit=crop",
+        "desc": "Comodidad urbana", "link": "/catalogo?category=hoodies"},
+        {"title": "CAMISETAS", "image":
+        "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=800&h=1000&fit=crop", "desc": "Arte que vistes",
+        "link": "/catalogo?category=camisetas"},
+        {"title": "PANTALONES", "image":
+        "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800&h=1000&fit=crop", "desc": "Estilo cargo",
+        "link": "/catalogo?category=pantalones"},
+        {"title": "CHAQUETAS", "image":
+        "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&h=1000&fit=crop", "desc": "Bomber culture",
+        "link": "/catalogo?category=chaquetas"},
+        {"title": "ACCESORIOS", "image":
+        "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800&h=1000&fit=crop", "desc": "Completa tu
+        look", "link": "/catalogo?category=accesorios"}
+        ] %}
+
+        {% for category in categories %}
+        <a href="{{ category.link }}"
+            class="category-card flex-shrink-0 w-[75vw] md:w-[40vw] lg:w-[28vw] h-[70vh] relative group cursor-pointer block">
+            <div class="absolute inset-0 overflow-hidden">
+                <img src="{{ category.image }}" alt="{{ category.title }}"
+                    class="card-image w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform" />
+                <div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
+            </div>
+
+            <!-- Card number -->
+            <div
+                class="absolute top-6 left-6 font-[var(--font-display)] text-7xl md:text-8xl text-foreground/10 group-hover:text-primary/20 transition-colors duration-500">
+                0{{ loop.index }}
+            </div>
+
+            <div class="card-content absolute bottom-0 left-0 right-0 p-8 will-change-transform">
+                <span class="text-primary text-xs tracking-[0.3em] uppercase block mb-2">
+                    Colección
+                </span>
+                <h4
+                    class="font-[var(--font-display)] text-4xl md:text-5xl lg:text-6xl tracking-[0.1em] mb-2 group-hover:text-primary transition-colors duration-300">
+                    {{ category.title }}
+                </h4>
+                <p class="text-muted-foreground text-lg">{{ category.desc }}</p>
+
+                <div class="mt-6 flex items-center gap-3 text-primary">
+                    <span class="text-sm tracking-[0.2em] uppercase">Explorar</span>
+                    <i data-lucide="arrow-right"
+                        class="w-4 h-4 translate-x-0 group-hover:translate-x-2 transition-transform duration-300"></i>
+                </div>
+            </div>
+
+            <!-- Corner accents -->
+            <div
+                class="absolute top-6 right-6 w-10 h-10 border-r-2 border-t-2 border-primary opacity-0 group-hover:opacity-100 transition-all duration-500">
+            </div>
+            <div
+                class="absolute bottom-6 left-6 w-10 h-10 border-l-2 border-b-2 border-primary opacity-0 group-hover:opacity-100 transition-all duration-500">
+            </div>
+        </a>
+        {% endfor %}
+
+        <!-- End Card -->
+        <div
+            class="flex-shrink-0 w-[70vw] md:w-[40vw] lg:w-[30vw] h-[70vh] flex flex-col items-center justify-center text-center px-8">
+            <span class="text-primary text-sm tracking-[0.3em] uppercase mb-4">Ver todo</span>
+            <h3 class="font-[var(--font-display)] text-4xl md:text-5xl tracking-[0.1em] mb-6">
+                CATÁLOGO<br />COMPLETO
+            </h3>
+            <a href="/catalogo"
+                class="group inline-flex items-center gap-3 px-8 py-4 border-2 border-primary text-primary font-[var(--font-display)] text-lg tracking-[0.2em] hover:bg-primary hover:text-primary-foreground transition-all duration-300">
+                EXPLORAR
+                <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-2 transition-transform"></i>
+            </a>
+        </div>
+    </div>
+</section>

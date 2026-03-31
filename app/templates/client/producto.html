@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "components/_cart_drawer.html" %}
+
+<div id="producto-container" class="min-h-screen bg-background relative">
+    <!-- Breadcrumb -->
+    <div class="container mx-auto px-4 lg:px-8 pt-24 pb-4">
+        <a href="/catalogo"
+            class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Volver al catálogo</span>
+        </a>
+    </div>
+
+    <!-- Product Section -->
+    <section class="container mx-auto px-4 lg:px-8 pb-24">
+        <div class="grid lg:grid-cols-2 gap-8 lg:gap-16">
+            <!-- Images -->
+            <div class="space-y-4">
+                <!-- Main Image -->
+                <div class="producto-image relative aspect-[3/4] bg-secondary overflow-hidden">
+                    <img id="main-product-image" src="{{ product.image }}" alt="{{ product.name }}"
+                        class="object-cover w-full h-full" />
+                    {% if product.get('new') %}
+                    <span
+                        class="absolute top-4 left-4 bg-primary text-primary-foreground text-xs px-3 py-1 tracking-[0.2em]">
+                        NUEVO
+                    </span>
+                    {% endif %}
+
+                    <!-- Corner accents -->
+                    <div class="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-primary/50"></div>
+                    <div class="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-primary/50"></div>
+                </div>
+
+                <!-- Thumbnail Gallery (Simulated) -->
+                <div class="flex gap-2">
+                    <button
+                        class="thumb-btn ring-2 ring-primary relative w-20 h-24 bg-secondary overflow-hidden transition-all"
+                        data-src="{{ product.image }}">
+                        <img src="{{ product.image }}" alt="" class="object-cover w-full h-full" />
+                    </button>
+                    <button
+                        class="thumb-btn opacity-60 hover:opacity-100 relative w-20 h-24 bg-secondary overflow-hidden transition-all"
+                        data-src="{{ product.image.replace('w=800', 'w=801') }}">
+                        <img src="{{ product.image.replace('w=800', 'w=801') }}" alt=""
+                            class="object-cover w-full h-full" />
+                    </button>
+                    <button
+                        class="thumb-btn opacity-60 hover:opacity-100 relative w-20 h-24 bg-secondary overflow-hidden transition-all"
+                        data-src="{{ product.image.replace('w=800', 'w=802') }}">
+                        <img src="{{ product.image.replace('w=800', 'w=802') }}" alt=""
+                            class="object-cover w-full h-full" />
+                    </button>
+                </div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="producto-info space-y-8 lg:sticky lg:top-32 lg:self-start">
+                <div>
+                    <p class="text-primary text-sm tracking-[0.3em] uppercase mb-2 opacity-0 translate-y-8">
+                        {{ product.category }}
+                    </p>
+                    <h1
+                        class="font-[var(--font-display)] text-4xl md:text-5xl lg:text-6xl tracking-[0.1em] mb-4 opacity-0 translate-y-8">
+                        {{ product.name }}
+                    </h1>
+                    <p class="font-[var(--font-display)] text-3xl text-primary opacity-0 translate-y-8">
+                        ${{ "%.2f"|format(product.price) }}
+                    </p>
+                </div>
+
+                <p class="text-muted-foreground leading-relaxed opacity-0 translate-y-8">
+                    {{ product.get('description', 'Una prenda exclusiva que define el estilo urbano contemporáneo.') }}
+                </p>
+
+                <!-- Color Selection -->
+                <div class="opacity-0 translate-y-8">
+                    <p class="text-sm tracking-[0.2em] uppercase mb-3">
+                        Color: <span id="selected-color-label" class="text-muted-foreground">{{ product.colors[0]
+                            }}</span>
+                    </p>
+                    <div class="flex gap-2" id="color-options">
+                        {% for color in product.colors %}
+                        <button
+                            class="color-btn px-4 py-2 text-sm border transition-all {{ 'border-primary bg-primary/10 text-primary' if loop.first else 'border-border hover:border-foreground' }}"
+                            data-color="{{ color }}">
+                            {{ color }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Size Selection -->
+                <div class="opacity-0 translate-y-8">
+                    <p class="text-sm tracking-[0.2em] uppercase mb-3">
+                        Talla: <span id="selected-size-label" class="text-muted-foreground">Selecciona</span>
+                    </p>
+                    <div class="flex flex-wrap gap-2" id="size-options">
+                        {% for size in product.sizes %}
+                        <button
+                            class="size-btn w-12 h-12 text-sm border transition-all border-border hover:border-foreground"
+                            data-size="{{ size }}">
+                            {{ size }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Quantity -->
+                <div class="opacity-0 translate-y-8">
+                    <p class="text-sm tracking-[0.2em] uppercase mb-3">Cantidad</p>
+                    <div class="flex items-center border border-border w-fit">
+                        <button id="qty-minus" class="p-3 hover:bg-secondary transition-colors"
+                            aria-label="Decrease quantity">
+                            <i data-lucide="minus" class="w-[18px] h-[18px]"></i>
+                        </button>
+                        <span id="qty-value" class="w-12 text-center font-medium">1</span>
+                        <button id="qty-plus" class="p-3 hover:bg-secondary transition-colors"
+                            aria-label="Increase quantity">
+                            <i data-lucide="plus" class="w-[18px] h-[18px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-col sm:flex-row gap-4 opacity-0 translate-y-8">
+                    <button id="btn-add-to-cart-product"
+                        class="flex-1 py-4 font-[var(--font-display)] text-xl tracking-[0.2em] flex items-center justify-center gap-3 transition-all bg-muted text-muted-foreground cursor-not-allowed"
+                        data-id="{{ product.id }}" data-name="{{ product.name }}" data-price="{{ product.price }}"
+                        data-image="{{ product.image }}">
+                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        AÑADIR AL CARRITO
+                    </button>
+                    <button class="p-4 border border-border hover:border-primary hover:text-primary transition-colors">
+                        <i data-lucide="heart" class="w-5 h-5"></i>
+                    </button>
+                    <button class="p-4 border border-border hover:border-primary hover:text-primary transition-colors">
+                        <i data-lucide="share-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Product Details -->
+                <div class="border-t border-border pt-8 space-y-4 opacity-0 translate-y-8">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-muted-foreground">SKU</span>
+                        <span>AXIS-{{ "%04d"|format(product.id|int) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-muted-foreground">Categoría</span>
+                        <span class="capitalize">{{ product.category }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-muted-foreground">Envío</span>
+                        <span>Gratis en pedidos +$100</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Related Products -->
+    {% if related|length > 0 %}
+    <section class="py-16 bg-secondary">
+        <div class="container mx-auto px-4 lg:px-8">
+            <h2 class="font-[var(--font-display)] text-3xl tracking-[0.2em] mb-8">
+                TAMBIÉN TE PUEDE GUSTAR
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                {% for relatedProduct in related %}
+                <a href="/producto/{{ relatedProduct.id }}" class="group">
+                    <div class="relative aspect-[3/4] bg-background overflow-hidden mb-3">
+                        <img src="{{ relatedProduct.image }}" alt="{{ relatedProduct.name }}"
+                            class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105" />
+                    </div>
+                    <h3 class="text-sm font-medium group-hover:text-primary transition-colors line-clamp-1">
+                        {{ relatedProduct.name }}
+                    </h3>
+                    <p class="text-primary font-[var(--font-display)]">
+                        ${{ "%.2f"|format(relatedProduct.price) }}
+                    </p>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+</div>
+{% endblock %}

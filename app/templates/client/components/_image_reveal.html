@@ -1,0 +1,103 @@
+<section id="image-reveal-container" class="relative min-h-screen bg-secondary overflow-hidden py-20 lg:py-32">
+    <div class="container mx-auto px-4 lg:px-8">
+        <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <!-- Text Content -->
+            <div id="image-reveal-text" class="space-y-8">
+                <span class="word block text-primary text-sm tracking-[0.3em] uppercase font-medium">
+                    Nuestra Esencia
+                </span>
+
+                <h2
+                    class="font-[var(--font-display)] text-5xl md:text-6xl lg:text-7xl xl:text-8xl tracking-[0.02em] leading-[0.95]">
+                    <div class="overflow-hidden">
+                        <span class="word inline-block">REDEFINE</span>
+                    </div>
+                    <div class="overflow-hidden">
+                        <span class="word inline-block text-primary">TU</span>
+                        <span class="word inline-block text-primary">ESTILO</span>
+                    </div>
+                    <div class="overflow-hidden">
+                        <span class="word inline-block">URBANO</span>
+                    </div>
+                </h2>
+
+                <p class="text-muted-foreground text-lg leading-relaxed max-w-md">
+                    <span class="word inline-block mr-1">AXIS</span>
+                    <span class="word inline-block mr-1">nace</span>
+                    <span class="word inline-block mr-1">de</span>
+                    <span class="word inline-block mr-1">las</span>
+                    <span class="word inline-block mr-1">calles.</span>
+                    <span class="word inline-block mr-1">Cada</span>
+                    <span class="word inline-block mr-1">diseño</span>
+                    <span class="word inline-block mr-1">captura</span>
+                    <span class="word inline-block mr-1">la</span>
+                    <span class="word inline-block mr-1">energía</span>
+                    <span class="word inline-block mr-1">del</span>
+                    <span class="word inline-block mr-1">arte</span>
+                    <span class="word inline-block">callejero.</span>
+                </p>
+
+                <div class="flex flex-wrap gap-8 lg:gap-12 pt-8">
+                    <div class="decor-element">
+                        <div class="flex items-baseline">
+                            <span class="stat-number font-[var(--font-display)] text-4xl md:text-5xl text-primary"
+                                data-target="500">0</span>
+                            <span class="font-[var(--font-display)] text-4xl md:text-5xl text-primary">+</span>
+                        </div>
+                        <p class="text-muted-foreground text-xs mt-2 tracking-widest uppercase">Diseños Únicos</p>
+                    </div>
+                    <div class="decor-element">
+                        <div class="flex items-baseline">
+                            <span class="stat-number font-[var(--font-display)] text-4xl md:text-5xl text-primary"
+                                data-target="50">0</span>
+                            <span class="font-[var(--font-display)] text-4xl md:text-5xl text-primary">K+</span>
+                        </div>
+                        <p class="text-muted-foreground text-xs mt-2 tracking-widest uppercase">Comunidad</p>
+                    </div>
+                    <div class="decor-element">
+                        <div class="flex items-baseline">
+                            <span class="stat-number font-[var(--font-display)] text-4xl md:text-5xl text-primary"
+                                data-target="100">0</span>
+                            <span class="font-[var(--font-display)] text-4xl md:text-5xl text-primary">%</span>
+                        </div>
+                        <p class="text-muted-foreground text-xs mt-2 tracking-widest uppercase">Original</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image with reveal effect -->
+            <div id="image-reveal-wrapper" class="relative aspect-[3/4] w-full max-w-lg mx-auto lg:mx-0">
+                <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&h=1200&fit=crop"
+                    alt="AXIS Urban Fashion" class="w-full h-full object-cover z-0 relative" loading="eager" />
+
+                <!-- Overlay pieces that reveal the image -->
+                <div class="absolute inset-0 flex pointer-events-none z-10">
+                    <div class="reveal-piece w-1/5 h-full bg-secondary origin-top"></div>
+                    <div class="reveal-piece w-1/5 h-full bg-secondary origin-bottom"></div>
+                    <div class="reveal-piece w-1/5 h-full bg-secondary origin-top"></div>
+                    <div class="reveal-piece w-1/5 h-full bg-secondary origin-bottom"></div>
+                    <div class="reveal-piece w-1/5 h-full bg-secondary origin-top"></div>
+                </div>
+
+                <!-- Decorative frame -->
+                <div class="decor-element absolute -inset-3 border border-primary/20 pointer-events-none z-20"></div>
+                <div class="decor-element absolute -inset-6 border border-primary/10 pointer-events-none z-20"></div>
+
+                <!-- Corner decorations -->
+                <div
+                    class="decor-element absolute -top-1.5 -left-1.5 w-6 h-6 border-l-2 border-t-2 border-primary z-20">
+                </div>
+                <div
+                    class="decor-element absolute -bottom-1.5 -right-1.5 w-6 h-6 border-r-2 border-b-2 border-primary z-20">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Background text -->
+    <div class="absolute top-1/2 left-0 -translate-y-1/2 pointer-events-none overflow-hidden w-full opacity-[0.02]">
+        <span class="font-[var(--font-display)] text-[15vw] text-foreground tracking-[0.2em] whitespace-nowrap">
+            STREET ART • URBAN CULTURE •
+        </span>
+    </div>
+</section>

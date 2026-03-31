@@ -1,0 +1,76 @@
+<header id="main-header" class="fixed top-0 left-0 right-0 z-50 transition-all duration-500 bg-transparent">
+    <div class="container mx-auto px-4 lg:px-8">
+        <div class="flex items-center justify-between h-16 lg:h-20">
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" class="lg:hidden p-2 hover:text-primary transition-colors"
+                aria-label="Toggle menu">
+                <i data-lucide="menu" id="menu-icon-open" class="block"></i>
+                <i data-lucide="x" id="menu-icon-close" class="hidden"></i>
+            </button>
+
+            <!-- Logo -->
+            <a href="/"
+                class="font-[var(--font-display)] text-3xl lg:text-4xl tracking-[0.3em] hover:text-primary transition-colors">
+                AXIS
+            </a>
+
+            <!-- Desktop Navigation -->
+            <nav class="hidden lg:flex items-center gap-8">
+                <a href="/" class="text-sm tracking-[0.2em] hover:text-primary transition-colors relative group">
+                    INICIO
+                    <span
+                        class="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </a>
+                <a href="/catalogo"
+                    class="text-sm tracking-[0.2em] hover:text-primary transition-colors relative group">
+                    CATALOGO
+                    <span
+                        class="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </a>
+                <a href="/nuevo" class="text-sm tracking-[0.2em] hover:text-primary transition-colors relative group">
+                    NUEVO
+                    <span
+                        class="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </a>
+                <a href="/about" class="text-sm tracking-[0.2em] hover:text-primary transition-colors relative group">
+                    NOSOTROS
+                    <span
+                        class="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </a>
+            </nav>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-4">
+                <button class="p-2 hover:text-primary transition-colors" aria-label="Search">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </button>
+                <button id="cart-btn" class="p-2 hover:text-primary transition-colors relative" aria-label="Cart">
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    <span id="cart-badge"
+                        class="hidden absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs flex items-center justify-center rounded-full">
+                        0
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu"
+        class="lg:hidden fixed inset-0 top-16 bg-background/98 backdrop-blur-lg transition-all duration-500 z-40 opacity-0 invisible">
+        <nav class="flex flex-col items-center justify-center h-full gap-8">
+            <a href="/"
+                class="mobile-link font-[var(--font-display)] text-4xl tracking-[0.3em] hover:text-primary transition-colors"
+                style="animation-delay: 0ms">INICIO</a>
+            <a href="/catalogo"
+                class="mobile-link font-[var(--font-display)] text-4xl tracking-[0.3em] hover:text-primary transition-colors"
+                style="animation-delay: 100ms">CATALOGO</a>
+            <a href="/nuevo"
+                class="mobile-link font-[var(--font-display)] text-4xl tracking-[0.3em] hover:text-primary transition-colors"
+                style="animation-delay: 200ms">NUEVO</a>
+            <a href="/about"
+                class="mobile-link font-[var(--font-display)] text-4xl tracking-[0.3em] hover:text-primary transition-colors"
+                style="animation-delay: 300ms">NOSOTROS</a>
+        </nav>
+    </div>
+</header>
