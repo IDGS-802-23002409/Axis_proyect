@@ -1,0 +1,50 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<script>
+    // Inicializar íconos
+    lucide.createIcons();
+
+    // Configuración de la Gráfica de Ventas
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    
+    // Datos dinámicos pasados desde Flask 
+    const labels = {{ chart_labels | tojson }};
+    const dataVentas = {{ chart_data | tojson }};
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Ventas ($)',
+                data: dataVentas,
+                borderColor: '#111827', 
+                backgroundColor: 'rgba(17, 24, 39, 0.05)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4, 
+                pointRadius: 4,
+                pointBackgroundColor: '#111827'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#f3f4f6' },
+                    ticks: { size: 10, color: '#9ca3af' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { size: 10, color: '#9ca3af' }
+                }
+            }
+        }
+    });
+</script>

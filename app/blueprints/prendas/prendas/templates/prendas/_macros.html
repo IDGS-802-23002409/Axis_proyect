@@ -1,0 +1,94 @@
+{# prendas/_macros.html #}
+
+{# ── Tarjeta KPI de costo ──────────────────────────────────────────────────
+   Params:
+     titulo      : str   — etiqueta superior
+     valor       : str   — valor principal formateado
+     subtitulo   : str   — leyenda inferior
+     icono       : str   — nombre de ícono Lucide
+     dark        : bool  — fondo oscuro (para tarjeta de margen)
+     color_valor : str   — clase Tailwind para el color del valor
+#}
+{% macro kpi_costo(titulo, valor, subtitulo, icono='layers', dark=false, color_valor='text-gray-950') %}
+<div class="{{ 'bg-gray-950' if dark else 'bg-white border border-gray-200' }} rounded-xl shadow-sm p-5">
+    <div class="flex items-start justify-between mb-3">
+        <p class="text-[10px] font-bold uppercase tracking-widest {{ 'text-gray-400' if dark else 'text-gray-400' }}">
+            {{ titulo }}
+        </p>
+        <i data-lucide="{{ icono }}" class="w-4 h-4 {{ 'text-blue-400' if dark else 'text-gray-300' }}"></i>
+    </div>
+    <p class="text-2xl font-black tracking-tight {{ color_valor }}">{{ valor }}</p>
+    <p class="text-[10px] mt-1 {{ 'text-gray-500' if dark else 'text-gray-400' }}">{{ subtitulo }}</p>
+</div>
+{% endmacro %}
+
+
+{# ── Badge de estado de margen ─────────────────────────────────────────────
+   Params:
+     margen_pct : float
+#}
+{% macro badge_margen(margen_pct) %}
+{% if margen_pct >= 50 %}
+    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
+        <i data-lucide="trending-up" class="w-3 h-3"></i>{{ "%.1f"|format(margen_pct) }}%
+    </span>
+{% elif margen_pct >= 30 %}
+    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-100 text-yellow-700">
+        <i data-lucide="minus" class="w-3 h-3"></i>{{ "%.1f"|format(margen_pct) }}%
+    </span>
+{% else %}
+    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600">
+        <i data-lucide="trending-down" class="w-3 h-3"></i>{{ "%.1f"|format(margen_pct) }}%
+    </span>
+{% endif %}
+{% endmacro %}
+
+
+{# ── Fila de insumo en tabla BOM ───────────────────────────────────────────
+   Params:
+     linea : dict (output de _get_bom)
+     uuid_producto : str
+     can_edit : bool
+#}
+{% macro fila_bom(linea, uuid_producto, can_edit=true) %}
+<tr class="hover:bg-gray-50 transition-colors group">
+    <td class="px-6 py-4">
+        <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
+                {% if linea.tipo == 'tela' %}
+                    <i data-lucide="layers" class="w-3.5 h-3.5 text-gray-500"></i>
+                {% elif linea.tipo == 'avios' %}
+                    <i data-lucide="tag" class="w-3.5 h-3.5 text-gray-500"></i>
+                {% else %}
+                    <i data-lucide="box" class="w-3.5 h-3.5 text-gray-500"></i>
+                {% endif %}
+            </div>
+            <div>
+                <p class="font-semibold text-gray-800 text-xs">{{ linea.nombre_insumo }}</p>
+                <p class="text-[10px] text-gray-400 capitalize">{{ linea.categoria }}</p>
+            </div>
+        </div>
+    </td>
+    <td class="px-4 py-4 text-right text-xs font-medium text-gray-600">
+        {{ linea.consumo }} {{ linea.unidad }}
+    </td>
+    <td class="px-4 py-4 text-right text-xs text-gray-500">
+        ${{ "{:,.2f}".format(linea.costo_unitario) }} / {{ linea.unidad }}
+    </td>
+    <td class="px-4 py-4 text-right text-xs font-bold text-gray-800">
+        ${{ "{:,.2f}".format(linea.subtotal) }}
+    </td>
+    {% if can_edit %}
+    <td class="px-4 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+        <form method="POST"
+              action="{{ url_for('prendas.bom_eliminar', uuid_producto=uuid_producto, uuid_linea=linea.uuid_linea) }}"
+              onsubmit="return confirm('¿Eliminar este insumo de la receta?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="text-red-400 hover:text-red-600 transition-colors">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+        </form>
+    </td>
+    {% endif %}
+</tr>
+{% endmacro %}

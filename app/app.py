@@ -23,7 +23,7 @@ mail = Mail()
 
 
 def create_app():
-    application = Flask(__name__)
+    application = Flask(__name__, template_folder='templates')
 
     # ── Core ──────────────────────────────────────────────────
     application.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'change-me')
@@ -112,12 +112,17 @@ def create_app():
     mail.init_app(application)
     Migrate(application, db)
 
-    from app.blueprints.proveedores.routes import proveedores_bp
-    application.register_blueprint(proveedores_bp, url_prefix='/proveedores')
-    from app.blueprints.dashboard_administrativo.routes import dashboard_bp
+    from app.blueprints.dashboard_administrativo import dashboard_bp
     application.register_blueprint(dashboard_bp, url_prefix='/dashboard_administrativo')
-    from app.blueprints.alertas.routes import alertas_bp
+
+    from app.blueprints.proveedores import proveedores_bp
+    application.register_blueprint(proveedores_bp, url_prefix='/proveedores')
+
+    from app.blueprints.alertas import alertas_bp
     application.register_blueprint(alertas_bp, url_prefix='/alertas')
+
+    from app.blueprints.prendas import prendas_bp
+    application.register_blueprint(prendas_bp, url_prefix='/prendas')
 
     # Flask-Security datastore
     user_datastore = SQLAlchemyUserDatastore(db, Usuario, Role)
