@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, DecimalField, SelectField, SubmitField
-from wtforms.validators import DataRequired, Optional, NumberRange, Length
+from wtforms.validators import DataRequired, Optional, NumberRange, Length, ValidationError
+
 
 class InsumoForm(FlaskForm):
 
@@ -27,37 +28,47 @@ class InsumoForm(FlaskForm):
         validators=[Optional()]
     )
 
-    #  UNIDAD DE COMPRA (ANTES era unidad_medida mal definida)
+    # UNIDAD DE COMPRA
     unidad_medida = SelectField(
         'Unidad de compra',
         choices=[
-            ('CAJA', 'Caja'),
+            ('PIEZA', 'Pieza'),
             ('ROLLO', 'Rollo')
         ],
         validators=[DataRequired(message="La unidad de compra es obligatoria")]
     )
 
-    #  CONTENIDO DE ESA UNIDAD
+    # CONTENIDO
     contenido_cantidad = DecimalField(
         'Cantidad por unidad de compra',
         places=4,
         validators=[
-            DataRequired(message="La cantidad es obligatoria"),
+            Optional(),
             NumberRange(min=0, message="Debe ser mayor a 0")
         ]
     )
 
-    #  UNIDAD BASE (en qué realmente se mide)
+    # UNIDAD BASE
     contenido_unidad_medida = SelectField(
         'Unidad base',
         choices=[
             ('METRO', 'Metro(s)'),
             ('PIEZA', 'Pieza(s)')
         ],
-        validators=[DataRequired(message="La unidad base es obligatoria")]
+        validators=[Optional()]
     )
 
-    #  STOCK MÍNIMO
+    # NUEVO CAMPO: ANCHO
+    ancho = DecimalField(
+        'Ancho (metros)',
+        places=2,
+        validators=[
+            Optional(),
+            NumberRange(min=0, message="Debe ser mayor a 0")
+        ]
+    )
+
+    # STOCK MÍNIMO
     stock_minimo_alerta = DecimalField(
         'Stock mínimo',
         default=0,
@@ -70,3 +81,16 @@ class InsumoForm(FlaskForm):
 
     submit = SubmitField('Guardar y salir')
     submit_add = SubmitField('Guardar y continuar')
+
+    #  VALIDACIÓN PERSONALIZADA
+    def validate(self, extra_validators=None):
+        if not super().validate(extra_validators):
+            return False
+
+        # Si es ROLLO → ancho obligatorio
+        if self.unidad_medida.data == "ROLLO":
+            if self.ancho.data is None or self.ancho.data <= 0:
+                self.ancho.errors.append("El ancho es obligatorio y debe ser mayor a 0 para insumos tipo ROLLO")
+                return False
+
+        return True

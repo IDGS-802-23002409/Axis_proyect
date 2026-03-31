@@ -5,6 +5,8 @@ from app.utils.database_connection import db
 import app.models  # noqa: F401 — ensures all models are registered with SQLAlchemy
 from app.blueprints.insumos import insumos_bp
 from app.blueprints.categorias import categorias_bp
+from app.blueprints.compras import compras_bp
+from app.blueprints.inventario import inventario_bp
 #
 
 import os
@@ -33,6 +35,8 @@ def create_app():
     #INSUMOS
     application.register_blueprint(insumos_bp)
     application.register_blueprint(categorias_bp)
+    application.register_blueprint(compras_bp)
+    application.register_blueprint(inventario_bp)
     return application
     #
 

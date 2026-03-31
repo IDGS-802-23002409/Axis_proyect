@@ -1,0 +1,127 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="min-h-screen bg-white text-neutral-900 font-sans p-8">
+
+    <div class="mb-8 border-b pb-4">
+        <h1 class="text-2xl font-bold">Inventario (Kardex)</h1>
+        <p class="text-sm text-gray-500">Control de entradas y salidas de insumos</p>
+    </div>
+
+    
+    <form method="POST" class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        {{ form.hidden_tag() }}
+
+        <div>
+            <label class="text-xs text-gray-500">Insumo</label>
+            {{ form.uuid_insumo(class="w-full border rounded px-2 py-1") }}
+        </div>
+
+        <div>
+            <label class="text-xs text-gray-500">Tipo</label>
+            {{ form.tipo_movimiento(class="w-full border rounded px-2 py-1") }}
+        </div>
+
+        
+
+        <div>
+            <label class="text-xs text-gray-500">Fecha inicio</label>
+            {{ form.fecha_inicio(class="w-full border rounded px-2 py-1") }}
+        </div>
+
+        <div>
+            <label class="text-xs text-gray-500">Fecha fin</label>
+            {{ form.fecha_fin(class="w-full border rounded px-2 py-1") }}
+        </div>
+
+        <div class="md:col-span-5">
+            {{ form.submit(class="bg-black text-white px-4 py-2 rounded text-sm hover:bg-gray-800") }}
+        </div>
+    </form>
+
+    <!--  TABLA -->
+    <div class="overflow-x-auto border rounded-lg">
+        <table class="min-w-full text-sm">
+
+            <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                <tr>
+                    <th class="px-4 py-2">Tipo</th>
+                    
+                    <th class="px-4 py-2">SKU</th>
+                    <th class="px-4 py-2">Insumo</th>
+                    <th class="px-4 py-2">Cantidad</th>
+                    <th class="px-4 py-2">Unidad</th>
+                    <th class="px-4 py-2">Fecha</th>
+                    <th class="px-4 py-2">Referencia</th>
+                    <th class="px-4 py-2 text-center">Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for m in movimientos %}
+                <tr class="border-t hover:bg-gray-50">
+
+                    <!-- Tipo -->
+                    <td class="px-4 py-2">
+                        {% if m.tipo == 'ENTRADA' %}
+                            <span class="text-green-600 font-semibold">Entrada</span>
+                        {% else %}
+                            <span class="text-red-600 font-semibold">Salida</span>
+                        {% endif %}
+                    </td>
+
+                    
+
+                    <!-- SKU -->
+                    <td class="px-4 py-2">
+                        {{ m.sku }}
+                    </td>
+
+                    <!-- Insumo -->
+                    <td class="px-4 py-2">
+                        {{ m.insumo }}
+                    </td>
+
+                    <!-- Cantidad -->
+                    <td class="px-4 py-2 font-bold">
+                        {{ m.cantidad }}
+                    </td>
+
+                    <!-- Unidad -->
+                    <td class="px-4 py-2">
+                        {{ m.unidad }}
+                    </td>
+
+                    <!-- Fecha -->
+                    <td class="px-4 py-2 text-xs">
+                        {{ m.fecha.strftime('%Y-%m-%d %H:%M') }}
+                    </td>
+
+                    <!-- Referencia -->
+                    <td class="px-4 py-2 text-xs">
+                        {{ m.referencia }}
+                    </td>
+
+                    <!-- BOTÓN -->
+                    <td class="px-4 py-2 text-center">
+                        <a href="{{ url_for('inventario_bp.detalle', tipo=m.subtipo, id=m.detalle_id) }}"
+                           class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">
+                            Ver detalles
+                        </a>
+                    </td>
+
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center py-6 text-gray-400">
+                        No hay movimientos de inventario
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+{% endblock %}

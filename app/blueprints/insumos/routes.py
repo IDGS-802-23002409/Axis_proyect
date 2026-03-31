@@ -42,62 +42,89 @@ def index():
         categorias=categorias
     )
 
-# CREAR
 @insumos_bp.route("/create", methods=["GET", "POST"])
 def create():
     form = InsumoForm()
 
-    # 🔹 Cargar categorías
     categorias = Categoria.query.all()
     form.uuid_categoria.choices = [("", "Seleccione una categoría")] + [
         (c.uuid_categoria, c.nombre) for c in categorias
     ]
 
     if form.validate_on_submit():
-
         categoria_uuid = form.uuid_categoria.data or None
 
-        # 🔹 NORMALIZAR DATOS (clave para evitar duplicados raros)
         nombre = form.nombre.data.strip()
         sku = form.sku.data.strip() if form.sku.data else None
+        unidad = form.unidad_medida.data
 
-        # 🔹 VALIDACIONES
+
+        # Nombre único
         if Insumo.query.filter_by(nombre=nombre).first():
             form.nombre.errors.append("Ya existe un insumo con ese nombre")
             flash("Error: el nombre ya existe", "error")
             return render_template("produccion/insumos/create.html", form=form)
 
+        # SKU único
         if sku and Insumo.query.filter_by(sku=sku).first():
             form.sku.errors.append("Ya existe un insumo con ese SKU")
             flash("Error: el SKU ya existe", "error")
             return render_template("produccion/insumos/create.html", form=form)
 
-        # 🔹 VALIDACIÓN NUMÉRICA
-        if form.contenido_cantidad.data is None or form.contenido_cantidad.data <= 0:
-            form.contenido_cantidad.errors.append("Debe ser mayor a 0")
-            flash("Error en cantidad por unidad", "error")
+
+        #  CASO PIEZA
+        if unidad == "PIEZA":
+            contenido_cantidad = 1
+            contenido_unidad = "PIEZA"
+            ancho = None
+
+        #  CASO ROLLO
+        elif unidad == "ROLLO":
+
+            contenido_cantidad = form.contenido_cantidad.data
+            ancho = form.ancho.data
+
+            #  FORZAR UNIDAD CORRECTA
+            contenido_unidad = "METRO"
+
+            # VALIDAR CANTIDAD
+            if contenido_cantidad is None or contenido_cantidad <= 0:
+                form.contenido_cantidad.errors.append("Debe ser mayor a 0")
+                flash("Error: la cantidad debe ser mayor a 0", "error")
+                return render_template("produccion/insumos/create.html", form=form)
+
+            # VALIDAR ANCHO
+            if ancho is None or ancho <= 0:
+                form.ancho.errors.append("El ancho es obligatorio para rollos")
+                flash("Error: el ancho es obligatorio para rollos", "error")
+                return render_template("produccion/insumos/create.html", form=form)
+
+        else:
+            flash("Unidad no válida", "error")
             return render_template("produccion/insumos/create.html", form=form)
 
-        # 🔹 VALIDACIÓN LÓGICA (nivel pro 👇)
-        if form.unidad_medida.data == "ROLLO" and form.contenido_unidad_medida.data != "METRO":
-            flash("Un rollo normalmente se mide en metros", "warning")
 
-        if form.unidad_medida.data == "CAJA" and form.contenido_unidad_medida.data != "PIEZA":
-            flash("Una caja normalmente contiene piezas", "warning")
+        if unidad == "PIEZA" and contenido_unidad != "PIEZA":
+            flash("Error: una pieza solo puede medirse en PIEZA", "error")
+            return render_template("produccion/insumos/create.html", form=form)
+
+        if unidad == "ROLLO" and contenido_unidad != "METRO":
+            flash("Error: un rollo solo puede medirse en METRO", "error")
+            return render_template("produccion/insumos/create.html", form=form)
+
 
         try:
-            # 🔹 CREACIÓN DEL INSUMO
             nuevo_insumo = Insumo(
                 sku=sku,
                 nombre=nombre,
                 uuid_categoria=categoria_uuid,
 
-                # CONFIGURACIÓN
-                unidad_medida=form.unidad_medida.data,
-                contenido_cantidad=form.contenido_cantidad.data,
-                contenido_unidad_medida=form.contenido_unidad_medida.data,
+                unidad_medida=unidad,
+                contenido_cantidad=contenido_cantidad,
+                contenido_unidad_medida=contenido_unidad,
 
-                # INVENTARIO
+                ancho=ancho,
+
                 stock_total_acumulado=0,
                 stock_minimo_alerta=form.stock_minimo_alerta.data or 0
             )
@@ -107,17 +134,16 @@ def create():
 
             flash("Insumo registrado correctamente", "success")
 
-            # 🔹 BOTONES
             if form.submit.data:
                 return redirect(url_for('insumos_bp.index'))
 
-            elif form.submit_add.data:
+            if form.submit_add.data:
                 return redirect(url_for('insumos_bp.create'))
 
         except Exception as e:
             db.session.rollback()
             flash("Error al guardar el insumo", "error")
-            print(e)  # útil para debug
+            print(e)
 
     return render_template("produccion/insumos/create.html", form=form)
 
@@ -127,7 +153,6 @@ def edit(uuid_insumo):
     insumo = Insumo.query.get_or_404(uuid_insumo)
     form = InsumoForm(obj=insumo)
 
-    # 🔹 Cargar categorías
     categorias = Categoria.query.all()
     form.uuid_categoria.choices = [("", "Seleccione una categoría")] + [
         (c.uuid_categoria, c.nombre) for c in categorias
@@ -137,11 +162,15 @@ def edit(uuid_insumo):
 
         categoria_uuid = form.uuid_categoria.data or None
 
-        # 🔹 NORMALIZAR (igual que create)
         nombre = form.nombre.data.strip()
         sku = form.sku.data.strip() if form.sku.data else None
+        unidad = form.unidad_medida.data
 
-        # 🔹 VALIDAR NOMBRE (excluyendo el actual)
+        # =========================
+        # VALIDACIONES
+        # =========================
+
+        # Nombre único
         existe_nombre = Insumo.query.filter(
             Insumo.nombre == nombre,
             Insumo.uuid_insumo != uuid_insumo
@@ -152,7 +181,7 @@ def edit(uuid_insumo):
             flash("Error: el nombre ya existe", "error")
             return render_template("produccion/insumos/edit.html", form=form, insumo=insumo)
 
-        # 🔹 VALIDAR SKU (excluyendo el actual)
+        # SKU único
         if sku:
             existe_sku = Insumo.query.filter(
                 Insumo.sku == sku,
@@ -164,28 +193,66 @@ def edit(uuid_insumo):
                 flash("Error: el SKU ya existe", "error")
                 return render_template("produccion/insumos/edit.html", form=form, insumo=insumo)
 
-        # 🔹 VALIDACIÓN NUMÉRICA
-        if form.contenido_cantidad.data is None or form.contenido_cantidad.data <= 0:
-            form.contenido_cantidad.errors.append("Debe ser mayor a 0")
-            flash("Error en cantidad por unidad", "error")
+        # =========================
+        # CONFIGURACIÓN SEGÚN UNIDAD
+        # =========================
+
+        # 🔹 PIEZA
+        if unidad == "PIEZA":
+            contenido_cantidad = 1
+            contenido_unidad = "PIEZA"
+            ancho = None  # 🔥 limpiar ancho
+
+        # 🔹 ROLLO
+        elif unidad == "ROLLO":
+            contenido_cantidad = form.contenido_cantidad.data
+            ancho = form.ancho.data
+
+            # 🔥 FORZAR
+            contenido_unidad = "METRO"
+
+            # VALIDAR CANTIDAD
+            if contenido_cantidad is None or contenido_cantidad <= 0:
+                form.contenido_cantidad.errors.append("Debe ser mayor a 0")
+                flash("Error: la cantidad debe ser mayor a 0", "error")
+                return render_template("produccion/insumos/edit.html", form=form, insumo=insumo)
+
+            # VALIDAR ANCHO
+            if ancho is None or ancho <= 0:
+                form.ancho.errors.append("El ancho es obligatorio para rollos")
+                flash("Error: el ancho es obligatorio", "error")
+                return render_template("produccion/insumos/edit.html", form=form, insumo=insumo)
+
+        else:
+            flash("Unidad no válida", "error")
             return render_template("produccion/insumos/edit.html", form=form, insumo=insumo)
 
-        # 🔹 VALIDACIÓN LÓGICA
-        if form.unidad_medida.data == "ROLLO" and form.contenido_unidad_medida.data != "METRO":
-            flash("Un rollo normalmente se mide en metros", "warning")
+        # =========================
+        # VALIDACIÓN FINAL
+        # =========================
 
-        if form.unidad_medida.data == "CAJA" and form.contenido_unidad_medida.data != "PIEZA":
-            flash("Una caja normalmente contiene piezas", "warning")
+        if unidad == "PIEZA" and contenido_unidad != "PIEZA":
+            flash("Error: una pieza solo puede medirse en PIEZA", "error")
+            return render_template("produccion/insumos/edit.html", form=form, insumo=insumo)
+
+        if unidad == "ROLLO" and contenido_unidad != "METRO":
+            flash("Error: un rollo solo puede medirse en METRO", "error")
+            return render_template("produccion/insumos/edit.html", form=form, insumo=insumo)
+
+        # =========================
+        # ACTUALIZACIÓN
+        # =========================
 
         try:
-            # 🔹 ACTUALIZAR TODO (aquí estaba tu error principal 👇)
             insumo.sku = sku
             insumo.nombre = nombre
             insumo.uuid_categoria = categoria_uuid
 
-            insumo.unidad_medida = form.unidad_medida.data
-            insumo.contenido_cantidad = form.contenido_cantidad.data
-            insumo.contenido_unidad_medida = form.contenido_unidad_medida.data
+            insumo.unidad_medida = unidad
+            insumo.contenido_cantidad = contenido_cantidad
+            insumo.contenido_unidad_medida = contenido_unidad
+
+            insumo.ancho = ancho  # 🔥 AQUÍ SE ACTUALIZA
 
             insumo.stock_minimo_alerta = form.stock_minimo_alerta.data or 0
 
@@ -198,6 +265,10 @@ def edit(uuid_insumo):
             db.session.rollback()
             flash("Error al actualizar el insumo", "error")
             print(e)
+
+    else:
+        if form.is_submitted():
+            print("ERRORES:", form.errors)
 
     return render_template("produccion/insumos/edit.html", form=form, insumo=insumo)
 
@@ -227,7 +298,7 @@ def delete(uuid_insumo):
 
     db.session.commit()
 
-    flash("Insumo desactivado correctamente", "success")
+    flash("Insumo eliminado correctamente", "success")
     return redirect(url_for('insumos_bp.index'))
 
 @insumos_bp.route("/restore/<string:uuid_insumo>", methods=["POST"])

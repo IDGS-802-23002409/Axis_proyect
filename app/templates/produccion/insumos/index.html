@@ -61,7 +61,7 @@
 
         <div class="flex justify-between items-center mb-8 gap-4">
 
-            <!-- 🔎 IZQUIERDA: buscador -->
+            <!--  IZQUIERDA: buscador -->
             <form method="GET" action="{{ url_for('insumos_bp.index') }}" class="flex items-center gap-4">
 
                 <div class="relative flex-1 max-w-md group">
@@ -71,20 +71,20 @@
                         class="w-full pl-12 pr-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs">
                 </div>
 
-                <!-- 🔘 botón -->
+                <!--  botón -->
                 <button type="submit" class="px-4 py-3 bg-black text-white rounded-xl text-xs">
                     Buscar
                 </button>
 
-                <!-- 🔥 importante: mantener categoria -->
+                
                 <input type="hidden" name="categoria" value="{{ request.args.get('categoria','') }}">
 
             </form>
 
-            <!-- 🏷 DERECHA: filtro -->
+            <!--  DERECHA: filtro -->
             <form method="GET" action="{{ url_for('insumos_bp.index') }}">
 
-                <!-- 🔥 importante: mantener búsqueda -->
+                <!--  importante: mantener búsqueda -->
                 <input type="hidden" name="q" value="{{ request.args.get('q','') }}">
 
                 <div class="flex items-center gap-2">

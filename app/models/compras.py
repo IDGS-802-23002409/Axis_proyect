@@ -49,13 +49,13 @@ class CompraDetalle(db.Model):
     # Cantidad comprada en UNIDAD DE COMPRA
     # Ejemplo:
     # - 3 rollos
-    # - 2 cajas
+    # 
     cantidad_comprada = Column(Numeric(12, 4), nullable=False)
 
     #  Costo por unidad de compra
     # Ejemplo:
     # - $500 por rollo
-    # - $200 por caja
+    
     costo_unitario_compra = Column(Numeric(12, 2), nullable=False)
     compra = db.relationship('CompraEncabezado', backref=db.backref('detalles', lazy=True))
     insumo = db.relationship('Insumo', backref=db.backref('compras_detalle', lazy=True))

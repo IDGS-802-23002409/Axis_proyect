@@ -4,8 +4,8 @@ from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, func, Enum
 
 #  cómo se compra el insumo (presentación comercial)
 unidad_compra_enum = Enum(
-    'CAJA',   # Ej: caja de botones, caja de agujas
-    'ROLLO',  # Ej: rollo de tela, rollo de hilo
+    'ROLLO',
+    'PIEZA', 
     name='unidad_compra_enum'
 )
 
@@ -46,7 +46,7 @@ class Insumo(db.Model):
     # Cuánto contiene UNA unidad de compra
     # Ejemplo:
     # - 1 rollo de tela = 50 metros
-    # - 1 caja de botones = 100 piezas
+    # - 1 boton en pieza
     contenido_cantidad = Column(Numeric(12, 4), nullable=False)
 
     #  En qué unidad se mide ese contenido
@@ -62,12 +62,14 @@ class Insumo(db.Model):
     #  Stock total SIEMPRE en unidad base (nunca en cajas o rollos)
     # Ejemplo:
     # - Compras 3 rollos de tela de 50m → stock = 150 METROS
-    # - Compras 2 cajas de botones de 100 → stock = 200 PIEZAS
+    
     stock_total_acumulado = Column(Numeric(12, 4), default=0)
 
     #  Alerta mínima de inventario
     stock_minimo_alerta = Column(Numeric(12, 4), default=0)
 
+# ancho para rollo inventario
+    ancho = Column(Numeric(5, 2), nullable=True)
 
     fecha_creacion = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())

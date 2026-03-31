@@ -1,8 +1,8 @@
-"""init limpio
+"""init
 
-Revision ID: b3996cd7cda1
+Revision ID: df960af945de
 Revises: 
-Create Date: 2026-03-26 20:20:17.298126
+Create Date: 2026-03-29 18:29:52.804096
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b3996cd7cda1'
+revision = 'df960af945de'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -91,7 +91,7 @@ def upgrade():
     sa.Column('sku', sa.String(length=50), nullable=True),
     sa.Column('nombre', sa.String(length=100), nullable=False),
     sa.Column('uuid_categoria', sa.String(length=36), nullable=True),
-    sa.Column('unidad_medida', sa.Enum('CAJA', 'ROLLO', name='unidad_compra_enum'), nullable=False),
+    sa.Column('unidad_medida', sa.Enum('ROLLO', 'PIEZA', name='unidad_compra_enum'), nullable=False),
     sa.Column('contenido_cantidad', sa.Numeric(precision=12, scale=4), nullable=False),
     sa.Column('contenido_unidad_medida', sa.Enum('METRO', 'PIEZA', name='unidad_base_enum'), nullable=False),
     sa.Column('stock_total_acumulado', sa.Numeric(precision=12, scale=4), nullable=True),
