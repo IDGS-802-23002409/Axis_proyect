@@ -1,6 +1,6 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import Boolean, Column, String, Integer, Numeric, DateTime, Enum, Text, ForeignKey, func
+from sqlalchemy import Boolean, Column, String, Integer, Numeric, DateTime, Enum, Text, ForeignKey, func, CheckConstraint
 
 
 class ModeloRopa(db.Model):
@@ -32,6 +32,10 @@ class ProductoTerminado(db.Model):
     active = Column(Boolean(), default=True)
     fecha_creacion = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        CheckConstraint('stock_fisico_actual >= 0', name='check_stock_producto_positivo'),
+    )
 
     modelo = db.relationship('ModeloRopa', backref=db.backref('productos', lazy=True))
 
