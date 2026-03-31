@@ -1,0 +1,68 @@
+<section id="hero-section" class="relative h-screen overflow-hidden">
+    <!-- Video Background -->
+    <div class="absolute inset-0">
+        <video autoplay muted loop playsinline class="w-full h-full object-cover scale-105"
+            poster="https://images.unsplash.com/photo-1523398002811-999ca8dec234?w=1920&h=1080&fit=crop">
+            <source
+                src="https://assets.mixkit.co/videos/preview/mixkit-people-walking-in-a-tunnel-with-a-neon-light-4991-large.mp4"
+                type="video/mp4" />
+        </video>
+        <div class="absolute inset-0 bg-background/70"></div>
+        <div class="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-background"></div>
+    </div>
+
+    <!-- Efecto linterna sobre AXIS -->
+    <div class="absolute inset-0 z-20 flex items-center justify-center">
+        <div class="relative flex items-center justify-center w-full" style="height: 100vh">
+            <span id="hero-text-axis"
+                class="font-[var(--font-display)] text-[18vw] md:text-[14vw] lg:text-[12vw] leading-none tracking-widest text-white select-none"
+                style="position: relative; z-index: 2; opacity: 1; transform: scale(1); transition: opacity 0.45s ease, transform 0.45s ease, filter 0.6s ease; filter: brightness(0.65) grayscale(1);">
+                AXIS
+            </span>
+            <!-- Overlay oscura con recorte circular -->
+            <div id="hero-flashlight-overlay" class="pointer-events-none absolute inset-0"
+                style="z-index: 3; transition: background 0.25s linear, opacity 0.35s linear; opacity: 1; background: radial-gradient(circle 18vw at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 68%, rgba(0,0,0,0.94) 100%);">
+            </div>
+        </div>
+    </div>
+
+    <!-- Staggered fade-in of buttons and subtitle -->
+    <div id="hero-controls-container"
+        class="opacity-0 pointer-events-none absolute inset-x-0 bottom-24 z-30 flex flex-col items-center gap-6 transition-opacity duration-700">
+        <p id="hero-subtitle"
+            class="opacity-0 translate-y-4 text-lg md:text-xl lg:text-2xl tracking-[0.4em] text-muted-foreground uppercase mb-2 transition-all duration-400">
+            Streetwear Culture
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4">
+            <a href="/catalogo" id="hero-btn-primary"
+                class="opacity-0 translate-y-6 group relative px-10 py-5 bg-primary font-[var(--font-display)] text-xl tracking-[0.2em] overflow-hidden transition-all duration-450">
+                <span
+                    class="relative z-10 text-primary-foreground group-hover:text-background transition-colors duration-300">EXPLORAR</span>
+                <div
+                    class="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300">
+                </div>
+            </a>
+
+            <a href="/nuevo" id="hero-btn-secondary"
+                class="opacity-0 translate-y-6 group relative px-10 py-5 border-2 border-foreground text-foreground font-[var(--font-display)] text-xl tracking-[0.2em] overflow-hidden transition-all duration-450">
+                <span class="relative z-10 group-hover:text-background transition-colors duration-300">NUEVO DROP</span>
+                <div
+                    class="absolute inset-0 bg-foreground scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300">
+                </div>
+            </a>
+        </div>
+
+        <div id="hero-scroll-hint"
+            class="opacity-0 translate-y-2 flex flex-col items-center gap-2 text-muted-foreground transition-all duration-400">
+            <span class="text-xs tracking-[0.3em] uppercase">Scroll</span>
+            <i data-lucide="arrow-down" class="w-5 h-5"></i>
+        </div>
+    </div>
+
+    <!-- Decorative Elements - Graffiti style lines -->
+    <div class="absolute top-1/4 left-8 w-px h-32 bg-linear-to-b from-primary via-primary/50 to-transparent"></div>
+    <div class="absolute top-1/3 right-8 w-px h-48 bg-linear-to-b from-primary via-primary/50 to-transparent"></div>
+    <div class="absolute bottom-1/4 left-16 w-24 h-px bg-linear-to-r from-primary to-transparent"></div>
+    <div class="absolute top-1/4 right-16 w-32 h-px bg-linear-to-l from-primary to-transparent"></div>
+</section>

@@ -1,0 +1,43 @@
+<section id="text-marquee-container" class="py-20 md:py-32 bg-secondary overflow-hidden relative" style="opacity: 0;">
+    <!-- Gradient overlays for smooth fade -->
+    <div
+        class="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-secondary to-transparent z-10 pointer-events-none">
+    </div>
+    <div
+        class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-secondary to-transparent z-10 pointer-events-none">
+    </div>
+
+    {% set words1 = ["STREETWEAR", "•", "GRAFFITI", "•", "URBAN", "•", "CULTURE", "•", "AXIS", "•"] * 4 %}
+    {% set words2 = ["ARTE", "•", "STYLE", "•", "UNIQUE", "•", "BOLD", "•", "AUTHENTIC", "•"] * 4 %}
+    {% set words3 = ["REBEL", "•", "UNDERGROUND", "•", "FRESH", "•", "RAW", "•", "ORIGINAL", "•"] * 4 %}
+
+    <!-- Row 1 - Moving Left -->
+    <div id="marquee-row-1" class="flex whitespace-nowrap mb-4 md:mb-6" style="transform: translateX(15%)">
+        {% for word in words1 %}
+        <span
+            class="font-[var(--font-display)] text-5xl md:text-7xl lg:text-8xl tracking-[0.15em] mx-4 md:mx-6 cursor-default transition-colors duration-500 {{ 'text-primary' if word == '•' else 'text-foreground/[0.08] hover:text-foreground/30' }}">
+            {{ word }}
+        </span>
+        {% endfor %}
+    </div>
+
+    <!-- Row 2 - Moving Right - Primary color accent -->
+    <div id="marquee-row-2" class="flex whitespace-nowrap mb-4 md:mb-6" style="transform: translateX(-30%)">
+        {% for word in words2 %}
+        <span
+            class="font-[var(--font-display)] text-5xl md:text-7xl lg:text-8xl tracking-[0.15em] mx-4 md:mx-6 cursor-default transition-colors duration-500 {{ 'text-primary/50' if word == '•' else 'text-primary/20 hover:text-primary/50' }}">
+            {{ word }}
+        </span>
+        {% endfor %}
+    </div>
+
+    <!-- Row 3 - Moving Left -->
+    <div id="marquee-row-3" class="flex whitespace-nowrap" style="transform: translateX(10%)">
+        {% for word in words3 %}
+        <span
+            class="font-[var(--font-display)] text-5xl md:text-7xl lg:text-8xl tracking-[0.15em] mx-4 md:mx-6 cursor-default transition-colors duration-500 {{ 'text-primary' if word == '•' else 'text-foreground/[0.08] hover:text-foreground/30' }}">
+            {{ word }}
+        </span>
+        {% endfor %}
+    </div>
+</section>
