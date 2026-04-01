@@ -10,13 +10,62 @@ from app.utils.database_connection import db
 
 from flask import render_template, request
 
+from flask import Blueprint, render_template
+from app.models import Insumo, RolloInventario
+from sqlalchemy import func
+
+
+
+@inventario_bp.route('/')
+def index():
+    insumos = Insumo.query.filter_by(estatus='ACTIVO').all()
+
+    inventario = []
+
+    for insumo in insumos:
+
+        # Solo aplica para rollos
+        total_rollos = 0
+        total_metros = 0
+        detalle_rollos = []
+
+        if insumo.unidad_medida == 'ROLLO':
+            total_rollos = len(insumo.rollos)
+
+            for rollo in insumo.rollos:
+                metros_actual = float(rollo.metraje_continuo_actual or 0)
+
+                total_metros += metros_actual
+
+                detalle_rollos.append({
+                    "uuid": rollo.uuid_rollo,
+                    "metros": metros_actual
+                })
+
+        inventario.append({
+            "nombre": insumo.nombre,
+            "sku": insumo.sku,
+            "tipo": insumo.unidad_medida,
+            "unidad": insumo.contenido_unidad_medida,
+
+            #  resumen
+            "total_rollos": total_rollos,
+            "total_metros": total_metros,
+
+            # detalle
+            "rollos": detalle_rollos
+        })
+
+    return render_template("produccion/inventario/index.html", inventario=inventario)
+
+'''
 
 @inventario_bp.route("/", methods=["GET", "POST"])
 def index():
 
     form = InventarioForm()
 
-    # 🔹 llenar select de insumos
+    #  llenar select de insumos
     form.uuid_insumo.choices = [("", "Todos")] + [
         (i.uuid_insumo, f"{i.sku} - {i.nombre}")
         for i in Insumo.query.all()
@@ -25,7 +74,7 @@ def index():
     movimientos = []
 
     # =========================
-    # 🔵 ENTRADAS (COMPRAS)
+    #  ENTRADAS (COMPRAS)
     # =========================
     compras = (
         db.session.query(CompraDetalle, CompraEncabezado, Insumo)
@@ -35,7 +84,7 @@ def index():
     )
 
     # =========================
-    # 🔴 SALIDAS - CONSUMO
+    #  SALIDAS - CONSUMO
     # =========================
     cortes = (
         db.session.query(EjecucionCorte, RolloInventario, Insumo)
@@ -44,7 +93,7 @@ def index():
     )
 
     # =========================
-    # 🔴 SALIDAS - MERMA
+    #  SALIDAS - MERMA
     # =========================
     retazos = (
         db.session.query(RetazoInventario, RolloInventario, Insumo)
@@ -53,7 +102,7 @@ def index():
     )
 
     # =========================
-    # 🔍 FILTROS EN QUERY (ANTES DE EJECUTAR)
+    #  FILTROS EN QUERY (ANTES DE EJECUTAR)
     # =========================
     if form.uuid_insumo.data:
         compras = compras.filter(Insumo.uuid_insumo == form.uuid_insumo.data)
@@ -71,7 +120,7 @@ def index():
         retazos = retazos.filter(RetazoInventario.fecha_creacion <= form.fecha_fin.data)
 
     # =========================
-    # 📦 PROCESAR ENTRADAS
+    #  PROCESAR ENTRADAS
     # =========================
     for detalle, encabezado, insumo in compras.all():
 
@@ -147,4 +196,28 @@ def index():
         "produccion/inventario/index.html",
         movimientos=movimientos,
         form=form
+    )
+'''
+@inventario_bp.route("/ver/<uuid_insumo>")
+def ver(uuid_insumo):
+
+    insumo = Insumo.query.get_or_404(uuid_insumo)
+
+    rollos = RolloInventario.query.filter_by(
+        uuid_insumo=uuid_insumo
+    ).all()
+
+    total_rollos = len(rollos)
+
+    total_metros = sum([
+        float(r.metraje_continuo_actual or 0)
+        for r in rollos
+    ])
+
+    return render_template(
+        "produccion/inventario/ver.html",
+        insumo=insumo,
+        rollos=rollos,
+        total_rollos=total_rollos,
+        total_metros=round(total_metros, 2)
     )

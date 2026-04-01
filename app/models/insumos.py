@@ -1,6 +1,6 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, func, Enum
+from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, func, Enum,CheckConstraint
 
 #  cómo se compra el insumo (presentación comercial)
 unidad_compra_enum = Enum(
@@ -25,6 +25,11 @@ estatus_enum = Enum(
 
 class Insumo(db.Model):
     __tablename__ = 'insumos'
+
+    __table_args__ = (
+        CheckConstraint('stock_total_acumulado >= 0', name='check_stock_no_negativo'),
+    )
+
 
     # Identificador único
     uuid_insumo = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

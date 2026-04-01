@@ -199,78 +199,155 @@ def create():
     )
 
 
+from decimal import Decimal
+from sqlalchemy.orm import joinedload
 
+@compras_bp.route("/<uuid_compra>")
+def ver(uuid_compra):
+
+    #aCargar TODO: encabezado → detalles → insumo
+    compra = CompraEncabezado.query.options(
+        joinedload(CompraEncabezado.detalles)
+        .joinedload(CompraDetalle.insumo)
+    ).get_or_404(uuid_compra)
+
+    
+    print("DETALLES:", len(compra.detalles))
+
+    total_compra = Decimal(0)
+
+    for d in compra.detalles:
+        cantidad = d.cantidad_comprada or Decimal(0)
+        costo = d.costo_unitario_compra or Decimal(0)
+
+        print("Insumo:", d.insumo.nombre)
+        print("Unidad:", d.insumo.unidad_medida)
+        print("Cantidad:", cantidad)
+        print("Costo:", costo)
+
+        subtotal = cantidad * costo
+        print("Subtotal:", subtotal)
+
+        total_compra += subtotal
+
+    print("TOTAL FINAL:", total_compra)
+
+    return render_template(
+        "produccion/compras/ver.html",
+        compra=compra,
+        total_compra=total_compra
+    )
 # =========================
 # RECIBIR COMPRA
 # =========================
-@compras_bp.route("/<uuid_compra>/recibir", methods=["POST"])
-def recibir_compra(uuid_compra):
-    try:
-        compra = CompraEncabezado.query.get(uuid_compra)
-
-        if not compra:
-            flash("Compra no encontrada", "error")
-            return redirect(url_for("compras_bp.index"))
-
-        if compra.estatus != "PENDIENTE":
-            flash("La compra ya fue procesada", "warning")
-            return redirect(url_for("compras_bp.index"))
-
-        for detalle in compra.detalles:
-            insumo = detalle.insumo
-
-            cantidad_base = float(detalle.cantidad_comprada) * float(
-                insumo.contenido_cantidad
-            )
-
-            insumo.stock_total_acumulado += cantidad_base
-
-            if insumo.unidad_medida == "ROLLO":
-                for _ in range(int(detalle.cantidad_comprada)):
-                    rollo = RolloInventario(
-                        uuid_insumo=insumo.uuid_insumo,
-                        uuid_detalle_compra=detalle.uuid_detalle_compra,
-                        metraje_inicial=insumo.contenido_cantidad,
-                        metraje_continuo_actual=insumo.contenido_cantidad,
-                    )
-                    db.session.add(rollo)
-
-        compra.estatus = "RECIBIDO"
-
-        db.session.commit()
-
-        flash("Compra recibida correctamente", "success")
-        return redirect(url_for("compras_bp.index"))
-
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error: {str(e)}", "error")
-        return redirect(url_for("compras_bp.index"))
-
-
-@compras_bp.route("/edit/<string:uuid_compra>", methods=["GET", "POST"])
-def edit(uuid_compra):
-
+@compras_bp.route("/recibir/<uuid_compra>", methods=["GET", "POST"])
+def recibir(uuid_compra):
     compra = CompraEncabezado.query.get_or_404(uuid_compra)
+
+    # SOLO PENDIENTE
+    if compra.estatus != "PENDIENTE":
+        flash("Solo se pueden recibir compras pendientes", "error")
+        return redirect(url_for("compras_bp.index"))
 
     form = CompraEncabezadoForm(obj=compra)
 
-    # limitar estatus
-    form.estatus.choices = [("PENDIENTE", "Pendiente"), ("RECIBIDO", "Recibido")]
+    # PROVEEDORES
+    proveedores = Proveedor.query.all()
+    form.uuid_proveedor.choices = [
+        (p.uuid_proveedor, f"{p.razon_social} - {p.rfc}") for p in proveedores
+    ]
 
-    if form.validate_on_submit():
+    if request.method == "POST":
+        try:
+            # TOMAR DETALLES EDITADOS
+            insumos_ids = request.form.getlist("uuid_insumo[]")
+            cantidades = request.form.getlist("cantidad[]")
+            costos = request.form.getlist("costo[]")
 
-        compra.folio_factura = form.folio_factura.data
-        compra.uuid_proveedor = form.uuid_proveedor.data
-        compra.uuid_usuario_registro = form.uuid_usuario_registro.data
-        compra.estatus = form.estatus.data
+            if not insumos_ids:
+                flash("Agrega al menos un insumo", "error")
+                return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
 
-        db.session.commit()
+            # BORRAR DETALLES EXISTENTES (y ROLLOS)
+            for detalle in compra.detalles:
+                RolloInventario.query.filter_by(uuid_detalle_compra=detalle.uuid_detalle_compra).delete()
+                db.session.delete(detalle)
 
-        flash("Compra actualizada correctamente", "success")
-        return redirect(url_for("compras_bp.index"))
+            db.session.flush()
 
-    return render_template("compras/edit.html", form=form, compra=compra)
+            # CREAR NUEVOS DETALLES
+            for i in range(len(insumos_ids)):
+                if not insumos_ids[i]:
+                    continue
+
+                try:
+                    cantidad = Decimal(cantidades[i])
+                    costo = Decimal(costos[i])
+                except (InvalidOperation, TypeError):
+                    flash("Cantidad o costo inválido", "error")
+                    return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
+
+                if cantidad <= 0 or costo < 0:
+                    flash("Cantidad o costo inválido", "error")
+                    return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
+
+                insumo = Insumo.query.get(insumos_ids[i])
+                if not insumo:
+                    flash("Insumo no encontrado", "error")
+                    return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
+
+                detalle = CompraDetalle(
+                    uuid_compra=compra.uuid_compra,
+                    uuid_insumo=insumo.uuid_insumo,
+                    cantidad_comprada=cantidad,
+                    costo_unitario_compra=costo
+                )
+                db.session.add(detalle)
+                db.session.flush()
+
+                # =========================
+                # ACTUALIZAR STOCK Y CREAR ROLLOS
+                # =========================
+                if insumo.unidad_medida == "PIEZA":
+                    cantidad_base = cantidad
+                elif insumo.unidad_medida == "ROLLO":
+                    cantidad_base = cantidad * Decimal(insumo.contenido_cantidad)
+                else:
+                    cantidad_base = cantidad
+
+                insumo.stock_total_acumulado += cantidad_base
+
+                if insumo.unidad_medida == "ROLLO":
+                    ancho_real = Decimal(insumo.ancho or 0)
+                    for _ in range(int(cantidad)):
+                        rollo = RolloInventario(
+                            uuid_insumo=insumo.uuid_insumo,
+                            uuid_detalle_compra=detalle.uuid_detalle_compra,
+                            metraje_inicial=Decimal(insumo.contenido_cantidad),
+                            metraje_continuo_actual=Decimal(insumo.contenido_cantidad),
+                            ancho_real_recibido=ancho_real
+                        )
+                        db.session.add(rollo)
+
+            # CAMBIAR ESTATUS
+            compra.estatus = "RECIBIDO"
+            db.session.commit()
+
+            flash("Compra recibida correctamente y stock actualizado", "success")
+            return redirect(url_for("compras_bp.index"))
+
+        except Exception as e:
+            db.session.rollback()
+            print("ERROR:", e)
+            flash("Error al recibir la compra", "error")
+            return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
+
+    return render_template(
+        "produccion/compras/recibir.html",
+        form=form,
+        compra=compra,
+        insumos=Insumo.query.all()
+    )
 
 
 # VER
@@ -283,17 +360,28 @@ def view(uuid_compra):
 
 
 # Cancelado
-@compras_bp.route("/delete/<string:uuid_compra>", methods=["POST"])
-def delete(uuid_compra):
-
+@compras_bp.route("/cancelar/<uuid_compra>", methods=["POST"])
+def cancelar(uuid_compra):
     compra = CompraEncabezado.query.get_or_404(uuid_compra)
 
-    compra.estatus = "CANCELADO"
+    # VALIDACIÓN IMPORTANTE
+    if compra.estatus != "PENDIENTE":
+        flash("Solo se pueden cancelar compras pendientes", "error")
+        return redirect(url_for("compras_bp.index"))
 
-    db.session.commit()
+    try:
+        compra.estatus = "CANCELADO"
 
-    flash("Compra cancelada correctamente", "warning")
-    return redirect(url_for("compras_bp.index"))
+        db.session.commit()
+
+        flash("Compra cancelada correctamente", "success")
+        return redirect(url_for("compras_bp.index"))
+
+    except Exception as e:
+        db.session.rollback()
+        print("ERROR:", e)
+        flash("Error al cancelar la compra", "error")
+        return redirect(url_for("compras_bp.index"))
 
 
 # compras canceladas

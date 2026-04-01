@@ -54,7 +54,9 @@
                         (MX)</span>
                     <i class="fas fa-dollar-sign text-neutral-300"></i>
                 </div>
-                \
+                <div class="text-4xl font-bold mb-1 text-black">
+                    ${{ "%.4f"|format(valorizado_total) }}
+                </div>
                 <div class="text-[10px] text-neutral-400 uppercase">Costo total insumos</div>
             </div>
         </div>
@@ -76,7 +78,7 @@
                     Buscar
                 </button>
 
-                
+
                 <input type="hidden" name="categoria" value="{{ request.args.get('categoria','') }}">
 
             </form>
@@ -151,7 +153,7 @@
                                     1 {{ insumo.unidad_medida }}
                                 </span>
                                 <span class="text-neutral-300">
-                                   Unidad
+                                    Unidad
                                 </span>
                                 <span class="text-neutral-400">
                                     {{ insumo.contenido_unidad_medida }}
@@ -161,7 +163,7 @@
 
                         <!-- Costo promedio -->
                         <td class="px-4 py-6 text-xs text-right text-neutral-400">
-                            $0.00
+                            ${{ "%.2f"|format(insumo.costo_promedio) }}
                         </td>
 
                         <!-- STOCK -->

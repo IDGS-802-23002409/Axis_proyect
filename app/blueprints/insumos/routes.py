@@ -3,8 +3,35 @@ from app.models.insumos import Insumo
 from .forms import InsumoForm
 from app.utils.database_connection import db
 from app.models.categorias import Categoria
+from app.models.compras import CompraDetalle, CompraEncabezado
 from flask import render_template, redirect, url_for, flash, request
 from sqlalchemy import or_, func
+
+
+
+# COSTO PROMEDIO
+def calcular_costo_promedio(insumo_id, limite=5):
+    ultimos_costos = (
+        db.session.query(CompraDetalle.costo_unitario_compra)
+        .join(CompraEncabezado, CompraDetalle.uuid_compra == CompraEncabezado.uuid_compra)
+        .filter(
+            CompraDetalle.uuid_insumo == insumo_id,
+            CompraEncabezado.estatus == 'RECIBIDO'
+        )
+        .order_by(CompraEncabezado.fecha_compra.desc())
+        .limit(limite)
+        .all()
+    )
+
+    costos = [float(c[0]) for c in ultimos_costos if c[0] is not None]
+
+    if not costos:
+        return 0
+
+    return sum(costos) / len(costos)
+
+
+# INDEX
 
 @insumos_bp.route("/")
 def index():
@@ -13,7 +40,7 @@ def index():
 
     query = Insumo.query.filter(Insumo.estatus == 'ACTIVO')
 
-    # categorías (desde la tabla relacionada)
+    # categorías
     categorias = db.session.query(Categoria.nombre).distinct().all()
     categorias = [c[0] for c in categorias]
 
@@ -28,7 +55,7 @@ def index():
             )
         )
 
-    # filtro por categoría (RELACIÓN)
+    # filtro por categoría
     if categoria:
         query = query.join(Insumo.categoria).filter(
             Categoria.nombre == categoria
@@ -36,10 +63,25 @@ def index():
 
     insumos = query.all()
 
+    
+    # COSTO PROMEDIO POR INSUMO
+    
+    for insumo in insumos:
+        insumo.costo_promedio = calcular_costo_promedio(insumo.uuid_insumo)
+
+  
+    # COSTO PROMEDIO DE LOS INSUMOS ACUMULADO
+
+    valorizado_total = sum(
+        insumo.costo_promedio * float(insumo.stock_total_acumulado or 0)
+        for insumo in insumos
+    )
+
     return render_template(
         "produccion/insumos/index.html",
         insumos=insumos,
-        categorias=categorias
+        categorias=categorias,
+        valorizado_total=valorizado_total
     )
 
 @insumos_bp.route("/create", methods=["GET", "POST"])

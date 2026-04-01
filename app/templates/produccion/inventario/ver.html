@@ -1,8 +1,142 @@
 {% extends "produccion/layout.html" %}
 
 {% block container %}
-<div class="min-h-screen bg-white text-[#1d1d1f] font-sans p-6 md:p-12 text-base">
+<div class="min-h-screen bg-white text-neutral-900 font-sans p-8 xl:p-12">
 
-    
+    <!-- HEADER -->
+    <div class="flex justify-between items-center mb-10 border-b pb-6">
+        <div>
+            <h1 class="text-xl font-bold uppercase text-black">
+                Reporte de Inventario
+            </h1>
+            <p class="text-xs text-neutral-500 mt-1">
+                Detalle completo del insumo en almacén
+            </p>
+        </div>
+
+        <a href="{{ url_for('inventario_bp.index') }}"
+            class="text-xs font-bold text-neutral-400 hover:text-black uppercase">
+            ← Volver
+        </a>
+    </div>
+
+    <!-- INFO GENERAL -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+
+        <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm">
+            <span class="text-[10px] uppercase text-neutral-400">Insumo</span>
+            <div class="text-lg font-bold mt-2">
+                {{ insumo.nombre }}
+            </div>
+        </div>
+
+        <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm">
+            <span class="text-[10px] uppercase text-neutral-400">SKU</span>
+            <div class="text-lg font-bold mt-2">
+                {{ insumo.sku or 'SIN-SKU' }}
+            </div>
+        </div>
+
+        <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm">
+            <span class="text-[10px] uppercase text-neutral-400">Unidad</span>
+            <div class="text-lg font-bold mt-2">
+                {{ insumo.unidad_medida }}
+            </div>
+        </div>
+
+        <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm">
+            <span class="text-[10px] uppercase text-neutral-400">Stock Total</span>
+            <div class="text-lg font-bold mt-2">
+                {{ insumo.stock_total_acumulado }} {{ insumo.contenido_unidad_medida }}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CONFIGURACIÓN -->
+    <div class="bg-neutral-50 border border-neutral-200 rounded-xl p-6 mb-10 text-sm">
+
+        <span class="text-xs uppercase text-neutral-400">Configuración</span>
+
+        <p class="mt-2 font-medium text-neutral-700">
+            1 {{ insumo.unidad_medida }} =
+            {{ insumo.contenido_cantidad }}
+            {{ insumo.contenido_unidad_medida }}
+            {% if insumo.unidad_medida == 'ROLLO' %}
+            | Ancho: {{ insumo.ancho }} m
+            {% endif %}
+        </p>
+
+    </div>
+
+    <!-- TABLA DE ROLLOS -->
+    {% if insumo.unidad_medida == 'ROLLO' %}
+
+    <div class="border border-neutral-200 rounded-xl overflow-hidden">
+
+        <div class="px-6 py-4 border-b bg-neutral-50 flex justify-between">
+            <span class="text-xs font-bold uppercase text-neutral-500">
+                Detalle de Rollos
+            </span>
+
+            <span class="text-xs text-neutral-400">
+                Total: {{ rollos|length }} rollos
+            </span>
+        </div>
+
+        <table class="w-full text-left">
+            <thead>
+                <tr class="text-[10px] uppercase tracking-widest text-neutral-400 border-b">
+                    <th class="px-4 py-4">ID Rollo</th>
+                    <th class="px-4 py-4 text-right">Metraje Inicial</th>
+                    <th class="px-4 py-4 text-right">Metraje Actual</th>
+                    <th class="px-4 py-4 text-right">Uso (%)</th>
+                </tr>
+            </thead>
+
+            <tbody class="divide-y divide-neutral-100">
+
+                {% for rollo in rollos %}
+                <tr class="hover:bg-neutral-50">
+
+                    <td class="px-4 py-4 text-xs font-bold text-neutral-500">
+                        {{ rollo.uuid_rollo[:8] }}
+                    </td>
+
+                    <td class="px-4 py-4 text-sm text-right">
+                        {{ rollo.metraje_inicial }}
+                    </td>
+
+                    <td class="px-4 py-4 text-sm font-semibold text-right">
+                        {{ rollo.metraje_continuo_actual }}
+                    </td>
+
+                    <td class="px-4 py-4 text-xs text-right">
+                        {% if rollo.metraje_inicial > 0 %}
+                        {{ ((rollo.metraje_continuo_actual / rollo.metraje_inicial) * 100) | round(2) }}%
+                        {% else %}
+                        0%
+                        {% endif %}
+                    </td>
+
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <!-- SI ES PIEZA -->
+    <div class="bg-neutral-50 border border-neutral-200 rounded-xl p-6 text-center">
+        <p class="text-sm text-neutral-500">
+            Este insumo se maneja por piezas. No hay rollos registrados.
+        </p>
+    </div>
+
+    {% endif %}
+
 </div>
 {% endblock %}
