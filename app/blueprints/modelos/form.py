@@ -28,6 +28,6 @@ class ModeloForm(FlaskForm):
         try:
             # Poblamos el select desde la bd
             categorias = Categoria.query.all()
-            self.uuid_categoria.choices = [(c.uuid_categoria, c.nombre_categoria) for c in categorias]
+            self.uuid_categoria.choices = [(c.uuid_categoria, c.nombre) for c in categorias]
         except Exception as e:
             self.uuid_categoria.choices = []

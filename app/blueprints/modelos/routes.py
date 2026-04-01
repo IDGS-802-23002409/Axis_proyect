@@ -39,7 +39,7 @@ def registro_modelo():
     form = ModeloForm()
     
     if request.method == "POST" and form.validate():
-        imagen_url = None
+        imagen_url = "/static/images/default/default-image.png"
         
         # Procesamiento de la imagen
         if form.imagen.data:
