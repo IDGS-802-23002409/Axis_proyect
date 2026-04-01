@@ -169,10 +169,11 @@ def create_app():
     def inject_layout():
         if current_user.is_authenticated:
             if current_user.has_role('cliente'):
-                return {'base_layout': 'client/layout.html'}
+                return {'base_layout': 'client/base.html'}
             elif any(current_user.has_role(r) for r in ['admin', 'produccion', 'gerente']):
                 return {'base_layout': 'produccion/layout.html'}
-        return {'base_layout': 'client/layout.html'}
+        # Fallback para pruebas sin rol asignado (para habilitar el desarrollo)
+        return {'base_layout': 'produccion/layout.html'}
 
     # ── Catálogo (Ruta Raíz) ──────────────────────────────────
     # Ya está manejado por client_bp con url_prefix=''

@@ -1,4 +1,4 @@
-{% extends base_layout %}
+{% extends "produccion/layout.html" %}
 {% block title %}
 Gestión de Modelos
 {% endblock %}
@@ -33,7 +33,8 @@ Gestión de Modelos
                 </button>
 
                 <button id="filterToggle" type="button"
-                    class="h-9 w-9 p-2 bg-card border border-border rounded-md text-muted-foreground hover:bg-secondary" title="Mostrar/Ocultar filtros">
+                    class="h-9 w-9 p-2 bg-card border border-border rounded-md text-muted-foreground hover:bg-secondary"
+                    title="Mostrar/Ocultar filtros">
                     <i data-lucide="filter" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -69,17 +70,18 @@ Gestión de Modelos
                     <!-- IMG -->
                     <td class="px-6 py-4">
                         {% if mod.imagen_url %}
-                            <img src="{{ mod.imagen_url }}" class="w-12 h-12 rounded-md object-cover border" alt="img">
+                        <img src="{{ mod.imagen_url }}" class="w-12 h-12 rounded-md object-cover border" alt="img">
                         {% else %}
-                            <div class="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center">
-                                <i data-lucide="image" class="w-5 h-5 text-gray-400"></i>
-                            </div>
+                        <div class="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center">
+                            <i data-lucide="image" class="w-5 h-5 text-gray-400"></i>
+                        </div>
                         {% endif %}
                     </td>
                     <!-- Modelo -->
                     <td class="px-6 py-4">
                         <p class="font-medium">{{ mod.nombre_modelo }}</p>
-                        <p class="text-xs text-muted-foreground truncate max-w-[200px]" title="{{ mod.descripcion }}">{{ mod.descripcion or '' }}</p>
+                        <p class="text-xs text-muted-foreground truncate max-w-[200px]" title="{{ mod.descripcion }}">{{
+                            mod.descripcion or '' }}</p>
                     </td>
                     <!-- Categoria -->
                     <td class="px-6 py-4">
@@ -91,15 +93,18 @@ Gestión de Modelos
                     </td>
                     <!-- Acciones -->
                     <td class="px-6 py-4 text-right flex justify-end gap-3 items-center" style="height: 80px;">
-                        
+
                         <!-- Editar -->
-                        <a href="{{ url_for('modelos.update_modelo', uuid_modelo=mod.uuid_modelo) }}" title="Editar Modelo">
+                        <a href="{{ url_for('modelos.update_modelo', uuid_modelo=mod.uuid_modelo) }}"
+                            title="Editar Modelo">
                             <i data-lucide="pencil" class="w-4 h-4 cursor-pointer hover:text-primary"></i>
                         </a>
 
                         <!-- Eliminar -->
-                        <form method="POST" action="{{ url_for('modelos.delete_modelo', uuid_modelo=mod.uuid_modelo) }}" class="inline">
-                            <button type="button" onclick="openDeleteModal('{{ mod.uuid_modelo }}')" title="Eliminar Modelo">
+                        <form method="POST" action="{{ url_for('modelos.delete_modelo', uuid_modelo=mod.uuid_modelo) }}"
+                            class="inline">
+                            <button type="button" onclick="openDeleteModal('{{ mod.uuid_modelo }}')"
+                                title="Eliminar Modelo">
                                 <i data-lucide="trash-2" class="w-4 h-4 text-red-500 cursor-pointer"></i>
                             </button>
                         </form>
@@ -123,8 +128,10 @@ Gestión de Modelos
             <form id="deleteForm" method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="flex justify-end gap-3">
-                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 border rounded-md text-sm">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-md text-sm">Eliminar Modelo</button>
+                    <button type="button" onclick="closeDeleteModal()"
+                        class="px-4 py-2 border rounded-md text-sm">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-md text-sm">Eliminar
+                        Modelo</button>
                 </div>
             </form>
         </div>

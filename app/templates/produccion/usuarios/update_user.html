@@ -1,4 +1,4 @@
-{% extends base_layout %}
+{% extends "produccion/layout.html" %}
 
 {% block title %}
 Gestión de Usuarios
@@ -36,14 +36,14 @@ Gestión de Usuarios
       <!-- Password (opcional) -->
       <div>
         <label class="block text-sm font-medium mb-1">
-          {{ form.password.label }} 
+          {{ form.password.label }}
           <span class="text-xs text-muted-foreground">(Opcional)</span>
         </label>
 
         {{ form.password(class="w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
 
         {% for error in form.password.errors %}
-          <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+        <p class="text-red-500 text-xs mt-1">{{ error }}</p>
         {% endfor %}
       </div>
 
@@ -64,31 +64,29 @@ Gestión de Usuarios
         {% else %}
         <div class="flex gap-6">
           {% for subfield in form.active %}
-            <label class="flex items-center gap-2 text-sm">
-              {{ subfield(class="accent-black") }}
-              {{ subfield.label.text }}
-            </label>
+          <label class="flex items-center gap-2 text-sm">
+            {{ subfield(class="accent-black") }}
+            {{ subfield.label.text }}
+          </label>
           {% endfor %}
         </div>
         {% endif %}
 
         {% if form.active.errors %}
-          {% for error in form.active.errors %}
-            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-          {% endfor %}
+        {% for error in form.active.errors %}
+        <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+        {% endfor %}
         {% endif %}
       </div>
 
       <!-- Buttons -->
       <div class="flex justify-end gap-3 pt-4">
 
-        <a href="{{ url_for('usuarios.index') }}"
-           class="px-4 py-2 border border-border rounded-md text-sm">
+        <a href="{{ url_for('usuarios.index') }}" class="px-4 py-2 border border-border rounded-md text-sm">
           Cancelar
         </a>
 
-        <button type="submit"
-                class="px-4 py-2 bg-black text-white rounded-md text-sm">
+        <button type="submit" class="px-4 py-2 bg-black text-white rounded-md text-sm">
           Actualizar Usuario
         </button>
 
