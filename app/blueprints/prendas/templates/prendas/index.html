@@ -1,4 +1,4 @@
-{% extends "dashboard/layout_admin.html" %}
+{% extends "produccion/layout.html" %}
 
 {% block content %}
 
@@ -15,7 +15,7 @@
         </div>
 
         {% if prenda_activa %}
-        <h1 class="text-3xl font-black text-white uppercase tracking-tighter leading-none">
+        <h1 class="text-3xl font-black text-black uppercase tracking-tighter leading-none">
             {{ prenda_activa.nombre_modelo }}
         </h1>
         <p class="text-xs text-gray-500 mt-1 uppercase tracking-widest">
@@ -36,7 +36,7 @@
     {% if prenda_activa %}
     <button onclick="window.print()"
         class="flex items-center gap-2 px-4 py-2 border border-gray-700 rounded-lg text-sm font-semibold
-               text-gray-400 hover:border-gray-500 hover:text-white transition-colors mt-1">
+               text-gray-400 hover:border-gray-500 hover:text-black transition-colors mt-1">
         <i data-lucide="printer" class="w-4 h-4"></i>
         Exportar PDF
     </button>
@@ -387,6 +387,46 @@
 {% endblock %}
 
 {% block scripts %}
+<style>
+@media print {
+    /* Ocultar todo el layout excepto aro
+    el contenido */
+    aside,                          /* sidebar de prendas (catálogo) */
+    nav,                            /* navegación principal */
+    header,                         /* topbar */
+    .sticky,                        /* elementos fijos */
+    #buscador-prendas,             /* buscador */
+    button[onclick="window.print()"] /* el mismo botón de exportar */
+    { display: none !important; }
+
+    /* Quitar padding/margin del layout padre */
+    body { background: white !important; }
+    .flex.min-h-screen { display: block !important; }
+    main { padding: 0 !important; }
+    .flex-1.p-8 { padding: 0 !important; }
+
+    /* El grid de prendas: quitar el sidebar interno y expandir el panel */
+    .lg\\:col-span-3 { display: none !important; }
+    .lg\\:col-span-9 {
+        grid-column: span 12 !important;
+        width: 100% !important;
+    }
+
+    /* Colores dark → imprimibles */
+    .bg-gray-900, .bg-gray-800 {
+        background-color: #f9fafb !important;
+        border: 1px solid #e5e7eb !important;
+    }
+    .text-white { color: #111 !important; }
+    .text-gray-200, .text-gray-300, .text-gray-400 { color: #374151 !important; }
+    .text-gray-500, .text-gray-600 { color: #6b7280 !important; }
+    .border-gray-800, .border-gray-700 { border-color: #e5e7eb !important; }
+
+    /* Evitar cortes de página dentro de tarjetas */
+    .rounded-xl { page-break-inside: avoid; }
+}
+</style>
+
 <script>
     lucide.createIcons();
 
