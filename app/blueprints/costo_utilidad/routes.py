@@ -1,31 +1,43 @@
 from flask import render_template, request, redirect, url_for, flash
+from flask_security import login_required, roles_required
+
 from app.blueprints.costo_utilidad import costo_utilidad_bp
 from app.models.modelos_productos import ProductoTerminado
-from app.models.explosion_materiales import ExplosionMaterialesCabecera, ExplosionMaterialesDetalle
-from app.models.insumos import Insumo
+from app.models.explosion_materiales import (
+    ExplosionMaterialesCabecera,
+    ExplosionMaterialesDetalle,
+)
 from app.models.compras import CompraEncabezado, CompraDetalle
-from flask_security import login_required, roles_required
+from app.models.produccion import EjecucionCorte, OrdenProduccion
 from app.utils.database_connection import db
 
 
-def _obtener_costo_promedio_insumo(uuid_insumo):
+def _obtener_costo_promedio_insumo(uuid_insumo, cache_costos=None):
     """
     Calcula el costo promedio ponderado por UNIDAD BASE
-    usando las últimas 5 compras del insumo.
+    usando las últimas 5 compras RECIBIDAS del insumo.
 
     Fórmula:
         total gastado / total unidades base compradas
     """
+    if cache_costos is not None and uuid_insumo in cache_costos:
+        return cache_costos[uuid_insumo]
+
     detalles = (
         CompraDetalle.query
-        .filter_by(uuid_insumo=uuid_insumo)
         .join(CompraEncabezado)
+        .filter(
+            CompraDetalle.uuid_insumo == uuid_insumo,
+            CompraEncabezado.estatus == "RECIBIDO"
+        )
         .order_by(CompraEncabezado.fecha_compra.desc())
         .limit(5)
         .all()
     )
 
     if not detalles:
+        if cache_costos is not None:
+            cache_costos[uuid_insumo] = 0.0
         return 0.0
 
     total_costo = 0.0
@@ -33,11 +45,11 @@ def _obtener_costo_promedio_insumo(uuid_insumo):
 
     for d in detalles:
         if (
-            d.costo_unitario_compra is not None and
-            d.cantidad_comprada is not None and
-            d.insumo is not None and
-            d.insumo.contenido_cantidad is not None and
-            float(d.insumo.contenido_cantidad) > 0
+            d.costo_unitario_compra is not None
+            and d.cantidad_comprada is not None
+            and d.insumo is not None
+            and d.insumo.contenido_cantidad is not None
+            and float(d.insumo.contenido_cantidad) > 0
         ):
             cantidad_comprada = float(d.cantidad_comprada)
             costo_unitario_compra = float(d.costo_unitario_compra)
@@ -47,9 +59,59 @@ def _obtener_costo_promedio_insumo(uuid_insumo):
             total_unidades_base += cantidad_comprada * contenido_cantidad
 
     if total_unidades_base == 0:
+        if cache_costos is not None:
+            cache_costos[uuid_insumo] = 0.0
         return 0.0
 
-    return total_costo / total_unidades_base
+    costo_promedio = total_costo / total_unidades_base
+
+    if cache_costos is not None:
+        cache_costos[uuid_insumo] = costo_promedio
+
+    return costo_promedio
+
+
+def _obtener_merma_promedio(uuid_producto):
+    """
+    Calcula la merma promedio ponderada real del producto
+    basada en ejecuciones de corte.
+
+    Fórmula:
+        sum(merma_real_calculada) / sum(metros_teoricos_requeridos)
+
+    Retorna un valor decimal:
+        0.10 = 10%
+        0.25 = 25%
+    """
+    ejecuciones = (
+        EjecucionCorte.query
+        .join(OrdenProduccion)
+        .filter(OrdenProduccion.uuid_producto == uuid_producto)
+        .all()
+    )
+
+    if not ejecuciones:
+        return 0.0
+
+    total_merma_real = 0.0
+    total_metros_teoricos = 0.0
+
+    for e in ejecuciones:
+        if (
+            e.merma_real_calculada is not None
+            and e.metros_teoricos_requeridos is not None
+        ):
+            merma_real = float(e.merma_real_calculada)
+            metros_teoricos = float(e.metros_teoricos_requeridos)
+
+            if metros_teoricos > 0:
+                total_merma_real += merma_real
+                total_metros_teoricos += metros_teoricos
+
+    if total_metros_teoricos == 0:
+        return 0.0
+
+    return total_merma_real / total_metros_teoricos
 
 
 def _obtener_explosion_y_detalles(producto):
@@ -70,9 +132,11 @@ def _obtener_explosion_y_detalles(producto):
     return cabecera, detalles
 
 
-def _calcular_costo_mp(producto):
+def _calcular_costo_mp(producto, merma_promedio=0.0):
     """
     Calcula el costo total de materia prima del producto.
+
+    Aplica merma real promedio SOLO a insumos medidos en METRO.
     """
     _, detalles = _obtener_explosion_y_detalles(producto)
 
@@ -80,27 +144,41 @@ def _calcular_costo_mp(producto):
         return 0.0
 
     costo_mp = 0.0
+    cache_costos = {}
 
     for d in detalles:
-        insumo = Insumo.query.filter_by(uuid_insumo=d.uuid_insumo).first()
+        insumo = d.insumo
         if not insumo:
             continue
 
-        costo_promedio = _obtener_costo_promedio_insumo(insumo.uuid_insumo)
-        consumo = float(d.consumo_teorico_unitario or 0)
+        costo_promedio = _obtener_costo_promedio_insumo(
+            insumo.uuid_insumo,
+            cache_costos
+        )
 
-        costo_mp += consumo * costo_promedio
+        consumo_teorico = float(d.consumo_teorico_unitario or 0)
+
+        # Aplicar merma solo a materiales medidos en METRO
+        if insumo.contenido_unidad_medida == "METRO":
+            consumo_real = consumo_teorico * (1 + merma_promedio)
+        else:
+            consumo_real = consumo_teorico
+
+        costo_mp += consumo_real * costo_promedio
 
     return costo_mp
 
 
-def _obtener_desglose_insumos(producto):
+def _obtener_desglose_insumos(producto, merma_promedio=0.0):
     """
     Devuelve el desglose de insumos del producto con:
     - nombre del insumo
-    - consumo teórico unitario
-    - costo promedio por unidad base
-    - costo total del insumo en el producto
+    - unidad base
+    - consumo teórico
+    - consumo real (ajustado con merma si aplica)
+    - merma aplicada %
+    - costo unitario promedio
+    - costo total
     """
     _, detalles = _obtener_explosion_y_detalles(producto)
 
@@ -108,45 +186,67 @@ def _obtener_desglose_insumos(producto):
         return []
 
     desglose = []
+    cache_costos = {}
 
     for d in detalles:
-        insumo = Insumo.query.filter_by(uuid_insumo=d.uuid_insumo).first()
+        insumo = d.insumo
         if not insumo:
             continue
 
-        costo_promedio = _obtener_costo_promedio_insumo(insumo.uuid_insumo)
-        consumo = float(d.consumo_teorico_unitario or 0)
-        costo_total_insumo = consumo * costo_promedio
+        costo_promedio = _obtener_costo_promedio_insumo(
+            insumo.uuid_insumo,
+            cache_costos
+        )
+
+        consumo_teorico = float(d.consumo_teorico_unitario or 0)
+
+        if insumo.contenido_unidad_medida == "METRO":
+            consumo_real = consumo_teorico * (1 + merma_promedio)
+            merma_aplicada = merma_promedio * 100
+        else:
+            consumo_real = consumo_teorico
+            merma_aplicada = 0.0
+
+        costo_total = consumo_real * costo_promedio
 
         desglose.append({
-            'insumo': insumo.nombre if insumo.nombre else 'N/A',
-            'unidad_base': insumo.contenido_unidad_medida,
-            'consumo': consumo,
-            'costo_unitario': costo_promedio,
-            'costo_total': costo_total_insumo,
+            "insumo": insumo.nombre or "N/A",
+            "unidad_base": insumo.contenido_unidad_medida,
+            "consumo_teorico": consumo_teorico,
+            "consumo_real": consumo_real,
+            "merma_aplicada_%": merma_aplicada,
+            "costo_unitario": costo_promedio,
+            "costo_total": costo_total,
         })
 
     return desglose
 
-# @costo_utilidad_bp.route('/costo-utilidad', methods=['GET'])
-# @login_required
-# @roles_required('admin')
-# def index():
-#     productos = ProductoTerminado.query.order_by(
-#         ProductoTerminado.modelo_id,
-#         ProductoTerminado.talla
-#     ).all()
 
-#     return render_template(
-#         'produccion/costo_utilidad/index.html',
-#         productos=productos,
-#     )
-
-
-@costo_utilidad_bp.route('/costo-utilidad', methods=['GET', 'POST'])
+@costo_utilidad_bp.route("/costo-utilidad", methods=["GET"])
 @login_required
-@roles_required('admin')
+@roles_required("admin")
 def index():
+    """
+    Lista de productos para análisis de costo-utilidad.
+    """
+    productos = ProductoTerminado.query.order_by(
+        ProductoTerminado.uuid_modelo,
+        ProductoTerminado.talla
+    ).all()
+
+    return render_template(
+        "produccion/costo_utilidad/lista.html",
+        productos=productos,
+    )
+
+
+@costo_utilidad_bp.route("/costo-utilidad/<uuid_producto>", methods=["GET", "POST"])
+@login_required
+@roles_required("admin")
+def detalle(uuid_producto):
+    """
+    Página de detalle - Análisis de costo y utilidad de un producto.
+    """
     productos = ProductoTerminado.query.order_by(
         ProductoTerminado.fecha_actualizacion.desc()
     ).all()
@@ -157,67 +257,81 @@ def index():
     utilidad_actual = 0.0
     precio_ajustado = 0.0
     desglose_insumos = []
+    merma_promedio = 0.0
 
     # ----------------------------
-    # GET: Selección de producto
+    # GET: Mostrar detalle del producto
     # ----------------------------
-    if request.method == 'GET':
-        uuid_producto = (request.args.get('producto') or '').strip()
+    if request.method == "GET":
+        uuid_producto_param = (
+            request.args.get("producto") or uuid_producto or ""
+        ).strip()
 
-        if uuid_producto:
+        if uuid_producto_param:
             product = ProductoTerminado.query.filter_by(
-                uuid_producto=uuid_producto
+                uuid_producto=uuid_producto_param
             ).first()
 
             if product:
                 _, detalles = _obtener_explosion_y_detalles(product)
-                costo_mp = _calcular_costo_mp(product)
-                desglose_insumos = _obtener_desglose_insumos(product)
+                merma_promedio = _obtener_merma_promedio(product.uuid_producto)
+                costo_mp = _calcular_costo_mp(product, merma_promedio)
+                desglose_insumos = _obtener_desglose_insumos(product, merma_promedio)
 
                 if not detalles:
                     flash(
-                        'Este producto no tiene explosión de materiales configurada.',
-                        'warning'
+                        "Este producto no tiene explosión de materiales configurada.",
+                        "warning",
                     )
                 elif costo_mp == 0.0:
                     flash(
-                        'No fue posible calcular el costo del producto. Verifica compras, contenido del insumo y consumos configurados.',
-                        'warning'
+                        "No fue posible calcular el costo del producto. "
+                        "Verifica compras recibidas, contenido del insumo y consumos configurados.",
+                        "warning",
                     )
-                    
-    if request.method == 'POST':
-        uuid_producto = (request.form.get('producto') or '').strip()
+
+    # ----------------------------
+    # POST: Calcular margen / guardar precio
+    # ----------------------------
+    if request.method == "POST":
+        uuid_producto_post = (request.form.get("producto") or "").strip()
 
         product = ProductoTerminado.query.filter_by(
-            uuid_producto=uuid_producto
+            uuid_producto=uuid_producto_post
         ).first()
 
         if not product:
-            flash('Producto no encontrado.', 'error')
-            return redirect(url_for('costo_utilidad.index'))
+            flash("Producto no encontrado.", "error")
+            return redirect(url_for("costo_utilidad.index"))
 
         try:
-            margen = float(request.form.get('margen', 0) or 0)
+            margen = float(request.form.get("margen", 0) or 0)
         except ValueError:
             margen = 0.0
 
         _, detalles = _obtener_explosion_y_detalles(product)
-        costo_mp = _calcular_costo_mp(product)
-        desglose_insumos = _obtener_desglose_insumos(product)
+        merma_promedio = _obtener_merma_promedio(product.uuid_producto)
+        costo_mp = _calcular_costo_mp(product, merma_promedio)
+        desglose_insumos = _obtener_desglose_insumos(product, merma_promedio)
 
         if not detalles:
             flash(
-                'Este producto no tiene explosión de materiales configurada.',
-                'error'
+                "Este producto no tiene explosión de materiales configurada.",
+                "error"
             )
-            return redirect(url_for('costo_utilidad.index', producto=product.uuid_producto))
+            return redirect(
+                url_for("costo_utilidad.detalle", uuid_producto=product.uuid_producto)
+            )
 
         if costo_mp == 0.0:
             flash(
-                'No fue posible calcular el costo del producto. Verifica compras, contenido del insumo y consumos configurados.',
-                'error'
+                "No fue posible calcular el costo del producto. "
+                "Verifica compras recibidas, contenido del insumo y consumos configurados.",
+                "error"
             )
-            return redirect(url_for('costo_utilidad.index', producto=product.uuid_producto))
+            return redirect(
+                url_for("costo_utilidad.detalle", uuid_producto=product.uuid_producto)
+            )
 
         try:
             precio_actual = float(product.precio_venta or 0)
@@ -231,19 +345,21 @@ def index():
 
         precio_ajustado = costo_mp * (1 + (margen / 100))
 
-        if request.form.get('guardar_precio') == '1':
+        if request.form.get("guardar_precio") == "1":
             product.precio_venta = precio_ajustado
             db.session.commit()
 
             flash(
-                f'Precio actualizado a ${precio_ajustado:.2f} para {product.sku_especifico}',
-                'success'
+                f"Precio actualizado a ${precio_ajustado:.2f} para {product.sku_especifico}",
+                "success",
             )
 
-            return redirect(url_for('costo_utilidad.index', producto=product.uuid_producto))
+            return redirect(
+                url_for("costo_utilidad.detalle", uuid_producto=product.uuid_producto)
+            )
 
     return render_template(
-        'produccion/costo_utilidad/index.html',
+        "produccion/costo_utilidad/detalle.html",
         productos=productos,
         producto=product,
         costo_mp=costo_mp,
@@ -251,4 +367,5 @@ def index():
         utilidad_actual=utilidad_actual,
         precio_ajustado=precio_ajustado,
         desglose_insumos=desglose_insumos,
+        merma_promedio=merma_promedio * 100,  # se manda en porcentaje para la vista
     )
