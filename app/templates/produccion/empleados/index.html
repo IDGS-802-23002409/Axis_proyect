@@ -1,0 +1,82 @@
+{% extends "produccion/layout.html" %}
+{% block title %}
+Gestión de Empleados
+{% endblock %}
+
+{% block header %}
+Gestión de Empleados
+{% endblock %}
+
+{% block container %}
+<div class="px-10 pb-10 flex flex-col gap-8">
+
+    <!-- STATS -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-card border border-border rounded-lg p-6">
+            <p class="text-sm text-muted-foreground">Total Plantilla</p>
+            <p class="text-3xl font-bold">{{ total_empleados }}</p>
+        </div>
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="bg-card border border-border rounded-lg overflow-hidden">
+        <div class="flex justify-between items-center p-5 border-b border-border">
+            <h3 class="font-semibold">Directorio de Empleados</h3>
+            <div class="flex items-center gap-2">
+                <button onclick="window.location.href='{{ url_for('empleados.registro_empleado') }}';"
+                    class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Añadir Empleado
+                </button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <table class="w-full text-sm">
+            <thead class="bg-secondary text-muted-foreground uppercase text-xs">
+                <tr>
+                    <th class="text-left px-6 py-4">Usuario base</th>
+                    <th class="text-left px-6 py-4">No. Empleado</th>
+                    <th class="text-left px-6 py-4">Puesto y Depto</th>
+                    <th class="text-left px-6 py-4">F. Ingreso</th>
+                    <th class="text-right px-6 py-4">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in empleados %}
+                <tr class="border-b border-border hover:bg-muted transition">
+                    <td class="px-6 py-4">
+                        <p class="font-medium">{{ emp.usuario.nombre_completo }}</p>
+                        <p class="text-xs text-muted-foreground">{{ emp.usuario.email }}</p>
+                    </td>
+                    <td class="px-6 py-4 font-medium">{{ emp.numero_empleado }}</td>
+                    <td class="px-6 py-4">
+                        {{ emp.puesto or '—' }} <br>
+                        <span class="text-gray-500 text-xs">{{ emp.departamento or '—' }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-muted-foreground">
+                        {{ emp.fecha_ingreso.strftime('%d %b %Y') if emp.fecha_ingreso else '—' }}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex justify-end gap-3 items-center">
+                            <a href="{{ url_for('empleados.update_empleado', uuid_empleado=emp.uuid_empleado) }}">
+                                <i data-lucide="pencil" class="w-4 h-4 hover:text-primary"></i>
+                            </a>
+                            <form method="POST"
+                                action="{{ url_for('empleados.delete_empleado', uuid_empleado=emp.uuid_empleado) }}"
+                                style="display:inline;">
+                                <button type="submit"
+                                    onclick="return confirm('¿Seguro de desvincular este empleado? El usuario base seguirá existiendo.');">
+                                    <i data-lucide="trash-2" class="w-4 h-4 text-red-500 hover:text-red-700"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

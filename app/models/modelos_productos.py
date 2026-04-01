@@ -10,6 +10,7 @@ class ModeloRopa(db.Model):
     nombre_modelo = Column(String(100), nullable=False)
     descripcion = Column(Text)
     uuid_categoria = Column(String(36), ForeignKey('categorias.uuid_categoria'), nullable=False)
+    imagen_url = Column(String(255))
     fecha_creacion = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

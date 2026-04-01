@@ -55,9 +55,25 @@
           Administración
         </p>
 
-        <a href="{{ url_for('usuarios.index') }}" class="flex items-center gap-3 px-4 h-12 rounded-md bg-black text-white">
+        <a href="{{ url_for('usuarios.index') }}"
+          class="flex items-center gap-3 px-4 h-12 rounded-md text-foreground hover:bg-black hover:text-white transition">
           <i data-lucide="users" class="w-5 h-5"></i>
           Usuarios
+        </a>
+        <a href="{{ url_for('empleados.index') }}"
+          class="flex items-center gap-3 px-4 h-12 rounded-md text-foreground hover:bg-black hover:text-white transition">
+          <i data-lucide="briefcase" class="w-5 h-5"></i>
+          Empleados
+        </a>
+        <a href="{{ url_for('clientes.index') }}"
+          class="flex items-center gap-3 px-4 h-12 rounded-md text-foreground hover:bg-black hover:text-white transition">
+          <i data-lucide="contact" class="w-5 h-5"></i>
+          Clientes
+        </a>
+        <a href="{{ url_for('modelos.index') }}"
+          class="flex items-center gap-3 px-4 h-12 rounded-md text-foreground hover:bg-black hover:text-white transition">
+          <i data-lucide="shirt" class="w-5 h-5"></i>
+          Modelos
         </a>
       </div>
 
