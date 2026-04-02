@@ -1,6 +1,6 @@
 {% extends "produccion/layout.html" %}
 {% block title %}Costo y Utilidad{% endblock %}
-{% block header %}Centro de Control - Costo y Utilidad por Producto{% endblock %}
+{% block header %}Costo y Utilidad por Producto{% endblock %}
 
 {% block container %}
 <div class="px-10 pb-10">
@@ -97,7 +97,7 @@ document.getElementById('buscar').addEventListener('keyup', function() {
     const talla = tarjeta.getAttribute('data-talla');
 
     const coincide = sku.includes(filtro) || modelo.includes(filtro) || talla.includes(filtro);
-    tarjeta.parentElement.style.display = coincide ? '' : 'none';
+    tarjeta.style.display = coincide ? '' : 'none';
   });
 });
 </script>

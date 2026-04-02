@@ -259,9 +259,6 @@ def detalle(uuid_producto):
     desglose_insumos = []
     merma_promedio = 0.0
 
-    # ----------------------------
-    # GET: Mostrar detalle del producto
-    # ----------------------------
     if request.method == "GET":
         uuid_producto_param = (
             request.args.get("producto") or uuid_producto or ""
@@ -278,6 +275,16 @@ def detalle(uuid_producto):
                 costo_mp = _calcular_costo_mp(product, merma_promedio)
                 desglose_insumos = _obtener_desglose_insumos(product, merma_promedio)
 
+                try:
+                    precio_actual = float(product.precio_venta or 0)
+                except (TypeError, ValueError):
+                    precio_actual = 0.0
+
+                if costo_mp > 0:
+                    utilidad_actual = ((precio_actual - costo_mp) / costo_mp) * 100
+                else:
+                    utilidad_actual = 0.0
+
                 if not detalles:
                     flash(
                         "Este producto no tiene explosión de materiales configurada.",
@@ -290,9 +297,6 @@ def detalle(uuid_producto):
                         "warning",
                     )
 
-    # ----------------------------
-    # POST: Calcular margen / guardar precio
-    # ----------------------------
     if request.method == "POST":
         uuid_producto_post = (request.form.get("producto") or "").strip()
 
@@ -367,5 +371,5 @@ def detalle(uuid_producto):
         utilidad_actual=utilidad_actual,
         precio_ajustado=precio_ajustado,
         desglose_insumos=desglose_insumos,
-        merma_promedio=merma_promedio * 100,  # se manda en porcentaje para la vista
+        merma_promedio=merma_promedio * 100, 
     )
