@@ -1,0 +1,9 @@
+Tu código de verificación Axis
+
+Tu código es: {{ token }}
+
+Este código expirará en unos minutos.
+
+Si no solicitaste este código, cambia tu contraseña inmediatamente.
+
+— Axis Urban Apparel

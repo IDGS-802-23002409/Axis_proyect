@@ -2,130 +2,146 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AXIS</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AXIS - {% block title %}{% endblock %}</title>
 
-    <!-- Tailwind CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        background: '#ffffff',
-                        foreground: '#09090b',
-                        border: '#e4e4e7',
-                        input: '#f4f4f5',
-                        primary: '#09090b',
-                        secondary: '#f4f4f5',
-                        muted: '#f4f4f5',
-                        'muted-foreground': '#71717a',
-                        success: '#166534',
-                        destructive: '#dc2626',
-                        card: '#ffffff',
-                        sidebar: '#fafafa'
-                    }
-                }
-            }
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: '#ffffff',
+            foreground: '#09090b',
+            border: '#e4e4e7',
+            input: '#f4f4f5',
+            primary: '#09090b',
+            secondary: '#f4f4f5',
+            muted: '#f4f4f5',
+            'muted-foreground': '#71717a',
+            success: '#166534',
+            destructive: '#dc2626',
+            card: '#ffffff',
+            sidebar: '#fafafa'
+          }
         }
-    </script>
+      }
+    }
+  </script>
 
-    <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body class="bg-background text-foreground font-sans">
 
-    <div class="flex min-h-screen">
+  <div class="flex min-h-screen">
 
-        <!-- SIDEBAR -->
-        <aside class="w-64 bg-sidebar border-r border-border p-6 flex flex-col gap-8">
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-sidebar border-r border-border p-6 flex flex-col gap-8">
 
-            <!-- Brand -->
-            <div>
-                <h1 class="text-2xl font-extrabold tracking-wide">AXIS</h1>
-                <p class="text-xs tracking-[0.2em] text-muted-foreground">URBAN APPAREL</p>
+      <!-- Brand -->
+      <div>
+        <h1 class="text-2xl font-extrabold tracking-wide">AXIS</h1>
+        <p class="text-xs tracking-[0.2em] text-muted-foreground">URBAN APPAREL</p>
+      </div>
+
+      <!-- Nav -->
+      <div>
+        <p class="text-xs uppercase tracking-widest text-muted-foreground mb-3">
+          Administración
+        </p>
+
+        <a href="{{ url_for('usuarios.index') }}" class="flex items-center gap-3 px-4 h-12 rounded-md bg-black text-white">
+          <i data-lucide="users" class="w-5 h-5"></i>
+          Usuarios
+        </a>
+      </div>
+
+    </aside>
+
+    <!-- MAIN -->
+    <main class="flex-1 flex flex-col">
+
+      <!-- TOPBAR -->
+      <div class="h-20 px-10 flex items-center justify-between">
+        <h2 class="uppercase font-bold text-lg">
+          {% block header %}{% endblock %}
+        </h2>
+
+        <div class="flex items-center gap-4">
+
+          <!-- User -->
+          <div class="flex items-center gap-3 bg-card border border-border px-3 py-1 rounded-full">
+            <div class="text-right text-xs">
+              <p class="font-semibold">Admin</p>
+              <p class="text-muted-foreground uppercase">Taller</p>
             </div>
+            <img class="w-9 h-9 rounded-full object-cover"
+              src="https://storage.googleapis.com/banani-avatars/avatar%2Fmale%2F25-35%2FHispanic%2F1">
+          </div>
 
-            <!-- Nav -->
-            <div>
-                <p class="text-xs uppercase tracking-widest text-muted-foreground mb-3">
-                    Administración
-                </p>
+        </div>
+      </div>
 
-                <a href="#" class="flex items-center gap-3 px-4 h-12 rounded-md bg-black text-white">
-                    <i data-lucide="users" class="w-5 h-5"></i>
-                    Usuarios
-                </a>
-               
-            </div>
-            <div>
-                <p class="text-xs uppercase tracking-widest text-muted-foreground mb-3">
-                    Producción
-                </p>
-
-                <a href="#" class="flex items-center gap-3 px-4 h-12 rounded-md bg-black text-white">
-                    <i data-lucide="users" class="w-5 h-5"></i>
-                    Insumos
-                </a>
-                <br></br>
-                <a href="#" class="flex items-center gap-3 px-4 h-12 rounded-md bg-black text-white">
-                    <i data-lucide="users" class="w-5 h-5"></i>
-                    Compras
-                </a>
-               
-            </div>
-
-        </aside>
-
-        <!-- MAIN -->
-        <main class="flex-1 flex flex-col">
-
-            <!-- TOPBAR -->
-            <div class="h-20 px-10 flex items-center justify-between">
-                <h2 class="uppercase font-bold text-lg">AXIS</h2>
-
-                <div class="flex items-center gap-4">
-
-                    <!-- User -->
-                    <div class="flex items-center gap-3 bg-card border border-border px-3 py-1 rounded-full">
-                        <div class="text-right text-xs">
-                            <p class="font-semibold">Admin</p>
-                            <p class="text-muted-foreground uppercase">Taller</p>
-                        </div>
-                        <img class="w-9 h-9 rounded-full object-cover"
-                            src="https://storage.googleapis.com/banani-avatars/avatar%2Fmale%2F25-35%2FHispanic%2F1">
-                    </div>
-
-                </div>
-            </div>
-
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            {% for category, message in messages %}
-            <div class="p-4 mb-4 text-sm rounded-lg z-10
-{% if category == 'success' %} bg-green-100 text-green-800
-{% elif category == 'error' %} bg-red-100 text-red-800
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="fixed top-4 right-4 z-50 space-y-2">
+        {% for category, message in messages %}
+        <div class="flex items-center p-4 mb-4 text-sm rounded-lg shadow-lg border flash-message-enter
+{% if category == 'success' %} bg-green-50 border-green-200 text-green-800
+{% elif category == 'error' %} bg-red-50 border-red-200 text-red-800
+{% elif category == 'warning' %} bg-yellow-50 border-yellow-200 text-yellow-800
+{% elif category == 'info' %} bg-blue-50 border-blue-200 text-blue-800
+{% else %} bg-gray-50 border-gray-200 text-gray-800
 {% endif %}">
-                {{ message }}
-            </div>
-            {% endfor %}
+          <div class="shrink-0 mr-3">
+            {% if category == 'success' %}
+            <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
+            {% elif category == 'error' %}
+            <i data-lucide="x-circle" class="w-5 h-5 text-red-600"></i>
+            {% elif category == 'warning' %}
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-600"></i>
+            {% elif category == 'info' %}
+            <i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
+            {% else %}
+            <i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>
             {% endif %}
-            {% endwith %}
+          </div>
+          <div class="flex-1 font-medium">
+            {{ message }}
+          </div>
+          <button type="button" class="ml-3 shrink-0 text-current hover:opacity-75 transition-opacity"
+            onclick="this.parentElement.remove()">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
 
-            <!-- CONTENT -->
-            {% block container%}
-            {% endblock %}
-        </main>
+      <!-- CONTENT -->
+      {% block container%}
+      {% endblock %}
+    </main>
 
-    </div>
+  </div>
 
-    <script>
-        lucide.createIcons();
-    </script>
+  <script>
+    lucide.createIcons();
+
+    // Función para recrear iconos cuando se agregan elementos dinámicamente
+    function refreshIcons() {
+      lucide.createIcons();
+    }
+
+    // Recrear iconos después de un pequeño delay para asegurar que se rendericen
+    setTimeout(refreshIcons, 100);
+  </script>
 
 </body>
 

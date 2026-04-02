@@ -1,0 +1,66 @@
+<section id="video-showcase-container" class="relative min-h-screen bg-background overflow-hidden py-20">
+    <!-- Video Container with rounded corners that animate to full screen -->
+    <div id="video-wrapper" class="relative w-full h-screen overflow-hidden"
+        style="transform: scale(0.7); border-radius: 60px; opacity: 0.5;">
+        <video id="showcase-video" autoplay muted loop playsinline class="w-full h-full object-cover">
+            <source
+                src="https://assets.mixkit.co/videos/preview/mixkit-man-wearing-a-jacket-and-walking-on-a-dark-street-50279-large.mp4"
+                type="video/mp4" />
+        </video>
+
+        <!-- Gradient overlays -->
+        <div class="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-background/50 via-transparent to-background/50"></div>
+
+        <!-- Content -->
+        <div id="video-text-container"
+            class="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+            <div class="overflow-hidden mb-4">
+                <span class="video-text block text-primary text-sm tracking-[0.4em] uppercase"
+                    style="opacity: 0; transform: perspective(1000px) rotateX(20deg) translateY(80px);">
+                    Colección 2026
+                </span>
+            </div>
+            <div class="overflow-hidden">
+                <h2 class="video-text video-main-title font-[var(--font-display)] text-7xl md:text-9xl lg:text-[12rem] tracking-[0.15em] leading-none"
+                    style="opacity: 0; transform: perspective(1000px) rotateX(20deg) translateY(80px);">
+                    REDEFINE
+                </h2>
+            </div>
+            <div class="overflow-hidden mt-8">
+                <p class="video-text text-xl md:text-2xl text-muted-foreground max-w-2xl leading-relaxed"
+                    style="opacity: 0; transform: perspective(1000px) rotateX(20deg) translateY(80px);">
+                    No solo usas ropa. Portas una declaración. Cada pieza cuenta una historia de las calles.
+                </p>
+            </div>
+        </div>
+
+        <!-- Video Controls -->
+        <div class="absolute bottom-8 left-8 flex gap-3">
+            <button id="video-play-btn"
+                class="group p-4 bg-background/20 backdrop-blur-md border border-foreground/20 hover:border-primary hover:bg-primary/20 transition-all duration-300"
+                aria-label="Pause video">
+                <i data-lucide="pause" class="w-5 h-5" id="video-icon-pause"></i>
+                <i data-lucide="play" class="w-5 h-5 hidden" id="video-icon-play"></i>
+            </button>
+            <button id="video-mute-btn"
+                class="group p-4 bg-background/20 backdrop-blur-md border border-foreground/20 hover:border-primary hover:bg-primary/20 transition-all duration-300"
+                aria-label="Unmute video">
+                <i data-lucide="volume-x" class="w-5 h-5" id="video-icon-muted"></i>
+                <i data-lucide="volume-2" class="w-5 h-5 hidden" id="video-icon-unmuted"></i>
+            </button>
+        </div>
+
+        <!-- Time indicator -->
+        <div class="absolute bottom-8 right-8 text-sm tracking-[0.2em] text-muted-foreground">
+            <span class="text-primary">2026</span> COLLECTION
+        </div>
+
+        <!-- Decorative corners -->
+        <div class="absolute top-8 left-8 w-20 h-20 border-l-2 border-t-2 border-primary/30"></div>
+        <div class="absolute top-8 right-8 w-20 h-20 border-r-2 border-t-2 border-primary/30"></div>
+        <div
+            class="absolute bottom-20 left-1/2 -translate-x-1/2 w-px h-16 bg-gradient-to-b from-primary to-transparent">
+        </div>
+    </div>
+</section>

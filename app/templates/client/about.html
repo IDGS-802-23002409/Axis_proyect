@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "components/_cart_drawer.html" %}
+
+<div id="about-container" class="min-h-screen bg-background">
+    <!-- Hero -->
+    <section class="pt-32 pb-24 px-4 lg:px-8">
+        <div class="container mx-auto">
+            <div class="overflow-hidden">
+                <span class="hero-text block text-primary text-sm tracking-[0.3em] uppercase mb-6"
+                    style="opacity: 0; transform: translateY(100px) skewY(3deg);">
+                    Nuestra Historia
+                </span>
+            </div>
+            <div class="overflow-hidden">
+                <h1 class="hero-text font-[var(--font-display)] text-6xl md:text-8xl lg:text-[10rem] tracking-[0.05em] leading-[0.85]"
+                    style="opacity: 0; transform: translateY(100px) skewY(3deg);">
+                    NACIDOS
+                </h1>
+            </div>
+            <div class="overflow-hidden">
+                <h1 class="hero-text font-[var(--font-display)] text-6xl md:text-8xl lg:text-[10rem] tracking-[0.05em] leading-[0.85]"
+                    style="opacity: 0; transform: translateY(100px) skewY(3deg);">
+                    EN LAS
+                </h1>
+            </div>
+            <div class="overflow-hidden">
+                <h1 class="hero-text font-[var(--font-display)] text-6xl md:text-8xl lg:text-[10rem] tracking-[0.05em] leading-[0.85] text-primary"
+                    style="opacity: 0; transform: translateY(100px) skewY(3deg);">
+                    CALLES
+                </h1>
+            </div>
+            <div class="overflow-hidden mt-8">
+                <p class="hero-text text-xl md:text-2xl text-muted-foreground max-w-2xl leading-relaxed"
+                    style="opacity: 0; transform: translateY(100px) skewY(3deg);">
+                    AXIS no es solo una marca de ropa. Es un movimiento. Una filosofía.
+                    Una forma de expresar quién eres sin decir una palabra.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Image Section -->
+    <section class="hero-image-section relative h-[50vh] md:h-[70vh] overflow-hidden">
+        <div class="parallax-hero absolute inset-0 scale-110">
+            <img src="https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=1920&h=1080&fit=crop" alt="AXIS Brand"
+                class="object-cover w-full h-full" />
+        </div>
+        <div class="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-background/50"></div>
+
+        <!-- Decorative lines -->
+        <div class="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary to-transparent">
+        </div>
+    </section>
+
+    <!-- Story Section -->
+    <section class="story-section py-24 md:py-32 px-4 lg:px-8">
+        <div class="container mx-auto">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="story-content space-y-8">
+                    <span class="block text-primary text-sm tracking-[0.3em] uppercase opacity-0 translate-y-16">
+                        La Historia
+                    </span>
+                    <h2
+                        class="font-[var(--font-display)] text-5xl md:text-7xl tracking-[0.05em] opacity-0 translate-y-16">
+                        DESDE 2018
+                    </h2>
+                    <p class="text-muted-foreground text-lg leading-relaxed opacity-0 translate-y-16">
+                        AXIS comenzó en un pequeño taller en el corazón de la ciudad.
+                        Un grupo de artistas urbanos y diseñadores unidos por una visión:
+                        crear ropa que capture la esencia del arte callejero.
+                    </p>
+                    <p class="text-muted-foreground text-lg leading-relaxed opacity-0 translate-y-16">
+                        Cada pieza que creamos lleva la energía de los murales, el ritmo
+                        del hip-hop y la actitud rebelde de quienes no siguen las normas.
+                    </p>
+                    <p class="text-foreground text-lg leading-relaxed font-medium opacity-0 translate-y-16">
+                        No diseñamos para las pasarelas. Diseñamos para las calles.
+                    </p>
+                </div>
+                <div class="story-image relative aspect-square opacity-0 scale-110">
+                    <img src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?w=800&h=800&fit=crop"
+                        alt="AXIS Workshop" class="object-cover w-full h-full" />
+                    <div class="absolute -bottom-6 -right-6 w-48 h-48 border-2 border-primary"></div>
+                    <div class="absolute -top-4 -left-4 w-24 h-24 border border-primary/50"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section py-24 bg-secondary">
+        <div class="container mx-auto px-4 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="stat-item text-center opacity-0 translate-y-10">
+                    <span id="stat-clients"
+                        class="font-[var(--font-display)] text-6xl md:text-8xl text-primary">0</span>
+                    <span class="font-[var(--font-display)] text-6xl md:text-8xl text-primary">K+</span>
+                    <p class="text-muted-foreground mt-2 tracking-wider uppercase text-sm">Clientes</p>
+                </div>
+                <div class="stat-item text-center opacity-0 translate-y-10">
+                    <span id="stat-designs"
+                        class="font-[var(--font-display)] text-6xl md:text-8xl text-primary">0</span>
+                    <span class="font-[var(--font-display)] text-6xl md:text-8xl text-primary">+</span>
+                    <p class="text-muted-foreground mt-2 tracking-wider uppercase text-sm">Diseños</p>
+                </div>
+                <div class="stat-item text-center opacity-0 translate-y-10">
+                    <span id="stat-countries"
+                        class="font-[var(--font-display)] text-6xl md:text-8xl text-primary">0</span>
+                    <p class="text-muted-foreground mt-2 tracking-wider uppercase text-sm">Países</p>
+                </div>
+                <div class="stat-item text-center opacity-0 translate-y-10">
+                    <span id="stat-years" class="font-[var(--font-display)] text-6xl md:text-8xl text-primary">0</span>
+                    <p class="text-muted-foreground mt-2 tracking-wider uppercase text-sm">Años</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Values Section -->
+    <section class="values-section py-24 md:py-32 px-4 lg:px-8">
+        <div class="container mx-auto">
+            <div class="text-center mb-16">
+                <span class="block text-primary text-sm tracking-[0.3em] uppercase mb-4">
+                    Lo Que Nos Define
+                </span>
+                <h2 class="font-[var(--font-display)] text-5xl md:text-7xl tracking-[0.05em]">
+                    NUESTROS VALORES
+                </h2>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                {% set values = [
+                {"num": "01", "title": "AUTENTICIDAD", "desc": "Cada diseño es original. No copiamos tendencias, las
+                creamos. Nuestro arte viene directo de la calle."},
+                {"num": "02", "title": "CALIDAD", "desc": "Usamos solo los mejores materiales. Cada prenda está hecha
+                para durar y resistir el estilo de vida urbano."},
+                {"num": "03", "title": "COMUNIDAD", "desc": "No somos solo una marca, somos una familia. Apoyamos a
+                artistas locales y proyectos urbanos."}
+                ] %}
+                {% for value in values %}
+                <div class="value-card group p-8 border border-border hover:border-primary transition-all duration-500 bg-background opacity-0 translate-y-16"
+                    style="transform-style: preserve-3d; transform: perspective(1000px) rotateY(10deg);">
+                    <div
+                        class="w-16 h-16 bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+                        <span class="font-[var(--font-display)] text-3xl text-primary">{{ value.num }}</span>
+                    </div>
+                    <h3
+                        class="font-[var(--font-display)] text-2xl tracking-[0.1em] mb-4 group-hover:text-primary transition-colors">
+                        {{ value.title }}
+                    </h3>
+                    <p class="text-muted-foreground leading-relaxed">
+                        {{ value.desc }}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="team-section py-24 bg-secondary px-4 lg:px-8">
+        <div class="container mx-auto">
+            <div class="text-center mb-16">
+                <span class="block text-primary text-sm tracking-[0.3em] uppercase mb-4">
+                    El Equipo
+                </span>
+                <h2 class="font-[var(--font-display)] text-5xl md:text-7xl tracking-[0.05em]">
+                    LOS CREADORES
+                </h2>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                {% set team = [
+                {"name": "ALEX URBAN", "role": "Fundador & Director Creativo", "image":
+                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop"},
+                {"name": "MAYA STREET", "role": "Diseñadora Principal", "image":
+                "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=500&fit=crop"},
+                {"name": "CARLOS GRAFFITI", "role": "Director de Arte", "image":
+                "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=500&fit=crop"}
+                ] %}
+                {% for member in team %}
+                <div class="team-member group opacity-0 translate-y-20">
+                    <div class="relative aspect-[4/5] overflow-hidden mb-4">
+                        <img src="{{ member.image }}" alt="{{ member.name }}"
+                            class="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105" />
+                        <div
+                            class="absolute inset-0 bg-primary/0 group-hover:bg-primary/20 transition-colors duration-500">
+                        </div>
+
+                        <!-- Corner accents -->
+                        <div
+                            class="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        </div>
+                        <div
+                            class="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        </div>
+                    </div>
+                    <h3 class="font-[var(--font-display)] text-xl tracking-[0.2em]">{{ member.name }}</h3>
+                    <p class="text-muted-foreground text-sm">{{ member.role }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section py-32 px-4 lg:px-8">
+        <div class="container mx-auto">
+            <div class="cta-content text-center max-w-3xl mx-auto">
+                <h2
+                    class="font-[var(--font-display)] text-5xl md:text-8xl tracking-[0.05em] mb-4 opacity-0 translate-y-10">
+                    ÚNETE AL
+                </h2>
+                <h2
+                    class="font-[var(--font-display)] text-5xl md:text-8xl tracking-[0.05em] text-primary mb-8 opacity-0 translate-y-10">
+                    MOVIMIENTO
+                </h2>
+                <p class="text-muted-foreground text-lg mb-12 opacity-0 translate-y-10">
+                    Explora nuestra colección y encuentra tu estilo único
+                </p>
+                <a href="/catalogo"
+                    class="group inline-flex items-center gap-4 px-12 py-6 bg-primary text-primary-foreground font-[var(--font-display)] text-xl tracking-[0.2em] hover:bg-primary/90 transition-all opacity-0 translate-y-10">
+                    EXPLORAR COLECCIÓN
+                    <i data-lucide="arrow-right" class="w-6 h-6 group-hover:translate-x-2 transition-transform"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

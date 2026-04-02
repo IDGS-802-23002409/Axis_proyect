@@ -1,37 +1,11 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, func, Enum,CheckConstraint
+from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, func
 
-#  cómo se compra el insumo (presentación comercial)
-unidad_compra_enum = Enum(
-    'ROLLO',
-    'PIEZA', 
-    name='unidad_compra_enum'
-)
-
-#  unidad real en la que se usa o consume el insumo
-unidad_base_enum = Enum(
-    'METRO',  # Para telas, hilos, etc.
-    'PIEZA',  # Para botones, agujas, etc.
-    name='unidad_base_enum'
-)
-
-# Estado del insumo
-estatus_enum = Enum(
-    'ACTIVO',
-    'INACTIVO',
-    name='estatus_insumo_enum'
-)
 
 class Insumo(db.Model):
     __tablename__ = 'insumos'
 
-    __table_args__ = (
-        CheckConstraint('stock_total_acumulado >= 0', name='check_stock_no_negativo'),
-    )
-
-
-    # Identificador único
     uuid_insumo = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
 
     sku = Column(String(50), unique=True)
@@ -80,6 +54,7 @@ class Insumo(db.Model):
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
     estatus = Column(estatus_enum, default='ACTIVO')
     usuario_actualizo_uuid = Column(String(36))
+
     categoria = db.relationship('Categoria', backref=db.backref('insumos', lazy=True))
 
     def __repr__(self):

@@ -1,0 +1,49 @@
+{% extends base_layout %}
+{% block title %}Detalle de Usuario{% endblock %}
+
+{% block header %}Detalle de Usuario{% endblock %}
+
+{% block container %}
+<div class="px-10 pb-10">
+    <div class="bg-card border border-border rounded-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">{{ user.nombre_completo }}</h2>
+            <a href="{{ url_for('usuarios.index') }}" class="px-4 py-2 bg-gray-200 rounded-md text-sm">Volver</a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <p class="text-sm text-muted-foreground">Email</p>
+                <p class="font-medium">{{ user.email }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-muted-foreground">Activo</p>
+                <p class="font-medium">{{ 'Sí' if user.active else 'No' }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-muted-foreground">Rol</p>
+                <p class="font-medium">{{ user.roles[0].name if user.roles else 'Sin rol' }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-muted-foreground">Confirmado</p>
+                <p class="font-medium">{{ user.confirmed_at.strftime('%d %b %Y %H:%M') if user.confirmed_at else 'No' }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-muted-foreground">Descripción del Rol</p>
+                <p class="font-medium">{{ user.roles[0].description if user.roles else 'Sin descripción' }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-muted-foreground">Última actualización</p>
+                <p class="font-medium">{{ user.fecha_actualizacion.strftime('%d %b %Y %H:%M') if user.fecha_actualizacion else '—' }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-muted-foreground">Creado</p>
+                <p class="font-medium">{{ user.fecha_creacion.strftime('%d %b %Y %H:%M') if user.fecha_creacion else '—' }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-muted-foreground">UUID</p>
+                <p class="font-medium wrap-break-word">{{ user.uuid_usuario }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

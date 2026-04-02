@@ -1,0 +1,57 @@
+<!-- Overlay -->
+<div id="cart-overlay"
+    class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 transition-opacity duration-300 opacity-0 pointer-events-none">
+</div>
+
+<!-- Drawer -->
+<div id="cart-drawer"
+    class="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-background border-l border-border z-50 transition-transform duration-500 ease-out translate-x-full">
+    <div class="flex flex-col h-full">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-6 border-b border-border">
+            <div class="flex items-center gap-3">
+                <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                <h2 class="font-[var(--font-display)] text-2xl tracking-[0.2em]">
+                    CARRITO (<span id="cart-total-items-header">0</span>)
+                </h2>
+            </div>
+            <button id="cart-close-btn" class="p-2 hover:text-primary transition-colors" aria-label="Close cart">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Items -->
+        <div class="flex-1 overflow-y-auto p-6" id="cart-items-container">
+            <div id="cart-empty-state" class="flex flex-col items-center justify-center h-full text-center">
+                <i data-lucide="shopping-bag" class="w-16 h-16 text-muted-foreground mb-4"></i>
+                <p class="text-muted-foreground mb-4">Tu carrito está vacío</p>
+                <a href="/catalogo"
+                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90">
+                    EXPLORAR PRODUCTOS
+                </a>
+            </div>
+            <div id="cart-items-list" class="space-y-6 hidden">
+                <!-- Cart items will be rendered here via JS -->
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div id="cart-footer" class="border-t border-border p-6 space-y-4 hidden">
+            <div class="flex justify-between items-center">
+                <span class="text-muted-foreground">Subtotal</span>
+                <span class="font-[var(--font-display)] text-2xl">$<span id="cart-total-price">0.00</span></span>
+            </div>
+            <p class="text-xs text-muted-foreground">
+                Envío calculado en el checkout
+            </p>
+            <button
+                class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 w-full bg-primary text-primary-foreground hover:bg-primary/90 h-12 font-[var(--font-display)] text-lg tracking-[0.2em]">
+                CHECKOUT
+            </button>
+            <button id="cart-continue-btn"
+                class="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Continuar comprando
+            </button>
+        </div>
+    </div>
+</div>
