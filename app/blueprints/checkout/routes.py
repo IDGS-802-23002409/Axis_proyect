@@ -8,7 +8,7 @@ checkout_bp = Blueprint('checkout', __name__, template_folder='../../templates/c
 @checkout_bp.route('/checkout')
 @login_required
 def checkout_view():
-    if not current_user.cliente_profile:
+    if not current_user.cliente:
         # Interceptor: Redirigir a recabar los datos operativos del cliente antes de permitir carrito
         return redirect(url_for('checkout.completar_perfil'))
     return render_template('carrito.html')
@@ -16,7 +16,7 @@ def checkout_view():
 @checkout_bp.route('/checkout/completar_perfil', methods=['GET', 'POST'])
 @login_required
 def completar_perfil():
-    if current_user.cliente_profile:
+    if current_user.cliente:
         return redirect(url_for('checkout.checkout_view'))
 
     if request.method == 'POST':
