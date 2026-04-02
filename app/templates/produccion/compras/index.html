@@ -1,0 +1,192 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="flex min-h-screen bg-white text-neutral-900 font-sans">
+
+    <main class="flex-1 p-8 xl:p-12">
+
+        <!-- HEADER -->
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h1 class="text-xl font-bold tracking-tight uppercase text-black">Compras</h1>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <a href="{{ url_for('compras_bp.create') }}"
+                    class="bg-black text-white px-8 py-3 rounded-lg text-xs font-black tracking-widest hover:bg-neutral-800 transition-all shadow-md uppercase">
+                    + Registrar Compra
+                </a>
+            </div>
+        </header>
+
+        <!-- CARDS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+
+            <!-- TOTAL -->
+            <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm">
+                <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Total Compras</span>
+                <div class="text-4xl font-bold text-black mt-2">{{ compras|length }}</div>
+            </div>
+
+            <!-- PENDIENTES -->
+            <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm">
+                {% set pendientes = compras | selectattr('estatus', 'equalto', 'PENDIENTE') | list %}
+                <span class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">Pendientes</span>
+                <div class="text-4xl font-bold text-black mt-2">{{ pendientes|length }}</div>
+            </div>
+
+            <!-- RECIBIDAS -->
+            <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm">
+                {% set recibidas = compras | selectattr('estatus', 'equalto', 'RECIBIDO') | list %}
+                <span class="text-[10px] font-bold text-green-500 uppercase tracking-widest">Recibidas</span>
+                <div class="text-4xl font-bold text-black mt-2">{{ recibidas|length }}</div>
+            </div>
+
+        </div>
+
+        <!-- BUSCADOR -->
+        <div class="flex justify-between items-center mb-8">
+
+            <form method="GET" action="{{ url_for('compras_bp.index') }}" class="flex items-center gap-4">
+
+                <div class="relative flex-1 max-w-md">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 text-xs"></i>
+
+                    <input type="text" name="q" value="{{ request.args.get('q', '') }}"
+                        placeholder="Folio o proveedor..."
+                        class="w-full pl-12 pr-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs">
+                </div>
+
+                <button type="submit" class="px-4 py-3 bg-black text-white rounded-xl text-xs">
+                    Buscar
+                </button>
+
+            </form>
+
+        </div>
+
+        <!-- TABLA -->
+        <div class="w-full overflow-x-auto">
+            <table class="w-full text-left">
+
+                <thead>
+                    <tr class="text-[10px] uppercase tracking-[0.2em] text-neutral-400 border-b">
+                        <th class="px-4 py-6 font-bold">Folio</th>
+                        <th class="px-4 py-6 font-bold">Proveedor</th>
+
+                        <th class="px-4 py-6 font-bold">Fecha</th>
+                        <th class="px-4 py-6 font-bold text-center">Estatus</th>
+                        <th class="px-4 py-6 font-bold text-right">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-neutral-50">
+                    {% for compra in compras %}
+                    <tr class="hover:bg-neutral-50 transition">
+
+                        <!-- FOLIO -->
+                        <td class="px-4 py-6 text-xs font-bold text-neutral-500 uppercase">
+                            {{ compra.folio_factura or 'Sin folio' }}
+                        </td>
+
+                        <!-- PROVEEDOR -->
+                        <td class="px-4 py-6 text-sm text-neutral-700">
+                            {{ compra.proveedor.razon_social if compra.proveedor else 'Sin proveedor' }}
+                        </td>
+
+
+
+                        <!-- FECHA -->
+                        <td class="px-4 py-6 text-xs text-neutral-400">
+                            {{ compra.fecha_compra.strftime('%d/%m/%Y') if compra.fecha_compra else '' }}
+                        </td>
+
+                        <!-- ESTATUS -->
+                        <td class="px-4 py-6 text-center">
+                            {% if compra.estatus == 'PENDIENTE' %}
+                            <span class="px-3 py-1 bg-yellow-50 text-yellow-600 text-[9px] font-bold rounded border">
+                                Pendiente
+                            </span>
+                            {% elif compra.estatus == 'RECIBIDO' %}
+                            <span class="px-3 py-1 bg-green-50 text-green-600 text-[9px] font-bold rounded border">
+                                Recibido
+                            </span>
+                            {% elif compra.estatus == 'CANCELADO' %}
+                            <span class="px-3 py-1 bg-red-50 text-red-600 text-[9px] font-bold rounded border">
+                                Cancelado
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- ACCIONES -->
+                        <td class="px-4 py-6 text-right">
+                            <div class="flex justify-end gap-3">
+
+                                <!-- VER DETALLE -->
+                                <a href="{{ url_for('compras_bp.ver', uuid_compra=compra.uuid_compra) }}"
+                                    class="px-5 py-3 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold border hover:bg-blue-100">
+                                    Ver
+                                </a>
+
+                                <!-- BOTON RECIBIR SOLO SI ESTA PENDIENTE -->
+                                {% if compra.estatus == 'PENDIENTE' %}
+                                <a href="{{ url_for('compras_bp.recibir', uuid_compra=compra.uuid_compra) }}"
+                                    class="flex items-center gap-2 px-5 py-3 bg-purple-50 hover:bg-purple-100 text-purple-600 hover:text-purple-800 rounded-lg text-[10px] font-bold tracking-wider border border-purple-200 transition-all">
+                                    <i class="fas fa-clipboard-check text-[10px]"></i>
+                                    Recibir
+                                </a>
+                                {% endif %}
+
+                                {% if compra.estatus == 'PENDIENTE' %}
+<form id="form-cancelar-{{ compra.uuid_compra }}" method="POST"
+    action="{{ url_for('compras_bp.cancelar', uuid_compra=compra.uuid_compra) }}" class="inline">
+
+    <button type="button"
+        onclick="confirmarCancelacion('{{ compra.uuid_compra }}', '{{ compra.folio_factura }}')"
+        class="flex items-center gap-2 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 rounded-lg text-[10px] font-bold tracking-wider border border-red-200 transition-all">
+        <i class="fas fa-trash text-[10px]"></i>
+        Cancelar
+    </button>
+
+</form>
+{% endif %}
+
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% else %}
+                    <!-- SI NO HAY DATOS -->
+                    <tr>
+                        <td colspan="6" class="text-center py-10 text-neutral-400 text-sm">
+                            No hay compras registradas
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+
+    </main>
+</div>
+<script>
+function confirmarCancelacion(uuid, folio) {
+    Swal.fire({
+        title: '¿Cancelar compra?',
+        text: "Folio: " + (folio || 'Sin folio'),
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#9ca3af',
+        confirmButtonText: 'Sí, cancelar',
+        cancelButtonText: 'No',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('form-cancelar-' + uuid).submit();
+        }
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,244 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="min-h-screen bg-white text-neutral-900 font-sans p-8 xl:p-12">
+
+    <div class="mb-8">
+        <a href="{{ url_for('insumos_bp.index') }}"
+            class="group flex items-center gap-2 text-[10px] font-bold text-neutral-400 hover:text-black uppercase tracking-widest transition-all">
+            <i class="fas fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
+            Volver a Insumos
+        </a>
+    </div>
+
+    <div class="max-w-4xl">
+        <header class="mb-12">
+            <h1 class="text-3xl font-black tracking-tighter uppercase text-black mb-2">
+                Editar Insumo
+            </h1>
+            <p class="text-sm text-neutral-500">
+                Modifica los datos del insumo seleccionado.
+            </p>
+        </header>
+
+        <form method="POST" class="space-y-12">
+            {{ form.hidden_tag() }}
+
+            <!--  INFORMACIÓN BÁSICA -->
+            <section>
+                <div class="flex items-center gap-3 mb-6">
+                    <i class="fas fa-info-circle text-neutral-300 text-sm"></i>
+                    <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-400">
+                        Información Básica
+                    </h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-bold uppercase">Nombre *</label>
+                        {{ form.nombre(class="input") }}
+                        {% for error in form.nombre.errors %}
+                        <span class="text-xs text-red-500">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-bold uppercase">SKU</label>
+                        <p class="text-[10px] text-neutral-400">
+                            El SKU no se puede modificar
+                        </p>
+                        {{ form.sku(class="input bg-neutral-100 cursor-not-allowed", readonly=True) }}
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-bold uppercase">Categoría</label>
+                        {{ form.uuid_categoria(class="input") }}
+                    </div>
+
+                </div>
+            </section>
+
+            <!--  CONFIGURACIÓN DE UNIDADES -->
+            <section>
+                <div class="flex items-center gap-3 mb-6">
+                    <i class="fas fa-ruler-combined text-neutral-300 text-sm"></i>
+                    <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-400">
+                        Configuración de Unidades
+                    </h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                    <!-- Unidad de compra -->
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-bold uppercase">
+                            ¿Cómo lo compras? *
+                        </label>
+                        {{ form.unidad_medida(class="input") }}
+                    </div>
+
+                    <!-- GRUPO DINÁMICO -->
+                    <div id="grupo-config" class="contents">
+
+                        <!-- Cantidad -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-bold uppercase">
+                                Cantidad por unidad
+                            </label>
+                            {{ form.contenido_cantidad(class="input") }}
+                            {% for error in form.contenido_cantidad.errors %}
+                            <span class="text-xs text-red-500">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Unidad base -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-bold uppercase">
+                                ¿En qué se usa?
+                            </label>
+                            {{ form.contenido_unidad_medida(class="input") }}
+                            {% for error in form.contenido_unidad_medida.errors %}
+                            <span class="text-xs text-red-500">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                    <!--  ANCHO -->
+                    <div id="grupo-ancho" class="hidden flex flex-col gap-2">
+                        <label class="text-[10px] font-bold uppercase">
+                            Ancho (metros) *
+                        </label>
+                        {{ form.ancho(class="input") }}
+                        {% for error in form.ancho.errors %}
+                        <span class="text-xs text-red-500">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <!-- MENSAJE -->
+                    <div id="mensaje-info" class="md:col-span-3 text-xs text-neutral-500 hidden">
+                        Este insumo se maneja como unidad individual (1 pieza). No requiere configuración adicional.
+                    </div>
+
+                </div>
+            </section>
+
+            <!--  STOCK -->
+            <section>
+                <div class="flex items-center gap-3 mb-6">
+                    <i class="fas fa-boxes text-neutral-300 text-sm"></i>
+                    <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-neutral-400">
+                        Control de Stock
+                    </h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-bold uppercase">
+                            Stock mínimo *
+                        </label>
+                        {{ form.stock_minimo_alerta(class="input") }}
+                        {% for error in form.stock_minimo_alerta.errors %}
+                        <span class="text-xs text-red-500">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                </div>
+            </section>
+
+            <!--  BOTONES -->
+            <div class="pt-8 flex items-center gap-4">
+                {{ form.submit(class="btn-primary") }}
+
+                <a href="{{ url_for('insumos_bp.index') }}" class="btn-cancel">
+                    Cancelar
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const unidad = document.querySelector("[name='unidad_medida']");
+    const grupo = document.getElementById("grupo-config");
+    const mensaje = document.getElementById("mensaje-info");
+
+    const cantidad = document.querySelector("[name='contenido_cantidad']");
+    const unidadUso = document.querySelector("[name='contenido_unidad_medida']");
+    const grupoAncho = document.getElementById("grupo-ancho");
+    const anchoInput = document.querySelector("[name='ancho']");
+
+    function bloquearOpciones(tipo) {
+        for (let option of unidadUso.options) {
+
+            if (tipo === "ROLLO") {
+                option.disabled = option.value !== "METRO";
+            }
+
+            if (tipo === "PIEZA") {
+                option.disabled = option.value !== "PIEZA";
+            }
+        }
+    }
+
+    function actualizar() {
+
+        const tipo = unidad.value;
+
+        // =========================
+        // PIEZA
+        // =========================
+        if (tipo === "PIEZA") {
+
+            grupo.style.display = "none";
+            mensaje.classList.remove("hidden");
+
+            // ancho oculto
+            grupoAncho.classList.add("hidden");
+            anchoInput.value = "";
+            anchoInput.required = false;
+
+            // cantidad fija
+            cantidad.value = 1;
+            cantidad.readOnly = true;
+
+            // unidad fija
+            unidadUso.value = "PIEZA";
+            unidadUso.disabled = true;
+
+            bloquearOpciones("PIEZA");
+        }
+
+        // =========================
+        // ROLLO
+        // =========================
+        else if (tipo === "ROLLO") {
+
+            grupo.style.display = "contents";
+            mensaje.classList.add("hidden");
+
+            // mostrar ancho
+            grupoAncho.classList.remove("hidden");
+            anchoInput.required = true;
+
+            // cantidad editable
+            cantidad.readOnly = false;
+
+            // unidad forzada
+            unidadUso.disabled = false;
+            unidadUso.value = "METRO";
+
+            bloquearOpciones("ROLLO");
+        }
+    }
+
+    unidad.addEventListener("change", actualizar);
+    actualizar();
+});
+</script>
+
+{% endblock %}

@@ -1,5 +1,5 @@
 import os
-
+from dotenv import load_dotenv
 from flask import Flask, redirect, url_for
 from flask_migrate import Migrate
 from flask_mail import Mail
@@ -21,6 +21,9 @@ mail = Mail()
 
 
 def create_app():
+    #
+    load_dotenv()
+    #
     application = Flask(__name__)
 
     # ── Core ──────────────────────────────────────────────────
@@ -157,6 +160,10 @@ def create_app():
 
     # ── Blueprints ────────────────────────────────────────────
     application.register_blueprint(bp.usuarios_bp, url_prefix='/usuarios')
+    application.register_blueprint(bp.insumos_bp, url_prefix='/insumos')
+    application.register_blueprint(bp.inventario_bp, url_prefix='/inventario')
+    application.register_blueprint(bp.compras_bp, url_prefix='/compras')
+    application.register_blueprint(bp.categorias_bp, url_prefix='/categorias')
     application.register_blueprint(bp.security_bp, url_prefix='/security')
     application.register_blueprint(bp.catalog_bp, url_prefix='')
     application.register_blueprint(bp.checkout_bp, url_prefix='')
@@ -211,6 +218,6 @@ def create_app():
             return f"OTRO ERROR: {e}", 400
 
     return application
-
+    #
 
 app = create_app()

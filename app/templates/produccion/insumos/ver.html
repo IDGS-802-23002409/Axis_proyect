@@ -1,0 +1,140 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="min-h-screen bg-white text-[#1d1d1f] font-sans p-6 md:p-12 text-base">
+
+    <div class="max-w-5xl mx-auto mb-10">
+        <a href="{{ url_for('insumos_bp.index') }}"
+            class="inline-flex items-center gap-2 text-[14px] font-bold text-slate-400 hover:text-black uppercase tracking-wider mb-8 transition-colors">
+            <i class="fas fa-arrow-left text-xs"></i> Regresar
+        </a>
+
+        <div class="border-b border-gray-100 pb-6 flex justify-between items-end">
+            <div>
+                <span class="text-[13px] font-black uppercase tracking-[0.2em] text-slate-300 block mb-1">Ficha de
+                    Insumo</span>
+                <h1 class="text-4xl font-light tracking-tight text-gray-900">{{ insumo.nombre }}</h1>
+            </div>
+            <div class="text-right">
+                <span
+                    class="inline-block px-3 py-1 text-[12px] font-bold {% if insumo.estatus == 'ACTIVO' %}bg-green-50 text-green-700 border border-green-100{% else %}bg-red-50 text-red-700 border border-red-100{% endif %} rounded">
+                    {{ insumo.estatus }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-5xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+
+            <div class="md:col-span-3">
+                <label class="block text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-2">Identificación
+                    (SKU)</label>
+                <div class="bg-gray-50/50 border border-gray-200 p-4 text-base font-mono text-gray-800 rounded-sm">
+                    {{ insumo.sku or "SIN ASIGNAR" }}
+                </div>
+            </div>
+
+            <div>
+                <label
+                    class="block text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-2">Categoría</label>
+                <div class="bg-gray-50/50 border border-gray-200 p-4 text-base text-gray-800 rounded-sm italic">
+                    {{ insumo.categoria.nombre if insumo.categoria else "General" }}
+                </div>
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-2">Presentación de
+                    Compra</label>
+                <div
+                    class="bg-gray-50/50 border border-gray-200 p-4 text-base text-gray-800 rounded-sm flex justify-between items-center">
+                    <span class="font-semibold">1 {{ insumo.unidad_medida }}</span>
+                    <span class="text-[11px] text-slate-400 font-bold">
+                        {{ insumo.unidad_medida }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-2">Contenido
+                    Unitario</label>
+                <div
+                    class="bg-gray-50/50 border border-gray-200 p-4 text-base text-gray-800 rounded-sm flex justify-between items-center">
+                    <span class="font-bold">{{ insumo.contenido_cantidad }} {{ insumo.contenido_unidad_medida }}</span>
+                    <span class="text-[11px] text-slate-400 italic font-bold">POR {{ insumo.unidad_medida }}</span>
+
+                </div>
+            </div>
+            {% if insumo.unidad_medida == "ROLLO" %}
+            <div class="md:col-span-2">
+                <label class="block text-[12px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ancho</label>
+                <div
+                    class="bg-gray-50/50 border border-gray-200 p-4 text-base text-gray-800 rounded-sm flex justify-between items-center">
+                    <span class="font-bold">{{ insumo.ancho }} METRO</span>
+                    <span class="text-[11px] text-slate-400 italic font-bold">ANCHO DEL ROLLO</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- STOCK Y ALERTAS EN FILA -->
+            <div class="md:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+
+                <!-- STOCK TOTAL -->
+                <div>
+                    <label class="block text-[13px] font-bold text-slate-600 uppercase tracking-widest mb-3">
+                        Stock Total Acumulado
+                    </label>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-5xl font-light tracking-tighter text-black">
+                            {{ insumo.stock_total_acumulado }}
+                        </span>
+                        <span class="text-xs font-black text-slate-400 uppercase tracking-tighter">
+                            {{ insumo.contenido_unidad_medida }}s
+                        </span>
+                    </div>
+                </div>
+
+                <!-- ALERTA -->
+                <div>
+                    <label class="block text-[13px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                        Mínimo de Alerta
+                    </label>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-5xl font-light tracking-tighter text-black">
+                            {{ insumo.stock_minimo_alerta }}
+                        </span>
+                        <span class="text-xs font-black text-slate-400 uppercase tracking-tighter">
+                            {{ insumo.contenido_unidad_medida }}s
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="mt-16 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-start gap-6">
+            <div class="flex gap-10">
+                <div class="space-y-1">
+                    <span class="block text-[11px] font-black text-slate-400 uppercase tracking-widest">Ingreso</span>
+                    <span class="text-[14px] font-bold text-slate-600">
+                        {{ insumo.fecha_creacion.strftime('%Y-%m-%d') }}
+                    </span>
+                </div>
+
+                <div class="space-y-1">
+                    <span
+                        class="block text-[11px] font-black text-slate-400 uppercase tracking-widest">Actualizado</span>
+                    <span class="text-[14px] font-bold text-slate-600">
+                        {{ insumo.fecha_actualizacion.strftime('%Y-%m-%d') }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 px-4 py-2 border border-slate-100 rounded">
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
