@@ -1,5 +1,6 @@
 
 from . import inventario_bp
+from flask_security import login_required, roles_required, hash_password,roles_accepted
 from .forms import InventarioForm
 from flask import render_template, request
 from sqlalchemy import func
@@ -12,6 +13,8 @@ from app.models.explosion_materiales import ExplosionMaterialesDetalle
 
 
 @inventario_bp.route("/")
+@login_required
+@roles_accepted('admin', 'produccion')
 def index():
 
     #  MERMA TOTAL
@@ -79,6 +82,8 @@ def index():
     )
 
 @inventario_bp.route('/<uuid>')
+@login_required
+@roles_accepted('admin', 'produccion')
 def ver_insumo(uuid):
 
     # =============================

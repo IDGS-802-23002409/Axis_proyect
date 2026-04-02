@@ -1,4 +1,5 @@
 from . import insumos_bp
+from flask_security import login_required, roles_required, hash_password,roles_accepted
 from app.models.insumos import Insumo
 from .forms import InsumoForm
 from app.utils.database_connection import db
@@ -6,6 +7,7 @@ from app.models.categorias import Categoria
 from app.models.compras import CompraDetalle, CompraEncabezado
 from flask import render_template, redirect, url_for, flash, request
 from sqlalchemy import or_, func
+
 
 
 
@@ -34,6 +36,8 @@ def calcular_costo_promedio(insumo_id, limite=5):
 # INDEX
 
 @insumos_bp.route("/")
+@login_required
+@roles_accepted('admin', 'produccion')  # cualquiera de los dos roles puede acceder
 def index():
     busqueda = request.args.get("q")
     categoria = request.args.get("categoria")
@@ -85,6 +89,8 @@ def index():
     )
 
 @insumos_bp.route("/create", methods=["GET", "POST"])
+@login_required
+@roles_accepted('admin', 'produccion')
 def create():
     form = InsumoForm()
 
@@ -190,7 +196,10 @@ def create():
     return render_template("produccion/insumos/create.html", form=form)
 
 #EDITAR
+
 @insumos_bp.route("/edit/<string:uuid_insumo>", methods=["GET", "POST"])
+@login_required
+@roles_accepted('admin', 'produccion')
 def edit(uuid_insumo):
     insumo = Insumo.query.get_or_404(uuid_insumo)
     form = InsumoForm(obj=insumo)
@@ -239,18 +248,18 @@ def edit(uuid_insumo):
         # CONFIGURACIÓN SEGÚN UNIDAD
         # =========================
 
-        # 🔹 PIEZA
+        #  PIEZA
         if unidad == "PIEZA":
             contenido_cantidad = 1
             contenido_unidad = "PIEZA"
-            ancho = None  # 🔥 limpiar ancho
+            ancho = None  #  limpiar ancho
 
-        # 🔹 ROLLO
+        #  ROLLO
         elif unidad == "ROLLO":
             contenido_cantidad = form.contenido_cantidad.data
             ancho = form.ancho.data
 
-            # 🔥 FORZAR
+            #  FORZAR
             contenido_unidad = "METRO"
 
             # VALIDAR CANTIDAD
@@ -294,7 +303,7 @@ def edit(uuid_insumo):
             insumo.contenido_cantidad = contenido_cantidad
             insumo.contenido_unidad_medida = contenido_unidad
 
-            insumo.ancho = ancho  # 🔥 AQUÍ SE ACTUALIZA
+            insumo.ancho = ancho  #  AQUÍ SE ACTUALIZA
 
             insumo.stock_minimo_alerta = form.stock_minimo_alerta.data or 0
 
@@ -316,12 +325,16 @@ def edit(uuid_insumo):
 
 #VER
 @insumos_bp.route("/ver/<string:uuid_insumo>")
+@login_required
+@roles_accepted('admin', 'produccion')
 def view(uuid_insumo):
     insumo = Insumo.query.get_or_404(uuid_insumo)
     return render_template("produccion/insumos/ver.html", insumo=insumo)
 
 #ELIMINACION LOGICA
 @insumos_bp.route("/delete/<string:uuid_insumo>", methods=["POST"])
+@login_required
+@roles_accepted('admin', 'produccion')
 def delete(uuid_insumo):
     insumo = Insumo.query.get_or_404(uuid_insumo)
 
@@ -344,6 +357,8 @@ def delete(uuid_insumo):
     return redirect(url_for('insumos_bp.index'))
 
 @insumos_bp.route("/restore/<string:uuid_insumo>", methods=["POST"])
+@login_required
+@roles_required('admin')
 def restore(uuid_insumo):
     insumo = Insumo.query.get_or_404(uuid_insumo)
 
@@ -358,6 +373,8 @@ def restore(uuid_insumo):
     return redirect(url_for('insumos_bp.index'))
 
 @insumos_bp.route("/trash")
+@login_required
+@roles_accepted('admin', 'produccion')
 def trash():
     insumos = Insumo.query.filter_by(estatus='INACTIVO').all()
     return render_template("produccion/insumos/trash.html", insumos=insumos)

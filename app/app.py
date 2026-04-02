@@ -1,5 +1,5 @@
 import os
-
+from dotenv import load_dotenv
 from flask import Flask, redirect, url_for
 from flask_migrate import Migrate
 from flask_mail import Mail
@@ -12,6 +12,12 @@ from app.utils.config import (
 )
 from app.utils.database_connection import db
 import app.models  # noqa: F401 — ensures all models are registered with SQLAlchemy
+from app.models.usuarios import Usuario, Role
+import app.blueprints as bp
+from flask_wtf.csrf import CSRFProtect
+
+csrf = CSRFProtect()
+mail = Mail()
 
 
 def create_app():
@@ -19,6 +25,9 @@ def create_app():
     load_dotenv()
     #
     application = Flask(__name__)
+
+    # ── Core ──────────────────────────────────────────────────
+    application.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'change-me')
     application.config['SQLALCHEMY_DATABASE_URI'] = (
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
@@ -103,6 +112,110 @@ def create_app():
     db.init_app(application)
     mail.init_app(application)
     Migrate(application, db)
+
+    # Flask-Security datastore
+    user_datastore = SQLAlchemyUserDatastore(db, Usuario, Role)
+    security = Security(
+        application,
+        user_datastore,
+        confirm_register_form=ExtendedRegisterForm
+    )
+
+    # ── Debug: log confirmation & login events ────────────────
+    from flask_security import user_confirmed, user_authenticated
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger('axis_security')
+
+    @user_confirmed.connect_via(application)
+    def on_user_confirmed(sender, user, **kwargs):
+        logger.info(f'[CONFIRM] Email confirmado para: {user.email} | confirmed_at={user.confirmed_at}')
+
+    @user_authenticated.connect_via(application)
+    def on_user_authenticated(sender, user, **kwargs):
+        logger.info(f'[LOGIN] Login exitoso para: {user.email} | confirmed_at={user.confirmed_at}')
+
+    @application.before_request
+    def ensure_roles():
+        """Asegura que los roles básicos existan en la base de datos."""
+        # Esta es una forma rápida de inicializar roles si no existen
+        if not Role.query.first():
+            roles = ['admin', 'gerente', 'produccion', 'cliente']
+            for r in roles:
+                user_datastore.create_role(name=r)
+            db.session.commit()
+
+    from flask_security import user_registered
+    from flask_security.confirmable import send_confirmation_instructions
+    from flask import session
+
+    @user_registered.connect_via(application)
+    def on_user_registered(sender, user, **kwargs):
+        """Asigna el rol 'cliente' automáticamente a cualquier usuario registrado."""
+        cliente_role = Role.query.filter_by(name='cliente').first()
+        if cliente_role:
+            user_datastore.add_role_to_user(user, cliente_role)
+            db.session.commit()
+            logger.info(f'[REGISTER] Rol "cliente" asignado a: {user.email}')
+
+    # ── Blueprints ────────────────────────────────────────────
+    application.register_blueprint(bp.usuarios_bp, url_prefix='/usuarios')
+    application.register_blueprint(bp.insumos_bp, url_prefix='/insumos')
+    application.register_blueprint(bp.inventario_bp, url_prefix='/inventario')
+    application.register_blueprint(bp.compras_bp, url_prefix='/compras')
+    application.register_blueprint(bp.categorias_bp, url_prefix='/categorias')
+    application.register_blueprint(bp.security_bp, url_prefix='/security')
+    application.register_blueprint(bp.catalog_bp, url_prefix='')
+    application.register_blueprint(bp.checkout_bp, url_prefix='')
+
+    # ── Context Processor for Dynamic Layout ──────────────────
+    @application.context_processor
+    def inject_layout():
+        if current_user.is_authenticated:
+            if current_user.has_role('cliente'):
+                return {'base_layout': 'client/layout.html'}
+            elif any(current_user.has_role(r) for r in ['admin', 'produccion', 'gerente']):
+                return {'base_layout': 'produccion/layout.html'}
+        return {'base_layout': 'client/layout.html'}
+
+    # ── Catálogo (Ruta Raíz) ──────────────────────────────────
+    # Ya está manejado por client_bp con url_prefix=''
+
+    # ── Debug: verificar estado de usuario (QUITAR EN PRODUCCIÓN) ──
+    @application.route('/debug/check-user/<email>')
+    def debug_check_user(email):
+        user = Usuario.query.filter_by(email=email).first()
+        if not user:
+            return f'Usuario {email} no encontrado', 404
+        return (
+            f'Email: {user.email}<br>'
+            f'confirmed_at: {user.confirmed_at}<br>'
+            f'active: {user.active}<br>'
+            f'tf_primary_method: {user.tf_primary_method}<br>'
+            f'roles: {[r.name for r in user.roles]}'
+        )
+
+    # ── Debug: VERIFICAR POR QUÉ FALLA EL TOKEN ──
+    @application.route('/debug/test-token/<token>')
+    def debug_test_token(token):
+        from itsdangerous import URLSafeTimedSerializer
+        from itsdangerous.exc import BadSignature, SignatureExpired
+        import time
+
+        serializer = URLSafeTimedSerializer(
+            application.config['SECRET_KEY'],
+            salt=application.config['SECURITY_PASSWORD_SALT']
+        )
+        try:
+            # We use 'confirm' salt which is standard for Flask-Security
+            data = serializer.loads(token, salt='confirm-email', max_age=application.config.get('SECURITY_CONFIRM_EMAIL_WITHIN', 86400 * 7))
+            return f"TOKEN VÁLIDO. Apunta al usuario_id o data: {data}"
+        except SignatureExpired as e:
+            return f"TOKEN EXPIRADO: {e}", 400
+        except BadSignature as e:
+            return f"FIRMA INVÁLIDA (SECRET_KEY o PASSWORD_SALT diferente): {e}", 400
+        except Exception as e:
+            return f"OTRO ERROR: {e}", 400
 
     return application
     #

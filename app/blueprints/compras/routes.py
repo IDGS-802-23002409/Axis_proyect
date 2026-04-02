@@ -1,4 +1,5 @@
 from . import compras_bp
+from flask_security import login_required, roles_required, hash_password,roles_accepted
 from app.utils.database_connection import db
 from app.models.compras import CompraEncabezado, CompraDetalle
 from app.models.insumos import Insumo
@@ -13,6 +14,8 @@ from sqlalchemy.orm import joinedload
 
 
 @compras_bp.route("/")
+@login_required
+@roles_accepted('admin', 'produccion')
 def index():
     busqueda = request.args.get("q")
 
@@ -41,6 +44,8 @@ from decimal import Decimal, InvalidOperation
 
 
 @compras_bp.route("/create", methods=["GET", "POST"])
+@login_required
+@roles_accepted('admin', 'produccion')
 def create():
     form = CompraEncabezadoForm()
 
@@ -203,6 +208,8 @@ from decimal import Decimal
 from sqlalchemy.orm import joinedload
 
 @compras_bp.route("/<uuid_compra>")
+@login_required
+@roles_accepted('admin', 'produccion')
 def ver(uuid_compra):
 
     #aCargar TODO: encabezado → detalles → insumo
@@ -241,6 +248,8 @@ def ver(uuid_compra):
 # RECIBIR COMPRA
 # =========================
 @compras_bp.route("/recibir/<uuid_compra>", methods=["GET", "POST"])
+@login_required
+@roles_accepted('admin', 'produccion')
 def recibir(uuid_compra):
     compra = CompraEncabezado.query.get_or_404(uuid_compra)
 
@@ -352,6 +361,8 @@ def recibir(uuid_compra):
 
 # VER
 @compras_bp.route("/ver/<string:uuid_compra>")
+@login_required
+@roles_accepted('admin', 'produccion')
 def view(uuid_compra):
 
     compra = CompraEncabezado.query.get_or_404(uuid_compra)
@@ -361,6 +372,8 @@ def view(uuid_compra):
 
 # Cancelado
 @compras_bp.route("/cancelar/<uuid_compra>", methods=["POST"])
+@login_required
+@roles_accepted('admin', 'produccion')
 def cancelar(uuid_compra):
     compra = CompraEncabezado.query.get_or_404(uuid_compra)
 
@@ -386,6 +399,8 @@ def cancelar(uuid_compra):
 
 # compras canceladas
 @compras_bp.route("/trash")
+@login_required
+@roles_accepted('admin', 'produccion')
 def trash():
 
     compras = (

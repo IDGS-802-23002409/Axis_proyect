@@ -1,4 +1,5 @@
 from . import categorias_bp
+from flask_security import login_required, roles_required, hash_password,roles_accepted
 from app.models.categorias import Categoria
 from .forms import CategoriaForm
 from app.utils.database_connection import db
@@ -7,6 +8,8 @@ from sqlalchemy import or_, func
 
 
 @categorias_bp.route("/")
+@login_required
+@roles_accepted('admin', 'produccion')
 def index():
     busqueda = request.args.get("q")
     estatus = request.args.get("estatus")
@@ -30,8 +33,10 @@ def index():
     return render_template("produccion/categorias/index.html", categorias=categorias)
 
 
-# 🔹 CREAR CATEGORÍA
+#  CREAR CATEGORÍA
 @categorias_bp.route("/create", methods=["GET", "POST"])
+@login_required
+@roles_accepted('admin', 'produccion')
 def create():
     form = CategoriaForm()
 
@@ -58,8 +63,10 @@ def create():
     return render_template("produccion/categorias/create.html", form=form, title="Registrar Categoría")
 
 
-# 🔹 EDITAR CATEGORÍA
+#  EDITAR CATEGORÍA
 @categorias_bp.route("/edit/<uuid_categoria>", methods=["GET", "POST"])
+@login_required
+@roles_accepted('admin', 'produccion')
 def edit(uuid_categoria):
     categoria = Categoria.query.get_or_404(uuid_categoria)
     form = CategoriaForm(obj=categoria)
@@ -87,8 +94,10 @@ def edit(uuid_categoria):
     return render_template("produccion/categorias/edit.html", form=form, title="Editar Categoría")
 
 
-# 🔹 DESACTIVAR / ACTIVAR CATEGORÍA
+#  DESACTIVAR / ACTIVAR CATEGORÍA
 @categorias_bp.route("/delete/<uuid_categoria>", methods=["POST"])
+@login_required
+@roles_accepted('admin', 'produccion')
 def delete(uuid_categoria):
     categoria = Categoria.query.get_or_404(uuid_categoria)
     categoria.estatus_visible = not categoria.estatus_visible
