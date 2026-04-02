@@ -1,8 +1,27 @@
-{% extends "produccion/layout.html" %} {% block content %}
+{% extends "produccion/layout.html" %} 
+
+{% block content %}
     {% from "dashboard/_macros.html" import kpi_card, status_badge %}
 
-    <div class="flex justify-end mb-6">
-        {% include "dashboard/_filtros.html" %}
+    <div class="flex justify-between items-center mb-10 print:hidden">
+        <div>
+            <h1 class="text-3xl font-black text-black uppercase tracking-tighter italic">Dashboard Operativo</h1>
+            <p class="text-gray-500 text-sm font-medium mt-1">Análisis de rendimiento y control de inventarios.</p>
+        </div>
+
+        <div class="flex gap-4">
+            <button onclick="actualizarDashboard()" id="btn-actualizar"
+                class="bg-[#111] border border-gray-800 text-gray-300 px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-gray-800 transition-all flex items-center gap-2">
+                <i data-lucide="rotate-cw" class="w-4 h-4" id="icon-refresh"></i>
+                ACTUALIZAR
+            </button>
+
+            <button onclick="generarReporte()"
+                class="bg-white text-black border border-gray-200 px-6 py-2.5 rounded-xl text-xs font-black hover:bg-gray-100 transition-all flex items-center gap-2 shadow-sm">
+                <i data-lucide="file-down" class="w-4 h-4"></i>
+                GENERAR REPORTE
+            </button>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -12,7 +31,61 @@
         {{ kpi_card("Producción", ops_produccion.abiertas if ops_produccion else 0, "Órdenes activas", none, "Estable") }}
     </div>
 
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {# Top Ventas #}
+        <div class="bg-[#111111] border border-gray-800 rounded-2xl p-6 flex items-center gap-6 relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-green-500/10 text-green-500 px-3 py-1 rounded-bl-xl text-[9px] font-black uppercase tracking-widest italic">Top Ventas</div>
+            <div class="w-20 h-20 bg-gray-900 rounded-xl border border-gray-800 flex items-center justify-center overflow-hidden flex-shrink-0">
+                {% if top_producto and top_producto.imagen %}
+                    <img src="{{ top_producto.imagen }}" class="object-cover w-full h-full">
+                {% else %}
+                    <i data-lucide="crown" class="w-8 h-8 text-amber-500"></i>
+                {% endif %}
+            </div>
+            <div class="flex-1">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1">Producto más vendido</p>
+                <h3 class="text-lg font-black text-white leading-tight uppercase italic">{{ top_producto.nombre if top_producto else 'Sin datos' }}</h3>
+                <div class="flex gap-4 mt-2">
+                    <div>
+                        <p class="text-[9px] text-gray-600 uppercase">Unidades</p>
+                        <p class="text-sm font-bold text-white">{{ top_producto.unidades if top_producto else 0 }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] text-gray-600 uppercase">Monto</p>
+                        <p class="text-sm font-bold text-green-400">${{ "{:,.2f}".format(top_producto.monto) if top_producto else '0.00' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Rezagado #}
+        <div class="bg-[#111111] border border-gray-800 rounded-2xl p-6 flex items-center gap-6 relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-red-500/10 text-red-500 px-3 py-1 rounded-bl-xl text-[9px] font-black uppercase tracking-widest italic">Baja Rotación</div>
+            <div class="w-20 h-20 bg-gray-900 rounded-xl border border-gray-800 flex items-center justify-center overflow-hidden flex-shrink-0">
+                {% if bottom_producto and bottom_producto.imagen %}
+                    <img src="{{ bottom_producto.imagen }}" class="object-cover w-full h-full">
+                {% else %}
+                    <i data-lucide="trending-down" class="w-8 h-8 text-red-500/50"></i>
+                {% endif %}
+            </div>
+            <div class="flex-1">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1">Stock menos vendido</p>
+                <h3 class="text-lg font-black text-white/70 leading-tight uppercase italic">{{ bottom_producto.nombre if bottom_producto else 'Sin datos' }}</h3>
+                <div class="flex gap-4 mt-2">
+                    <div>
+                        <p class="text-[9px] text-gray-600 uppercase">En Stock</p>
+                        <p class="text-sm font-bold text-white">{{ bottom_producto.stock if bottom_producto else 0 }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] text-gray-600 uppercase">Estatus</p>
+                        <p class="text-sm font-bold text-red-400">Revisar</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-8 print:shadow-none">
         <h2 class="font-bold text-gray-900 mb-4 italic uppercase flex items-center gap-2">
             <i data-lucide="bar-chart-3" class="w-5 h-5 text-blue-600"></i>
             Tendencia de Ventas Semanal
@@ -22,40 +95,33 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div class="lg:col-span-7 bg-white rounded-xl border border-gray-200 shadow-sm p-6 overflow-hidden">
-            <h2 class="font-bold text-gray-900 mb-6 italic uppercase">Alertas de Stock</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left">
-                    <thead class="text-[10px] uppercase text-gray-400 border-b border-gray-100">
-                        <tr>
-                            <th class="pb-3">Ítem / Modelo</th>
-                            <th class="pb-3 text-center">Stock</th>
-                            <th class="pb-3 text-right">Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-                        {% for item in alertas_stock %}
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="py-4 font-medium text-gray-700">{{ item.nombre_modelo }} - <span class="text-blue-600">{{ item.talla }}</span></td>
-                            <td class="py-4 text-center font-bold text-lg">{{ item.stock_fisico_actual }}</td>
-                            <td class="py-4 text-right">
-                                {% if item.stock_fisico_actual == 0 %}
-                                    {{ status_badge("Reponer Ya", "reponer") }}
-                                } {% else %}
-                                    {{ status_badge("Crítico", "critico") }}
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 overflow-hidden">
+        <h2 class="font-bold text-gray-900 mb-6 italic uppercase">Alertas de Stock Crítico</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="text-[10px] uppercase text-gray-400 border-b border-gray-100">
+                    <tr>
+                        <th class="pb-3">Ítem / Modelo</th>
+                        <th class="pb-3 text-center">Stock</th>
+                        <th class="pb-3 text-right">Estado</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for item in alertas_stock %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="py-4 font-medium text-gray-700">{{ item.nombre_modelo }} - <span class="text-blue-600">{{ item.talla }}</span></td>
+                        <td class="py-4 text-center font-bold text-lg">{{ item.stock_fisico_actual }}</td>
+                        <td class="py-4 text-right">
+                            {% if item.stock_fisico_actual == 0 %}
+                                {{ status_badge("Reponer Ya", "reponer") }}
+                            {% else %}
+                                {{ status_badge("Crítico", "critico") }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        
-        </div>
-{% endblock %}
-
-{% block scripts %}
-    {% include "dashboard/_scripts.html" %}
+    </div>
 {% endblock %}

@@ -1,0 +1,262 @@
+{% extends "produccion/layout.html" %}
+
+{% block content %}
+<div class="max-w-[1400px] mx-auto">
+
+    {# ══ Encabezado ══════════════════════════════════════════════════════════ #}
+    <div class="flex items-start justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-black text-black uppercase tracking-tighter">Registro de Ventas</h1>
+            <p class="text-gray-500 text-sm mt-1">Historial de pedidos, clientes y montos generados.</p>
+        </div>
+        <div class="text-right text-xs text-gray-400 mt-1">
+            <p class="font-bold text-gray-600">{{ total }} venta{{ 's' if total != 1 else '' }} encontrada{{ 's' if total != 1 else '' }}</p>
+            <p>{{ start }} → {{ end }}</p>
+        </div>
+    </div>
+
+    {# ══ KPIs ════════════════════════════════════════════════════════════════ #}
+    <div class="grid grid-cols-3 gap-5 mb-8">
+        <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Pedidos</p>
+            <p class="text-3xl font-black text-gray-950">{{ kpi_ventas }}</p>
+            <p class="text-[10px] text-gray-400 mt-1 uppercase">En el período seleccionado</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Ingresos Totales</p>
+            <p class="text-3xl font-black text-gray-950">${{ "{:,.2f}".format(kpi_ingresos) }}</p>
+            <p class="text-[10px] text-gray-400 mt-1 uppercase">Suma de todos los pedidos</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Unidades Vendidas</p>
+            <p class="text-3xl font-black text-gray-950">{{ kpi_unidades }}</p>
+            <p class="text-[10px] text-gray-400 mt-1 uppercase">Prendas despachadas</p>
+        </div>
+    </div>
+
+    {# ══ Filtros ═════════════════════════════════════════════════════════════ #}
+    <form method="GET" action="{{ url_for('ventas.index') }}"
+          class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm mb-6 flex flex-wrap gap-4 items-end">
+
+        <div class="flex-1 min-w-[180px]">
+            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">
+                Buscar cliente
+            </label>
+            <div class="relative">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-gray-400 absolute left-3 top-2.5 pointer-events-none"></i>
+                <input type="text" name="q" value="{{ q }}" placeholder="Nombre del cliente..."
+                    class="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg
+                           focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-800">
+            </div>
+        </div>
+
+        <div>
+            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Desde</label>
+            <input type="date" name="start" value="{{ start }}"
+                class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900">
+        </div>
+
+        <div>
+            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Hasta</label>
+            <input type="date" name="end" value="{{ end }}"
+                class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900">
+        </div>
+
+        <div>
+            <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Estatus</label>
+            <select name="estatus"
+                class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white">
+                <option value="">Todos</option>
+                <option value="Procesando" {% if estatus == 'Procesando' %}selected{% endif %}>Procesando</option>
+                <option value="Enviado"    {% if estatus == 'Enviado'    %}selected{% endif %}>Enviado</option>
+                <option value="Entregado"  {% if estatus == 'Entregado'  %}selected{% endif %}>Entregado</option>
+                <option value="Devuelto"   {% if estatus == 'Devuelto'   %}selected{% endif %}>Devuelto</option>
+            </select>
+        </div>
+
+        <button type="submit"
+            class="px-5 py-2 bg-gray-950 text-white text-xs font-bold rounded-lg hover:bg-gray-800 transition-colors uppercase tracking-wider">
+            Filtrar
+        </button>
+
+        {% if q or estatus or start %}
+        <a href="{{ url_for('ventas.index') }}"
+            class="px-4 py-2 text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            Limpiar
+        </a>
+        {% endif %}
+    </form>
+
+    {# ══ Tabla ═══════════════════════════════════════════════════════════════ #}
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+
+        <table class="w-full text-sm text-left">
+            <thead class="text-[10px] uppercase tracking-widest text-gray-400 bg-gray-50 border-b border-gray-100">
+                <tr>
+                    <th class="px-6 py-4">Pedido</th>
+                    <th class="px-4 py-4">Cliente</th>
+                    <th class="px-4 py-4">Fecha</th>
+                    <th class="px-4 py-4">Productos</th>
+                    <th class="px-4 py-4 text-center">Unidades</th>
+                    <th class="px-4 py-4">Método Pago</th>
+                    <th class="px-4 py-4 text-center">Estatus</th>
+                    <th class="px-6 py-4 text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for v in ventas %}
+                <tr class="hover:bg-gray-50 transition-colors group cursor-pointer"
+                    onclick="toggleDetalle('{{ v.uuid_venta }}')">
+
+                    {# Número de pedido #}
+                    <td class="px-6 py-4">
+                        <p class="font-bold text-gray-800 text-xs">{{ v.numero_pedido }}</p>
+                    </td>
+
+                    {# Cliente #}
+                    <td class="px-4 py-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-gray-500">
+                                {{ v.cliente[0].upper() if v.cliente != '—' else '?' }}
+                            </div>
+                            <span class="text-xs font-medium text-gray-700">{{ v.cliente }}</span>
+                        </div>
+                    </td>
+
+                    {# Fecha #}
+                    <td class="px-4 py-4 text-xs text-gray-500">
+                        {{ v.fecha_venta.strftime('%d %b %Y') if v.fecha_venta else '—' }}
+                        <p class="text-[10px] text-gray-400">
+                            {{ v.fecha_venta.strftime('%H:%M') if v.fecha_venta else '' }}
+                        </p>
+                    </td>
+
+                    {# Resumen de productos #}
+                    <td class="px-4 py-4">
+                        {% for p in v.productos[:2] %}
+                        <p class="text-xs text-gray-700 leading-tight">
+                            {{ p.nombre }} <span class="text-gray-400">· {{ p.talla }}</span>
+                        </p>
+                        {% endfor %}
+                        {% if v.productos|length > 2 %}
+                        <p class="text-[10px] text-gray-400">+{{ v.productos|length - 2 }} más</p>
+                        {% endif %}
+                    </td>
+
+                    {# Unidades #}
+                    <td class="px-4 py-4 text-center">
+                        <span class="text-xs font-bold text-gray-700">{{ v.total_unidades }}</span>
+                    </td>
+
+                    {# Método de pago #}
+                    <td class="px-4 py-4 text-xs text-gray-500">{{ v.metodo_pago }}</td>
+
+                    {# Estatus #}
+                    <td class="px-4 py-4 text-center">
+                        {% if v.estatus_envio == 'Entregado' %}
+                        <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Entregado</span>
+                        {% elif v.estatus_envio == 'Enviado' %}
+                        <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Enviado</span>
+                        {% elif v.estatus_envio == 'Procesando' %}
+                        <span class="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Procesando</span>
+                        {% else %}
+                        <span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">{{ v.estatus_envio }}</span>
+                        {% endif %}
+                    </td>
+
+                    {# Total #}
+                    <td class="px-6 py-4 text-right">
+                        <span class="font-black text-gray-900">${{ "{:,.2f}".format(v.total_venta) }}</span>
+                    </td>
+                </tr>
+
+                {# Fila de detalle expandible #}
+                <tr id="detalle-{{ v.uuid_venta }}" class="hidden bg-gray-50">
+                    <td colspan="8" class="px-6 py-4">
+                        <div class="border border-gray-200 rounded-xl overflow-hidden">
+                            <table class="w-full text-xs">
+                                <thead class="bg-gray-100 text-[10px] uppercase tracking-widest text-gray-500">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left">Producto</th>
+                                        <th class="px-4 py-2 text-center">Talla</th>
+                                        <th class="px-4 py-2 text-center">Cantidad</th>
+                                        <th class="px-4 py-2 text-right">Precio Unit.</th>
+                                        <th class="px-4 py-2 text-right">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    {% for p in v.productos %}
+                                    <tr>
+                                        <td class="px-4 py-2 font-medium text-gray-700">{{ p.nombre }}</td>
+                                        <td class="px-4 py-2 text-center text-gray-500">{{ p.talla }}</td>
+                                        <td class="px-4 py-2 text-center text-gray-700 font-bold">{{ p.qty }}</td>
+                                        <td class="px-4 py-2 text-right text-gray-500">${{ "{:,.2f}".format(p.precio) }}</td>
+                                        <td class="px-4 py-2 text-right font-bold text-gray-800">${{ "{:,.2f}".format(p.qty * p.precio) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                    <tr class="bg-gray-50">
+                                        <td colspan="4" class="px-4 py-2 text-right text-[10px] font-black uppercase tracking-widest text-gray-500">
+                                            Total del Pedido
+                                        </td>
+                                        <td class="px-4 py-2 text-right font-black text-gray-900">
+                                            ${{ "{:,.2f}".format(v.total_venta) }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+
+                {% else %}
+                <tr>
+                    <td colspan="8" class="px-6 py-16 text-center">
+                        <div class="flex flex-col items-center gap-3 opacity-40">
+                            <i data-lucide="shopping-cart" class="w-10 h-10 text-gray-400"></i>
+                            <p class="text-sm font-bold text-gray-500 uppercase tracking-widest">Sin ventas en este período</p>
+                            <p class="text-xs text-gray-400">Ajusta el rango de fechas o los filtros.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# ══ Paginación ══════════════════════════════════════════════════════════ #}
+    {% if total_pages > 1 %}
+    <div class="flex items-center justify-between mt-6">
+        <p class="text-xs text-gray-400">
+            Página {{ page }} de {{ total_pages }} · {{ total }} resultados
+        </p>
+        <div class="flex gap-2">
+            {% if page > 1 %}
+            <a href="{{ url_for('ventas.index', page=page-1, q=q, start=start, end=end, estatus=estatus) }}"
+                class="px-4 py-2 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                ← Anterior
+            </a>
+            {% endif %}
+            {% if page < total_pages %}
+            <a href="{{ url_for('ventas.index', page=page+1, q=q, start=start, end=end, estatus=estatus) }}"
+                class="px-4 py-2 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                Siguiente →
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    lucide.createIcons();
+
+    // Expandir/colapsar detalle de productos por venta
+    function toggleDetalle(uuid) {
+        const fila = document.getElementById('detalle-' + uuid);
+        if (fila) fila.classList.toggle('hidden');
+    }
+</script>
+{% endblock %}

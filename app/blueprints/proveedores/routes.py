@@ -16,7 +16,9 @@ import re
 def index():
     all_proveedores = Proveedor.query.order_by(Proveedor.fecha_creacion.desc()).all()
     form = ProveedorForm()
-    return render_template('index.html', proveedores=all_proveedores, form=form)
+    return render_template('index.html', proveedores=all_proveedores, form=form,
+                           top_producto={'nombre': 'Shadow Hoodie', 'unidades': 42, 'monto': 12500.50, 'imagen': None},
+                           bottom_producto={'nombre': 'Basic Tee White', 'stock': 85, 'imagen': None})
 
 # --- CREAR Y ACTUALIZAR ---
 @proveedores_bp.route('/guardar', methods=['POST'])
