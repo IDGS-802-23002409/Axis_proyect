@@ -1,223 +1,208 @@
+
 from . import inventario_bp
 from .forms import InventarioForm
-
+from flask import render_template, request
+from sqlalchemy import func
+from app.utils.database_connection import db
 from app.models.inventario import RolloInventario, RetazoInventario
 from app.models.compras import CompraDetalle, CompraEncabezado
 from app.models.insumos import Insumo
-from app.models.produccion import EjecucionCorte
-
-from app.utils.database_connection import db
-
-from flask import render_template, request
-
-from flask import Blueprint, render_template
-from app.models import Insumo, RolloInventario
-from sqlalchemy import func
+from app.models.produccion import EjecucionCorte, OrdenProduccion
+from app.models.explosion_materiales import ExplosionMaterialesDetalle
 
 
-
-@inventario_bp.route('/')
+@inventario_bp.route("/")
 def index():
-    insumos = Insumo.query.filter_by(estatus='ACTIVO').all()
+
+    #  MERMA TOTAL
+    merma_total = db.session.query(
+        func.coalesce(func.sum(RetazoInventario.metraje), 0)
+    ).scalar()
+    #  TOTAL DE METROS DE TODOS LOS ROLLOS
+    total_metros_global = db.session.query(
+        func.coalesce(func.sum(RolloInventario.metraje_continuo_actual), 0)
+    ).scalar()
+
+    #  SOLO INSUMOS ACTIVOS
+    insumos = Insumo.query.filter_by(estatus="ACTIVO").all()
 
     inventario = []
 
     for insumo in insumos:
 
-        # Solo aplica para rollos
         total_rollos = 0
         total_metros = 0
         detalle_rollos = []
 
-        if insumo.unidad_medida == 'ROLLO':
+        #  SI ES ROLLO
+        if insumo.unidad_medida == "ROLLO":
+
             total_rollos = len(insumo.rollos)
 
             for rollo in insumo.rollos:
                 metros_actual = float(rollo.metraje_continuo_actual or 0)
-
                 total_metros += metros_actual
 
-                detalle_rollos.append({
-                    "uuid": rollo.uuid_rollo,
-                    "metros": metros_actual
-                })
+                detalle_rollos.append(
+                    {"uuid": rollo.uuid_rollo, "metros": metros_actual}
+                )
 
-        inventario.append({
-            "nombre": insumo.nombre,
-            "sku": insumo.sku,
-            "tipo": insumo.unidad_medida,
-            "unidad": insumo.contenido_unidad_medida,
+        #  SI ES PIEZA
+        elif insumo.unidad_medida == "PIEZA":
+            total_metros = float(insumo.stock_total_acumulado or 0)
 
-            #  resumen
-            "total_rollos": total_rollos,
-            "total_metros": total_metros,
-
-            # detalle
-            "rollos": detalle_rollos
-        })
-
-    return render_template("produccion/inventario/index.html", inventario=inventario)
-
-'''
-
-@inventario_bp.route("/", methods=["GET", "POST"])
-def index():
-
-    form = InventarioForm()
-
-    #  llenar select de insumos
-    form.uuid_insumo.choices = [("", "Todos")] + [
-        (i.uuid_insumo, f"{i.sku} - {i.nombre}")
-        for i in Insumo.query.all()
-    ]
-
-    movimientos = []
-
-    # =========================
-    #  ENTRADAS (COMPRAS)
-    # =========================
-    compras = (
-        db.session.query(CompraDetalle, CompraEncabezado, Insumo)
-        .join(CompraEncabezado, CompraDetalle.uuid_compra == CompraEncabezado.uuid_compra)
-        .join(Insumo, CompraDetalle.uuid_insumo == Insumo.uuid_insumo)
-        .filter(CompraEncabezado.estatus == 'RECIBIDO')
-    )
-
-    # =========================
-    #  SALIDAS - CONSUMO
-    # =========================
-    cortes = (
-        db.session.query(EjecucionCorte, RolloInventario, Insumo)
-        .join(RolloInventario, EjecucionCorte.uuid_rollo_usado == RolloInventario.uuid_rollo)
-        .join(Insumo, RolloInventario.uuid_insumo == Insumo.uuid_insumo)
-    )
-
-    # =========================
-    #  SALIDAS - MERMA
-    # =========================
-    retazos = (
-        db.session.query(RetazoInventario, RolloInventario, Insumo)
-        .join(RolloInventario, RetazoInventario.uuid_rollo_origen == RolloInventario.uuid_rollo)
-        .join(Insumo, RolloInventario.uuid_insumo == Insumo.uuid_insumo)
-    )
-
-    # =========================
-    #  FILTROS EN QUERY (ANTES DE EJECUTAR)
-    # =========================
-    if form.uuid_insumo.data:
-        compras = compras.filter(Insumo.uuid_insumo == form.uuid_insumo.data)
-        cortes = cortes.filter(Insumo.uuid_insumo == form.uuid_insumo.data)
-        retazos = retazos.filter(Insumo.uuid_insumo == form.uuid_insumo.data)
-
-    if form.fecha_inicio.data:
-        compras = compras.filter(CompraEncabezado.fecha_compra >= form.fecha_inicio.data)
-        cortes = cortes.filter(EjecucionCorte.fecha_proceso >= form.fecha_inicio.data)
-        retazos = retazos.filter(RetazoInventario.fecha_creacion >= form.fecha_inicio.data)
-
-    if form.fecha_fin.data:
-        compras = compras.filter(CompraEncabezado.fecha_compra <= form.fecha_fin.data)
-        cortes = cortes.filter(EjecucionCorte.fecha_proceso <= form.fecha_fin.data)
-        retazos = retazos.filter(RetazoInventario.fecha_creacion <= form.fecha_fin.data)
-
-    # =========================
-    #  PROCESAR ENTRADAS
-    # =========================
-    for detalle, encabezado, insumo in compras.all():
-
-        cantidad = float(detalle.cantidad_comprada * insumo.contenido_cantidad)
-
-        movimientos.append({
-            "tipo": "ENTRADA",
-            "subtipo": "COMPRA",
-            "insumo": insumo.nombre,
-            "sku": insumo.sku,
-            "cantidad": cantidad,
-            "unidad": insumo.contenido_unidad_medida,
-            "fecha": encabezado.fecha_compra,
-            "referencia": encabezado.uuid_compra,
-            "detalle_id": detalle.uuid_detalle_compra
-        })
-
-    # =========================
-    # 📦 PROCESAR SALIDAS (CONSUMO)
-    # =========================
-    for corte, rollo, insumo in cortes.all():
-
-        movimientos.append({
-            "tipo": "SALIDA",
-            "subtipo": "CONSUMO",
-            "insumo": insumo.nombre,
-            "sku": insumo.sku,
-            "cantidad": float(corte.metros_sacados_bodega) * -1,
-            "unidad": insumo.contenido_unidad_medida,
-            "fecha": corte.fecha_proceso,
-            "referencia": corte.uuid_corte,
-            "detalle_id": corte.uuid_corte
-        })
-
-    # =========================
-    # 📦 PROCESAR SALIDAS (MERMA)
-    # =========================
-    for retazo, rollo, insumo in retazos.all():
-
-        movimientos.append({
-            "tipo": "SALIDA",
-            "subtipo": "MERMA",
-            "insumo": insumo.nombre,
-            "sku": insumo.sku,
-            "cantidad": float(retazo.metraje) * -1,
-            "unidad": insumo.contenido_unidad_medida,
-            "fecha": retazo.fecha_creacion,
-            "referencia": retazo.uuid_retazo,
-            "detalle_id": retazo.uuid_retazo
-        })
-
-    # =========================
-    # 🔍 FILTROS EN MEMORIA (tipo y subtipo)
-    # =========================
-    if form.tipo_movimiento.data:
-        movimientos = [
-            m for m in movimientos
-            if m["tipo"] == form.tipo_movimiento.data
-        ]
-
-    if form.subtipo.data:
-        movimientos = [
-            m for m in movimientos
-            if m["subtipo"] == form.subtipo.data
-        ]
-
-    # =========================
-    # 🔄 ORDEN FINAL
-    # =========================
-    movimientos.sort(key=lambda x: x["fecha"], reverse=True)
+        #  ARMADO FINAL
+        inventario.append(
+            {
+                "uuid_insumo": insumo.uuid_insumo,
+                "nombre": insumo.nombre,
+                "sku": insumo.sku,
+                # tipo de compra
+                "tipo": insumo.unidad_medida,
+                #  CONFIGURACIÓN (CLAVE PARA TU HTML)
+                "contenido": float(insumo.contenido_cantidad or 0),
+                "unidad_base": insumo.contenido_unidad_medida,
+                #  RESUMEN
+                "stock_total": float(insumo.stock_total_acumulado or 0),
+                "total_rollos": total_rollos,
+                "total_metros": total_metros,
+                #  DETALLE
+                "rollos": detalle_rollos,
+            }
+        )
 
     return render_template(
         "produccion/inventario/index.html",
-        movimientos=movimientos,
-        form=form
+        inventario=inventario,
+        merma_total=float(merma_total or 0),
+        total_metros_global=float(total_metros_global or 0),
     )
-'''
-@inventario_bp.route("/ver/<uuid_insumo>")
-def ver(uuid_insumo):
 
-    insumo = Insumo.query.get_or_404(uuid_insumo)
+@inventario_bp.route('/<uuid>')
+def ver_insumo(uuid):
 
-    rollos = RolloInventario.query.filter_by(
-        uuid_insumo=uuid_insumo
-    ).all()
+    # =============================
+    #  INSUMO
+    # =============================
+    insumo = Insumo.query.get_or_404(uuid)
 
-    total_rollos = len(rollos)
+    # Variables base
+    resumen = {}
+    detalle_rollos = []
+    ejecuciones = []
+    retazos = []
+    uso_piezas = []
 
-    total_metros = sum([
-        float(r.metraje_continuo_actual or 0)
-        for r in rollos
-    ])
+    # ==========================================================
+    #  CASO 1: INSUMOS POR ROLLO
+    # ==========================================================
+    if insumo.unidad_medida == 'ROLLO':
+
+        #  ROLLOS
+        rollos = RolloInventario.query.filter_by(uuid_insumo=uuid).all()
+
+        total_rollos = len(rollos)
+
+        total_metros_iniciales = sum(
+            float(r.metraje_inicial or 0) for r in rollos
+        )
+
+        total_metros_actual = sum(
+            float(r.metraje_continuo_actual or 0) for r in rollos
+        )
+
+        #  EJECUCIONES (uso real)
+        ejecuciones = EjecucionCorte.query.join(RolloInventario).filter(
+            RolloInventario.uuid_insumo == uuid
+        ).all()
+
+        total_metros_usados = sum(
+            float(e.metros_sacados_bodega or 0) for e in ejecuciones
+        )
+
+        total_merma = sum(
+            float(e.merma_real_calculada or 0) for e in ejecuciones
+        )
+
+        #  RETAZOS
+        retazos = RetazoInventario.query.join(RolloInventario).filter(
+            RolloInventario.uuid_insumo == uuid
+        ).all()
+
+        total_retazos = sum(
+            float(r.metraje or 0) for r in retazos
+        )
+
+        #  DETALLE POR ROLLO
+        for r in rollos:
+            detalle_rollos.append({
+                "uuid": r.uuid_rollo,
+                "inicial": float(r.metraje_inicial or 0),
+                "actual": float(r.metraje_continuo_actual or 0),
+                "usado": float(r.metraje_inicial or 0) - float(r.metraje_continuo_actual or 0)
+            })
+
+        #  RESUMEN
+        resumen = {
+            "total_rollos": total_rollos,
+            "entrada": total_metros_iniciales,
+            "salida": total_metros_usados,
+            "stock": total_metros_actual,
+            "merma": total_merma,
+            "retazos": total_retazos
+        }
+
+    # ==========================================================
+    #  CASO 2: INSUMOS POR PIEZA
+    # ==========================================================
+    elif insumo.unidad_medida == 'PIEZA':
+
+        #  STOCK ACTUAL
+        stock_actual = float(insumo.stock_total_acumulado or 0)
+
+        #  CONSUMO TEÓRICO (por producción)
+        detalles = ExplosionMaterialesDetalle.query.filter_by(
+            uuid_insumo=uuid
+        ).all()
+
+        total_usado = 0
+
+        for d in detalles:
+            producto = d.explosion.producto
+
+            ordenes = OrdenProduccion.query.filter_by(
+                uuid_producto=producto.uuid_producto
+            ).all()
+
+            for op in ordenes:
+                cantidad_usada = float(d.consumo_teorico_unitario or 0) * op.cantidad_a_producir
+
+                total_usado += cantidad_usada
+
+                uso_piezas.append({
+                    "producto": producto.nombre,
+                    "orden": op.uuid_op,
+                    "cantidad": cantidad_usada,
+                    "fecha": op.fecha_solicitud
+                })
+
+        #  MERMA (si manejas merma en piezas, si no queda en 0)
+        total_merma = 0
+
+        #  RESUMEN
+        resumen = {
+            "entrada": stock_actual + total_usado,  # aproximación
+            "salida": total_usado,
+            "stock": stock_actual,
+            "merma": total_merma
+        }
+
 
     return render_template(
         "produccion/inventario/ver.html",
         insumo=insumo,
-        rollos=rollos,
-        total_rollos=total_rollos,
-        total_metros=round(total_metros, 2)
+        resumen=resumen,
+        rollos=detalle_rollos,
+        ejecuciones=ejecuciones,
+        uso_piezas=uso_piezas
     )
