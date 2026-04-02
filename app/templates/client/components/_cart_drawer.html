@@ -12,7 +12,7 @@
             <div class="flex items-center gap-3">
                 <i data-lucide="shopping-bag" class="w-6 h-6"></i>
                 <h2 class="font-[var(--font-display)] text-2xl tracking-[0.2em]">
-                    CARRITO (<span id="cart-total-items-header">0</span>)
+                    CARRITO (<span id="cart-total-items-header">{{ cart_count }}</span>)
                 </h2>
             </div>
             <button id="cart-close-btn" class="p-2 hover:text-primary transition-colors" aria-label="Close cart">
@@ -22,6 +22,7 @@
 
         <!-- Items -->
         <div class="flex-1 overflow-y-auto p-6" id="cart-items-container">
+            {% if not cart_items or cart_items|length == 0 %}
             <div id="cart-empty-state" class="flex flex-col items-center justify-center h-full text-center">
                 <i data-lucide="shopping-bag" class="w-16 h-16 text-muted-foreground mb-4"></i>
                 <p class="text-muted-foreground mb-4">Tu carrito está vacío</p>
@@ -31,27 +32,66 @@
                 </a>
             </div>
             <div id="cart-items-list" class="space-y-6 hidden">
-                <!-- Cart items will be rendered here via JS -->
+            {% else %}
+            <div id="cart-empty-state" class="flex flex-col items-center justify-center h-full text-center hidden">
+                <i data-lucide="shopping-bag" class="w-16 h-16 text-muted-foreground mb-4"></i>
+                <p class="text-muted-foreground mb-4">Tu carrito está vacío</p>
+                <a href="/catalogo"
+                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90">
+                    EXPLORAR PRODUCTOS
+                </a>
             </div>
+            <div id="cart-items-list" class="space-y-6">
+                {% for item in cart_items %}
+                <div class="flex gap-4 group">
+                    <div class="relative w-24 h-24 bg-secondary overflow-hidden">
+                        <img src="{{ item.image }}" alt="{{ item.nombre }}" class="object-cover w-full h-full" />
+                    </div>
+                    <div class="flex-1 flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-medium text-sm">{{ item.nombre }}</h3>
+                            <p class="text-xs text-muted-foreground">Talla: {{ item.talla }}</p>
+                            <p class="text-primary font-medium">${{ "%.2f"|format(item.price) }}</p>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm">Cant: {{ item.quantity }}</span>
+                            <form action="{{ url_for('checkout.eliminar_carrito') }}" method="POST">
+                                <input type="hidden" name="uuid_producto" value="{{ item.uuid_producto }}">
+                                <input type="hidden" name="talla" value="{{ item.talla }}">
+                                <button type="submit" class="remove-btn p-2 text-muted-foreground hover:text-destructive transition-colors">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
 
         <!-- Footer -->
-        <div id="cart-footer" class="border-t border-border p-6 space-y-4 hidden">
+        {% if cart_items and cart_items|length > 0 %}
+        <div id="cart-footer" class="border-t border-border p-6 space-y-4">
             <div class="flex justify-between items-center">
                 <span class="text-muted-foreground">Subtotal</span>
-                <span class="font-[var(--font-display)] text-2xl">$<span id="cart-total-price">0.00</span></span>
+                <span class="font-[var(--font-display)] text-2xl">$<span id="cart-total-price">{{ "%.2f"|format(cart_items|sum(attribute='price*quantity')) }}</span></span>
             </div>
             <p class="text-xs text-muted-foreground">
                 Envío calculado en el checkout
             </p>
-            <button
+            <a href="{{ url_for('checkout.checkout_view') }}"
                 class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 w-full bg-primary text-primary-foreground hover:bg-primary/90 h-12 font-[var(--font-display)] text-lg tracking-[0.2em]">
                 CHECKOUT
-            </button>
+            </a>
             <button id="cart-continue-btn"
                 class="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Continuar comprando
             </button>
         </div>
+        {% else %}
+        <div id="cart-footer" class="border-t border-border p-6 space-y-4 hidden">
+        </div>
+        {% endif %}
     </div>
 </div>

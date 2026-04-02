@@ -21,14 +21,20 @@ def serialize_modelo(m, is_new=False):
     }
 
 def get_serialized_categories():
-    base = [{"id": "all", "name": "Todo"}]
-    for c in Categoria.query.all():
-        base.append({"id": c.uuid_categoria, "name": c.nombre})
+    base = [{"id": "all", "name": "Todo", "image": "/static/images/default/default-image.png"}]
+    for c in Categoria.query.filter_by(estatus_visible=True).all():
+        base.append({
+            "id": c.uuid_categoria, 
+            "name": c.nombre.upper(), 
+            "image": c.imagen_url if c.imagen_url else "/static/images/default/default-image.png",
+            "description": c.descripcion or "Colección"
+        })
     return base
 
 @catalog_bp.route('/')
 def index():
-    return render_template('index.html')
+    categorias = Categoria.query.filter_by(estatus_visible=True).order_by(Categoria.nombre).all()
+    return render_template('index.html', categorias=categorias)
 
 @catalog_bp.route('/about')
 def about():

@@ -168,13 +168,16 @@
                                     VER DETALLES
                                     <i data-lucide="arrow-up-right" class="w-[14px] h-[14px]"></i>
                                 </a>
-                                <button
-                                    class="add-to-cart-btn p-3 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                                    data-id="{{ product.id }}" data-name="{{ product.name }}"
-                                    data-price="{{ product.price }}" data-image="{{ product.image }}"
-                                    aria-label="Add to cart">
-                                    <i data-lucide="shopping-bag" class="w-[18px] h-[18px]"></i>
-                                </button>
+                                <form action="{{ url_for('checkout.agregar_carrito') }}" method="POST">
+                                    <input type="hidden" name="uuid_producto" value="{{ product.id }}">
+                                    <input type="hidden" name="cantidad" value="1">
+                                    <input type="hidden" name="talla" value="M">
+                                    <button type="submit"
+                                        class="add-to-cart-btn p-3 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                                        aria-label="Add to cart">
+                                        <i data-lucide="shopping-bag" class="w-[18px] h-[18px]"></i>
+                                    </button>
+                                </form>
                             </div>
 
                             <!-- Corner accents -->

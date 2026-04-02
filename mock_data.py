@@ -34,29 +34,46 @@ def run_seed():
         print(" [OK] Roles verificados.")
 
         # 2. Crear Usuarios (Admins, Clientes, Empleados)
-        if not Usuario.query.filter_by(email="admin@axis.com").first():
-            admin_user = Usuario(nombre_completo="Admin Axis", email="admin@axis.com", password=hash_password("admin1234"), confirmed_at=datetime.now(timezone.utc), active=True)
-            admin_user.roles.append(roles_dict['admin'])
-            db.session.add(admin_user)
-            
-            p_user = Usuario(nombre_completo="Empleado Modista", email="modista@axis.com", password=hash_password("modista1234"), confirmed_at=datetime.now(timezone.utc), active=True)
-            p_user.roles.append(roles_dict['produccion'])
-            db.session.add(p_user)
-            
-            c_user = Usuario(nombre_completo="Juan Cliente", email="juan@axis.com", password=hash_password("cliente1234"), confirmed_at=datetime.now(timezone.utc), active=True)
-            c_user.roles.append(roles_dict['cliente'])
-            db.session.add(c_user)
-            
-            db.session.commit()
+        test_users = [
+            {"nombre": "Admin Axis", "email": "admin@axis.com", "pass": "admin1234", "role": "admin", "emp_num": "EMP-001", "puesto": "Director Tienda", "depto": "Gerencia"},
+            {"nombre": "Empleado Modista", "email": "modista@axis.com", "pass": "modista1234", "role": "produccion", "emp_num": "EMP-002", "puesto": "Sastre Principal", "depto": "Produccion"},
+            {"nombre": "Juan Cliente", "email": "juan@axis.com", "pass": "cliente1234", "role": "cliente", "tel": "555-123-4567", "dir": "Av. Siempre Viva 742"}
+        ]
 
-            # Ligar perfiles operativos
-            db.session.add(Empleado(uuid_usuario=admin_user.uuid_usuario, numero_empleado="EMP-001", puesto="Director Tienda", departamento="Gerencia"))
-            db.session.add(Empleado(uuid_usuario=p_user.uuid_usuario, numero_empleado="EMP-002", puesto="Sastre Principal", departamento="Produccion"))
-            db.session.add(Cliente(uuid_usuario=c_user.uuid_usuario, telefono="555-123-4567", direccion_completa="Av. Siempre Viva 742"))
-            db.session.commit()
-            print(" [OK] Usuarios y Perfiles (Empleados/Clientes) creados.")
-        else:
-            print(" [INFO] Usuarios ya existían. Saltando...")
+        for u in test_users:
+            user = Usuario.query.filter_by(email=u["email"]).first()
+            if not user:
+                user = Usuario(
+                    nombre_completo=u["nombre"], 
+                    email=u["email"], 
+                    password=hash_password(u["pass"]), 
+                    confirmed_at=datetime.now(timezone.utc), 
+                    active=True
+                )
+                user.roles.append(roles_dict[u["role"]])
+                db.session.add(user)
+                db.session.flush() # Para tener el uuid
+
+                # Ligar perfil operativo
+                if u["role"] in ['admin', 'produccion']:
+                    if not Empleado.query.filter_by(uuid_usuario=user.uuid_usuario).first() and \
+                       not Empleado.query.filter_by(numero_empleado=u["emp_num"]).first():
+                        db.session.add(Empleado(
+                            uuid_usuario=user.uuid_usuario, 
+                            numero_empleado=u["emp_num"], 
+                            puesto=u["puesto"], 
+                            departamento=u["depto"]
+                        ))
+                elif u["role"] == 'cliente':
+                    if not Cliente.query.filter_by(uuid_usuario=user.uuid_usuario).first():
+                        db.session.add(Cliente(
+                            uuid_usuario=user.uuid_usuario, 
+                            telefono=u["tel"], 
+                            direccion_completa=u["dir"]
+                        ))
+                print(f" [OK] Usuario {u['email']} creado.")
+        
+        db.session.commit()
 
         # 3. Categorías
         if not Categoria.query.first():

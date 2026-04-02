@@ -11,7 +11,7 @@ from app.utils.config import (
     MAIL_DEFAULT_SENDER, SECURITY_TOTP_SECRETS
 )
 from app.utils.database_connection import db
-import app.models  # noqa: F401 — ensures all models are registered with SQLAlchemy
+import app.models 
 from app.models.usuarios import Usuario, Role
 import app.blueprints as bp
 from flask_wtf.csrf import CSRFProtect
@@ -181,6 +181,22 @@ def create_app():
                 return {'base_layout': 'produccion/layout.html'}
         # Fallback para pruebas sin rol asignado (para habilitar el desarrollo)
         return {'base_layout': 'produccion/layout.html'}
+
+    # ── Context Processor for Cart (JSON file) ──────────────────
+    @application.context_processor
+    def inject_cart():
+        try:
+            import json
+            import os
+            cart_file = os.path.join(application.root_path, '..', 'carrito.json')
+            if os.path.exists(cart_file):
+                with open(cart_file, 'r') as f:
+                    cart = json.load(f)
+                total_items = sum(item.get('quantity', 0) for item in cart)
+                return {'cart_items': cart, 'cart_count': total_items}
+        except:
+            pass
+        return {'cart_items': [], 'cart_count': 0}
 
     # ── Catálogo (Ruta Raíz) ──────────────────────────────────
     # Ya está manejado por client_bp con url_prefix=''
