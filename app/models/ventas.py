@@ -1,6 +1,6 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import Column, String, Integer, Numeric, DateTime, Enum, ForeignKey, func
+from sqlalchemy import Column, String, Integer, Numeric, DateTime, Enum, ForeignKey, func, Index
 
 
 class VentaEncabezado(db.Model):
@@ -15,6 +15,10 @@ class VentaEncabezado(db.Model):
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     cliente = db.relationship('Cliente', backref=db.backref('ventas', lazy=True))
+
+    __table_args__ = (
+        Index('idx_venta_fecha', 'fecha_venta'),
+    )
 
     def __repr__(self):
         return f'<VentaEncabezado {self.numero_pedido}>'

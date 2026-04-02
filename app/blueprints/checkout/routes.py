@@ -4,4 +4,4 @@ checkout_bp = Blueprint('checkout', __name__, template_folder='../../templates/c
 
 @checkout_bp.route('/checkout')
 def checkout_view():
-    return render_template('checkout/checkout.html')
+    return render_template('carrito.html')

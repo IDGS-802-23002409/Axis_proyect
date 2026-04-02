@@ -1,0 +1,56 @@
+<section id="split-screen-container" class="min-h-screen bg-background">
+    <div class="grid lg:grid-cols-2 min-h-screen">
+        <!-- Left Panel - Men's Collection -->
+        <div id="split-left-panel" class="relative group overflow-hidden"
+            style="opacity: 0; transform: translateY(30%);">
+            <div class="absolute inset-0">
+                <img src="https://images.unsplash.com/photo-1507680434567-5739c80be1ac?w=1000&h=1400&fit=crop"
+                    alt="Men's Collection" class="split-parallax-img object-cover scale-110 w-full h-full" />
+                <div
+                    class="absolute inset-0 bg-background/40 group-hover:bg-background/30 transition-colors duration-500">
+                </div>
+            </div>
+
+            <div class="relative z-10 h-full flex flex-col items-center justify-center p-8 text-center">
+                <span class="text-primary text-xs tracking-[0.3em] uppercase mb-4">Colección</span>
+                <h3 class="font-[var(--font-display)] text-6xl md:text-8xl tracking-[0.2em] mb-6">
+                    HOMBRE
+                </h3>
+                <a href="/catalogo?genre=hombre"
+                    class="px-8 py-4 border border-foreground hover:bg-foreground hover:text-background transition-all duration-300 font-[var(--font-display)] tracking-[0.2em]">
+                    EXPLORAR
+                </a>
+            </div>
+
+            <!-- Decorative line -->
+            <div class="absolute bottom-0 left-1/2 w-px h-0 bg-primary group-hover:h-32 transition-all duration-500">
+            </div>
+        </div>
+
+        <!-- Right Panel - Women's Collection -->
+        <div id="split-right-panel" class="relative group overflow-hidden"
+            style="opacity: 0; transform: translateY(-30%);">
+            <div class="absolute inset-0">
+                <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=1000&h=1400&fit=crop"
+                    alt="Women's Collection" class="split-parallax-img object-cover scale-110 w-full h-full" />
+                <div
+                    class="absolute inset-0 bg-background/40 group-hover:bg-background/30 transition-colors duration-500">
+                </div>
+            </div>
+
+            <div class="relative z-10 h-full flex flex-col items-center justify-center p-8 text-center">
+                <span class="text-primary text-xs tracking-[0.3em] uppercase mb-4">Colección</span>
+                <h3 class="font-[var(--font-display)] text-6xl md:text-8xl tracking-[0.2em] mb-6">
+                    MUJER
+                </h3>
+                <a href="/catalogo?genre=mujer"
+                    class="px-8 py-4 border border-foreground hover:bg-foreground hover:text-background transition-all duration-300 font-[var(--font-display)] tracking-[0.2em]">
+                    EXPLORAR
+                </a>
+            </div>
+
+            <!-- Decorative line -->
+            <div class="absolute top-0 left-1/2 w-px h-0 bg-primary group-hover:h-32 transition-all duration-500"></div>
+        </div>
+    </div>
+</section>

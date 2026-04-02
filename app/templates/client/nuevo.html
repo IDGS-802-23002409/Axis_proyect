@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "components/_cart_drawer.html" %}
+
+<div id="nuevo-container" class="min-h-screen bg-background">
+    <!-- Hero Section -->
+    <section id="nuevo-hero" class="relative min-h-[80vh] flex items-center overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?w=1920&h=1080&fit=crop"
+                alt="New Collection" id="nuevo-hero-image" class="object-cover w-full h-full" />
+            <div class="absolute inset-0 bg-black/40"></div>
+        </div>
+
+        <div class="container mx-auto px-4 lg:px-8 relative z-10 pt-20">
+            <span
+                class="nuevo-hero-text block text-white text-sm tracking-[0.3em] uppercase mb-6 font-bold opacity-0 translate-y-16"
+                style="transform: skewY(5deg);">
+                Drop 2026
+            </span>
+            <h1 class="nuevo-hero-text font-[var(--font-display)] text-white text-7xl md:text-9xl lg:text-[12rem] tracking-widest leading-none opacity-0 translate-y-16"
+                style="transform: skewY(5deg);">
+                NUEVO
+            </h1>
+            <p class="nuevo-hero-text text-xl md:text-2xl text-gray-200 mt-6 max-w-xl opacity-0 translate-y-16"
+                style="transform: skewY(5deg);">
+                Las últimas piezas de nuestra colección. Diseños exclusivos que definen
+                la nueva era del streetwear.
+            </p>
+        </div>
+
+        <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-10"></div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="py-24 px-4 lg:px-8">
+        <div class="container mx-auto">
+            <div class="flex items-end justify-between mb-12">
+                <div>
+                    <h2 class="font-[var(--font-display)] text-4xl md:text-5xl tracking-widest uppercase">
+                        RECIÉN LLEGADOS
+                    </h2>
+                    <p class="text-muted-foreground mt-2">
+                        {{ products|length }} nuevos productos disponibles
+                    </p>
+                </div>
+                <a href="/catalogo"
+                    class="text-sm tracking-[0.2em] uppercase hover:text-primary transition-colors hidden md:block border-b border-primary">
+                    Ver todo el catálogo
+                </a>
+            </div>
+
+            <div id="nuevo-products-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+                {% for product in products %}
+                {% set isLarge = loop.index0 % 7 == 0 %}
+                <div
+                    class="nuevo-product group flex flex-col opacity-0 translate-y-16 {{ 'md:col-span-2 md:row-span-2' if isLarge else '' }}">
+                    <div class="relative overflow-hidden bg-secondary aspect-[3/4] w-full">
+                        <img src="{{ product.image }}" alt="{{ product.name }}"
+                            class="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
+
+                        <div class="absolute top-4 left-4 z-20">
+                            <span
+                                class="bg-primary text-primary-foreground text-[10px] md:text-xs px-3 py-1 tracking-[0.2em] font-bold">
+                                NUEVO
+                            </span>
+                        </div>
+
+                        <!-- Overlay -->
+                        <div
+                            class="absolute inset-0 bg-background/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-4 z-30 px-4 text-center">
+                            <a href="/producto/{{ product.id }}"
+                                class="w-full max-w-[200px] py-3 bg-foreground text-background font-[var(--font-display)] text-xs tracking-[0.2em] hover:bg-foreground/80 transition-colors">
+                                VER DETALLES
+                            </a>
+                            <button
+                                class="add-to-cart-btn w-full max-w-[200px] py-3 bg-primary text-primary-foreground flex items-center justify-center gap-2 text-xs tracking-[0.2em] font-[var(--font-display)] hover:bg-primary/90 transition-colors"
+                                data-id="{{ product.id }}" data-name="{{ product.name }}"
+                                data-price="{{ product.price }}" data-image="{{ product.image }}">
+                                <i data-lucide="shopping-bag" class="w-4 h-4"></i> AÑADIR
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 space-y-1">
+                        <a href="/producto/{{ product.id }}">
+                            <h3
+                                class="font-bold hover:text-primary transition-colors uppercase tracking-tight {{ 'text-xl' if isLarge else 'text-base' }}">
+                                {{ product.name }}
+                            </h3>
+                        </a>
+                        <p class="text-primary font-[var(--font-display)] text-xl">
+                            ${{ "%.2f"|format(product.price) }}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24 bg-secondary">
+        <div class="container mx-auto px-4 lg:px-8 text-center">
+            <h2 class="font-[var(--font-display)] text-4xl md:text-6xl tracking-widest mb-6">
+                ÚNETE AL CLUB
+            </h2>
+            <p class="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
+                Suscríbete para lanzamientos exclusivos y acceso anticipado a drops.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-0 max-w-md mx-auto border border-border">
+                <input type="email" placeholder="TU@EMAIL.COM"
+                    class="flex-1 bg-background px-6 py-4 focus:outline-none text-sm tracking-widest" />
+                <button
+                    class="px-8 py-4 bg-foreground text-background font-[var(--font-display)] tracking-widest hover:bg-primary hover:text-white transition-all">
+                    SUSCRIBIR
+                </button>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
