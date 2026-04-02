@@ -1,0 +1,264 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="min-h-screen bg-white text-neutral-900 font-sans p-8 xl:p-12">
+
+    <!-- HEADER -->
+    <div class="mb-10 border-b pb-6">
+        <h1 class="text-xl font-bold uppercase tracking-wide text-black">
+            Recibir Compra
+        </h1>
+        <p class="text-sm text-neutral-500 mt-2">
+            Revisa, ajusta los insumos y confirma para enviarlos al inventario.
+        </p>
+    </div>
+
+    <!-- INFO COMPRA -->
+    <div class="bg-neutral-50 border border-neutral-200 rounded-xl p-6 mb-10">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+
+            <div>
+                <span class="text-neutral-400 uppercase text-xs">Folio</span>
+                <p class="font-bold text-black mt-1">
+                    {{ compra.folio_factura or 'Sin folio' }}
+                </p>
+            </div>
+
+            <div>
+                <span class="text-neutral-400 uppercase text-xs">Proveedor</span>
+                <p class="font-medium text-neutral-700 mt-1">
+                    {{ compra.proveedor.razon_social if compra.proveedor else 'Sin proveedor' }}
+                </p>
+            </div>
+
+            <div>
+                <span class="text-neutral-400 uppercase text-xs">Fecha</span>
+                <p class="text-neutral-500 mt-1">
+                    {{ compra.fecha_compra.strftime('%d/%m/%Y') if compra.fecha_compra else '' }}
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- FORM -->
+    <form method="POST">
+
+        <!-- TABLA -->
+        <div class="overflow-x-auto border border-neutral-200 rounded-xl">
+            <table class="w-full text-left">
+
+                <thead class="bg-neutral-50">
+                    <tr class="text-xs uppercase tracking-wider text-neutral-400">
+                        <th class="px-4 py-4">Insumo</th>
+                        <th class="px-4 py-4">Cantidad</th>
+                        <th class="px-4 py-4">Costo Unitario</th>
+                        <th class="px-4 py-4 text-center">Acción</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tabla-detalles" class="divide-y">
+
+                    {% for detalle in compra.detalles %}
+                    <tr class="hover:bg-neutral-50">
+
+                        <!-- INSUMO -->
+                        <td class="px-4 py-4">
+                            <select name="uuid_insumo[]" onchange="mostrarInfo(this)"
+                                class="w-full border rounded-lg px-3 py-2 text-sm">
+
+                                <option value="">Selecciona...</option>
+
+                                {% for insumo in insumos %}
+                                <option value="{{ insumo.uuid_insumo }}"
+                                    data-unidad="{{ insumo.unidad_medida }}"
+                                    data-cantidad="{{ insumo.contenido_cantidad }}"
+                                    data-unidaduso="{{ insumo.contenido_unidad_medida }}"
+                                    data-ancho="{{ insumo.ancho or 0 }}"
+                                    {% if insumo.uuid_insumo == detalle.uuid_insumo %}selected{% endif %}>
+                                    {{ insumo.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+
+                            <div class="info-insumo text-xs text-neutral-500 mt-1">
+                                Selecciona un insumo...
+                            </div>
+                        </td>
+
+                        <!-- CANTIDAD -->
+                        <td class="px-4 py-4">
+                            <input type="number" step="0.01" name="cantidad[]"
+                                value="{{ detalle.cantidad_comprada }}"
+                                class="w-full border rounded-lg px-3 py-2 text-sm">
+                        </td>
+
+                        <!-- COSTO -->
+                        <td class="px-4 py-4">
+                            <input type="number" step="0.01" name="costo[]"
+                                value="{{ detalle.costo_unitario_compra }}"
+                                class="w-full border rounded-lg px-3 py-2 text-sm">
+                        </td>
+
+                        <!-- ELIMINAR -->
+                        <td class="px-4 py-4 text-center">
+                            <button type="button"
+                                onclick="eliminarFila(this)"
+                                class="text-red-500 text-xs font-bold hover:underline">
+                                Quitar
+                            </button>
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+
+        <!-- TOTAL -->
+        <div class="flex justify-end mt-6">
+            <div class="text-right">
+                <span class="text-xs text-neutral-400 uppercase">Total</span>
+                <div class="text-2xl font-bold text-black">
+                    $ <span id="total">0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTONES -->
+        <div class="flex justify-between items-center mt-8">
+
+            <button type="button" onclick="agregarFila()"
+                class="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-xs font-bold rounded-lg border">
+                + Agregar Insumo
+            </button>
+
+            <div class="flex gap-4">
+                <a href="{{ url_for('compras_bp.index') }}"
+                    class="px-6 py-3 bg-neutral-100 text-neutral-600 rounded-lg text-xs font-bold">
+                    Cancelar
+                </a>
+
+                <button type="submit"
+                    class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow">
+                    Confirmar Recepción
+                </button>
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+<!-- JS -->
+<script>
+function calcularTotal() {
+    let total = 0;
+
+    document.querySelectorAll("#tabla-detalles tr").forEach(fila => {
+        const cantidad = parseFloat(fila.querySelector("input[name='cantidad[]']")?.value) || 0;
+        const costo = parseFloat(fila.querySelector("input[name='costo[]']")?.value) || 0;
+        total += cantidad * costo;
+    });
+
+    document.getElementById("total").innerText = total.toFixed(2);
+}
+
+function eliminarFila(btn) {
+    btn.closest("tr").remove();
+    calcularTotal();
+}
+
+function agregarFila() {
+    const tabla = document.getElementById("tabla-detalles");
+
+    const nuevaFila = `
+    <tr class="hover:bg-neutral-50">
+
+        <td class="px-4 py-4">
+            <select name="uuid_insumo[]" onchange="mostrarInfo(this)"
+                class="w-full border rounded-lg px-3 py-2 text-sm">
+
+                <option value="">Selecciona...</option>
+
+                {% for insumo in insumos %}
+                <option value="{{ insumo.uuid_insumo }}"
+                    data-unidad="{{ insumo.unidad_medida }}"
+                    data-cantidad="{{ insumo.contenido_cantidad }}"
+                    data-unidaduso="{{ insumo.contenido_unidad_medida }}"
+                    data-ancho="{{ insumo.ancho or 0 }}">
+                    {{ insumo.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <div class="info-insumo text-xs text-neutral-500 mt-1">
+                Selecciona un insumo...
+            </div>
+        </td>
+
+        <td class="px-4 py-4">
+            <input type="number" step="0.01" name="cantidad[]" class="w-full border rounded-lg px-3 py-2 text-sm">
+        </td>
+
+        <td class="px-4 py-4">
+            <input type="number" step="0.01" name="costo[]" class="w-full border rounded-lg px-3 py-2 text-sm">
+        </td>
+
+        <td class="px-4 py-4 text-center">
+            <button type="button" onclick="eliminarFila(this)"
+                class="text-red-500 text-xs font-bold hover:underline">
+                Quitar
+            </button>
+        </td>
+
+    </tr>
+    `;
+
+    tabla.insertAdjacentHTML("beforeend", nuevaFila);
+    calcularTotal();
+}
+
+function mostrarInfo(select) {
+    const option = select.selectedOptions[0];
+
+    const unidad = option.getAttribute("data-unidad");
+    const cantidad = option.getAttribute("data-cantidad");
+    const unidadUso = option.getAttribute("data-unidaduso");
+    const ancho = option.getAttribute("data-ancho");
+
+    const infoDiv = select.parentElement.querySelector(".info-insumo");
+
+    if (!unidad) {
+        infoDiv.innerText = "Selecciona un insumo...";
+        return;
+    }
+
+    let texto = `1 ${unidad} = ${parseFloat(cantidad).toFixed(4)} ${unidadUso}`;
+
+    if (unidad === "ROLLO") {
+        texto += ` | Ancho: ${parseFloat(ancho).toFixed(2)} m`;
+    }
+
+    infoDiv.innerText = texto;
+}
+
+// EVENTOS
+document.addEventListener("input", function (e) {
+    if (e.target.name === "cantidad[]" || e.target.name === "costo[]") {
+        calcularTotal();
+    }
+});
+
+window.addEventListener("load", function () {
+    calcularTotal();
+
+    document.querySelectorAll("select[name='uuid_insumo[]']").forEach(select => {
+        mostrarInfo(select);
+    });
+});
+</script>
+
+{% endblock %}
