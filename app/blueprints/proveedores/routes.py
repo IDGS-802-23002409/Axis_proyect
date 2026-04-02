@@ -60,7 +60,9 @@ def guardar(uid=None):
     
     # Si falla la validación, recarga los errores
     all_proveedores = Proveedor.query.order_by(Proveedor.fecha_creacion.desc()).all()
-    return render_template('index.html', proveedores=all_proveedores, form=form)
+    target_modal = 'modal-update' if uid else 'modal-registro'
+    return render_template('index.html', proveedores=all_proveedores, form=form, modal_to_open=target_modal,
+                           edit_uid=uid)
 
 # --- ELIMINAR ---
 @proveedores_bp.route('/eliminar/<string:uid>', methods=['POST'])
@@ -78,13 +80,21 @@ def eliminar(uid):
         
     return redirect(url_for('proveedores.index'))
 
-# --- API PARA MODALES (VITAL PARA JS) ---
 @proveedores_bp.route('/<string:uid>')
 @login_required
 @roles_accepted('admin', 'gerente', 'produccion')
 def detalles(uid):
     p = Proveedor.query.get_or_404(uid)
-    # Para saber que usuario creó
+    
+    # --- LOGICA DE REDIRECCIÓN ---
+    # Si NO viene el parámetro format=json, significa que el usuario entró desde la URL
+    if request.args.get('format') != 'json':
+        proveedores = Proveedor.query.all()
+        from .forms import ProveedorForm # Asegúrate de que el nombre sea correcto
+        form = ProveedorForm()
+        
+        return render_template('index.html', proveedores=proveedores, form=form)
+
     uuid_a_mostrar = p.usuario_creo_uuid if p.usuario_creo_uuid else "SISTEMA"
     return jsonify({
         "uuid": str(p.uuid_proveedor), 
