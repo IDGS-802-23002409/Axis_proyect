@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-[85vh] flex items-center justify-center bg-background px-4 pt-20">
+    <div class="max-w-md w-full p-8 lg:p-10 border border-border bg-secondary shadow-xl relative overflow-hidden">
+
+        <!-- Accents -->
+        <div class="absolute top-0 right-0 w-20 h-20 bg-primary/10 rounded-bl-full pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-20 h-20 bg-primary/10 rounded-tr-full pointer-events-none"></div>
+
+        <h2 class="font-[var(--font-display)] text-4xl mb-3 uppercase text-center relative z-10 tracking-[0.1em]">
+            Falta Poco
+        </h2>
+
+        <div class="w-12 h-1 bg-primary mx-auto mb-4"></div>
+
+        <p class="text-sm text-foreground/80 text-center mb-8 relative z-10 leading-relaxed font-medium">
+            Antes de proceder al pago, necesitamos configurar tu ficha de envío y detalles de contacto.
+        </p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div
+            class="bg-red-500/10 border border-red-500 text-red-500 text-xs tracking-wider uppercase p-4 mb-6 flex gap-2 items-center text-center justify-center font-bold relative z-10">
+            <i data-lucide="alert-circle" class="w-4 h-4"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" class="space-y-6 relative z-10">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+            <div class="space-y-2">
+                <label class="block text-xs uppercase tracking-[0.2em] font-bold text-foreground">
+                    Teléfono de Contacto <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                    <i data-lucide="phone"
+                        class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"></i>
+                    <input type="tel" name="telefono" required placeholder="555 123 4567"
+                        class="w-full bg-background border border-border pl-12 pr-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm font-medium">
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-xs uppercase tracking-[0.2em] font-bold text-foreground">
+                    Dirección de Envío Completa <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                    <i data-lucide="map-pin" class="w-4 h-4 absolute left-4 top-4 text-muted-foreground"></i>
+                    <textarea name="direccion_completa" required rows="3"
+                        placeholder="Calle Central #123, Colonia Centro..."
+                        class="w-full bg-background border border-border pl-12 pr-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm font-medium resize-none"></textarea>
+                </div>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-foreground text-background font-[var(--font-display)] py-4 text-lg tracking-[0.2em] hover:bg-primary transition-colors flex items-center justify-center gap-3">
+                GUARDAR Y PAGAR
+                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+            <div class="text-center mt-4">
+                <span class="text-[10px] text-muted-foreground uppercase tracking-[0.2em]">Cifrado de extremo a extremo
+                    SSL</span>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

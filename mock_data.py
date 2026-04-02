@@ -63,7 +63,10 @@ def run_seed():
             cat1 = Categoria(nombre="Camisetas", descripcion="Prendas de cuerpo superior")
             cat2 = Categoria(nombre="Pantalones", descripcion="Prendas inferiores")
             cat3 = Categoria(nombre="Hoodies", descripcion="Sudaderas con gorro")
-            db.session.add_all([cat1, cat2, cat3])
+            cat4 = Categoria(nombre="Chaquetas", descripcion="Abrigos y chamarras")
+            cat5 = Categoria(nombre="Shorts", descripcion="Pantalones cortos")
+            cat6 = Categoria(nombre="Accesorios", descripcion="Gorras y complementos")
+            db.session.add_all([cat1, cat2, cat3, cat4, cat5, cat6])
             db.session.commit()
             print(" [OK] Categorías creadas.")
             
@@ -82,25 +85,42 @@ def run_seed():
             print(" [OK] Proveedores e Insumos creados.")
 
         # 5. Modelos Matrix (Padre) y Variantes Tallas (Productos Terminados)
-        default_img = "/static/images/default/default-image.png"
         if not ModeloRopa.query.first():
-            m1 = ModeloRopa(nombre_modelo="Camiseta Oversize Core", descripcion="Camiseta holgada de algodón urbano.", uuid_categoria=categorias[0].uuid_categoria, imagen_url=default_img)
-            m2 = ModeloRopa(nombre_modelo="Cargo Pants Black", descripcion="Pantalones cargo oscuros con multibolso.", uuid_categoria=categorias[1].uuid_categoria, imagen_url=default_img)
-            m3 = ModeloRopa(nombre_modelo="Hoodie Essential", descripcion="Sudadera clásica con gorro.", uuid_categoria=categorias[2].uuid_categoria, imagen_url=default_img)
+            cats = {c.nombre: c.uuid_categoria for c in categorias}
             
-            db.session.add_all([m1, m2, m3])
+            modelos_data = [
+                {"nombre": "Gorra Black Axis", "desc": "Gorra urbana ajustable", "cat": "Accesorios", "img": "cap-black.jpg", "precio": 250.00, "sku": "CAP-BLK"},
+                {"nombre": "Cargo Pants Black", "desc": "Pantalón cargo multibolsillo", "cat": "Pantalones", "img": "cargo-pants.jpg", "precio": 850.00, "sku": "CRG-BLK"},
+                {"nombre": "Hoodie Essential Black", "desc": "Sudadera clásica oscura", "cat": "Hoodies", "img": "hoodie-black.jpg", "precio": 900.00, "sku": "HD-BLK"},
+                {"nombre": "Hoodie Purple Neon", "desc": "Sudadera con tonos púrpuras", "cat": "Hoodies", "img": "hoodie-purple.jpg", "precio": 950.00, "sku": "HD-PUR"},
+                {"nombre": "Street Jacket Premium", "desc": "Chaqueta resistente al viento", "cat": "Chaquetas", "img": "jacket-street.jpg", "precio": 1200.00, "sku": "JKT-STR"},
+                {"nombre": "Shorts Urban Black", "desc": "Shorts de verano ligeros", "cat": "Shorts", "img": "shorts-black.jpg", "precio": 450.00, "sku": "SH-BLK"},
+                {"nombre": "T-Shirt Purple Washed", "desc": "Camiseta con lavado morado", "cat": "Camisetas", "img": "tshirt-purple.jpg", "precio": 400.00, "sku": "TS-PUR"},
+                {"nombre": "T-Shirt Classic White", "desc": "Camiseta blanca minimalista", "cat": "Camisetas", "img": "tshirt-white.jpg", "precio": 350.00, "sku": "TS-WHT"}
+            ]
+            
+            for md in modelos_data:
+                nuevo_mod = ModeloRopa(
+                    nombre_modelo=md["nombre"], 
+                    descripcion=md["desc"], 
+                    uuid_categoria=cats.get(md["cat"]), 
+                    imagen_url=f"/static/images/products/{md['img']}"
+                )
+                db.session.add(nuevo_mod)
+                db.session.flush() # Obtener su uuid
+                
+                # Crear variantes de tallas
+                tallas = ['S', 'M', 'L'] if md["cat"] not in ["Accesorios"] else ['Unica']
+                for j, talla in enumerate(tallas):
+                    db.session.add(ProductoTerminado(
+                        sku_especifico=f"{md['sku']}-{talla}", 
+                        uuid_modelo=nuevo_mod.uuid_modelo, 
+                        talla=talla, 
+                        precio_venta=md["precio"]
+                    ))
+            
             db.session.commit()
-            
-            # Asociar tallas a m1
-            for talla in ['S', 'M', 'L']:
-                db.session.add(ProductoTerminado(sku_especifico=f"CORE-OVR-{talla}", uuid_modelo=m1.uuid_modelo, talla=talla, precio_venta=400.00))
-            
-            # Asociar tallas a m2
-            for talla in ['M', 'L', 'XL']:
-                db.session.add(ProductoTerminado(sku_especifico=f"CRG-BLK-{talla}", uuid_modelo=m2.uuid_modelo, talla=talla, precio_venta=850.00))
-
-            db.session.commit()
-            print(" [OK] Modelos padre y sub-tallas (SKUs) creadas exitosamente.")
+            print(" [OK] Catálogo visual y Modelos base inyectados a partir de las imágenes.")
             
         print("\n>> ¡Inyección de datos Mock completada con éxito! 🎉")
         print("   Email Test Admin: admin@axis.com / Pass: admin1234")

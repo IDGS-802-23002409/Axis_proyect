@@ -44,6 +44,10 @@ class Usuario(db.Model, UserMixin):
     # Relaciones
     roles = db.relationship('Role', secondary=roles_usuarios,
                           backref=db.backref('usuarios', lazy='dynamic'))
+    
+    # Perfiles Extendidos
+    empleado_profile = db.relationship('Empleado', backref='usuario', uselist=False, lazy=True)
+    cliente_profile = db.relationship('Cliente', backref='usuario', uselist=False, lazy=True)
 
     # Flask-Security necesita un 'id' property
     @property
