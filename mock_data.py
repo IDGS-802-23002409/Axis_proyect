@@ -77,15 +77,21 @@ def run_seed():
 
         # 3. Categorías
         if not Categoria.query.first():
-            cat1 = Categoria(nombre="Camisetas", descripcion="Prendas de cuerpo superior")
-            cat2 = Categoria(nombre="Pantalones", descripcion="Prendas inferiores")
-            cat3 = Categoria(nombre="Hoodies", descripcion="Sudaderas con gorro")
-            cat4 = Categoria(nombre="Chaquetas", descripcion="Abrigos y chamarras")
-            cat5 = Categoria(nombre="Shorts", descripcion="Pantalones cortos")
-            cat6 = Categoria(nombre="Accesorios", descripcion="Gorras y complementos")
+            cat1 = Categoria(nombre="Camisetas", descripcion="Prendas de cuerpo superior", estatus_visible=True)
+            cat2 = Categoria(nombre="Pantalones", descripcion="Prendas inferiores", estatus_visible=True)
+            cat3 = Categoria(nombre="Hoodies", descripcion="Sudaderas con gorro", estatus_visible=True)
+            cat4 = Categoria(nombre="Chaquetas", descripcion="Abrigos y chamarras", estatus_visible=True)
+            cat5 = Categoria(nombre="Shorts", descripcion="Pantalones cortos", estatus_visible=True)
+            cat6 = Categoria(nombre="Accesorios", descripcion="Gorras y complementos", estatus_visible=True)
             db.session.add_all([cat1, cat2, cat3, cat4, cat5, cat6])
             db.session.commit()
             print(" [OK] Categorías creadas.")
+        else:
+            # Asegurar que las existentes sean visibles
+            for c in Categoria.query.all():
+                c.estatus_visible = True
+            db.session.commit()
+            print(" [INFO] Categorías existentes marcadas como visibles.")
             
         categorias = Categoria.query.all()
 

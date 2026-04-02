@@ -105,7 +105,7 @@ def create_app():
     application.config['SECURITY_UNAUTHORIZED_VIEW'] = '/login'
 
     # Forzar que Flask genere URLs con localhost:3030 (no la IP interna de Docker)
-    application.config['SERVER_NAME'] = os.getenv('SERVER_NAME', 'localhost:3030')
+    # application.config['SERVER_NAME'] = os.getenv('SERVER_NAME', 'localhost:3030')
 
     # ── Init extensions ───────────────────────────────────────
     csrf.init_app(application)

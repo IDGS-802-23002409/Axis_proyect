@@ -102,8 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let revealProgress = 0;
         let freezeScroll = true;
 
-        document.body.style.overflow = 'hidden';
-        document.body.style.touchAction = 'none';
+        // document.body.style.overflow = 'hidden';
+        // document.body.style.touchAction = 'none';
 
         let frameId; let finishTimeout; let rafId;
         let x = 12, y = 22, dx = 2.3, dy = 1.6;
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 else { heroOverlay.style.display = 'none'; showControls(); }
             }
             rafId = requestAnimationFrame(step);
-        }, 3600);
+        }, 800);
 
         function showControls() {
             heroControls.classList.remove('opacity-0', 'pointer-events-none');
