@@ -162,6 +162,7 @@ def create_app():
     application.register_blueprint(bp.productos_bp, url_prefix='')
     application.register_blueprint(bp.checkout_bp, url_prefix='')
     application.register_blueprint(bp.costo_utilidad_bp, url_prefix='')
+    application.register_blueprint(bp.merma_bp, url_prefix='/merma')
 
     # ── Context Processor for Dynamic Layout ──────────────────
     @application.context_processor

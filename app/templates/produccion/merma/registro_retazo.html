@@ -1,0 +1,38 @@
+{% extends "produccion/layout.html" %}
+{% block title %}Registrar Nuevo Retazo{% endblock %}
+{% block header %}Registrar Nuevo Retazo de Tela{% endblock %}
+
+{% block container %}
+<div class="px-10 pb-10">
+  <div class="max-w-3xl mx-auto bg-card border border-border rounded-lg p-8">
+    <h2 class="text-xl font-bold mb-6">Nuevo Registro de Retazo</h2>
+
+    <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <p class="text-sm text-blue-800">
+        <span class="font-semibold">ℹ Nota importante:</span>
+        <br>• Si <strong>no completas</strong> el campo de descripción, es un <strong>sobrante normal</strong> del corte (no afecta merma de OP)
+        <br>• Si <strong>completas SÍ la descripción</strong>, es un <strong>defecto</strong> que aumenta merma de OP
+      </p>
+    </div>
+
+    <form method="POST" action="{{ url_for('merma.registro_retazo') }}" class="space-y-4" novalidate>
+      {{ form.hidden_tag() }}
+      {% import "produccion/usuarios/_macros.html" as macros %}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {{ macros.fieldUser(form.ejecucion_corte, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+        {{ macros.fieldUser(form.rollo_origen, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+      </div>
+
+      {{ macros.fieldUser(form.metraje, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+
+      {{ macros.fieldUser(form.motivo_merma, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+
+      <div class="flex justify-end gap-3 pt-4">
+        <a href="{{ url_for('merma.index_retazos') }}" class="px-4 py-2 border border-border rounded-md text-sm hover:bg-secondary">Cancelar</a>
+        <button type="submit" class="px-4 py-2 bg-black text-white rounded-md text-sm hover:bg-gray-800">Guardar Retazo</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

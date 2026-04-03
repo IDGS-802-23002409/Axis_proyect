@@ -4,3 +4,4 @@ from app.blueprints.catalog import catalog_bp
 from app.blueprints.checkout import checkout_bp
 from app.blueprints.productos_terminados import productos_bp
 from app.blueprints.costo_utilidad import costo_utilidad_bp
+from app.blueprints.merma import merma_bp
