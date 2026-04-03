@@ -1,0 +1,229 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="flex min-h-screen bg-white text-neutral-900 font-sans">
+    <main class="flex-1 p-8 xl:p-12">
+        <div class="mb-10">
+            <a href="{{ url_for('recetas_bp.index') }}"
+               class="bg-neutral-200 text-black px-6 py-3 rounded-lg text-xs font-black tracking-widest hover:bg-neutral-300 transition-all uppercase">
+               ← Volver
+            </a>
+        </div>
+
+        <!-- HEADER -->
+        <header class="flex justify-between items-center mb-10">
+            <h1 class="text-xl font-bold tracking-tight uppercase text-black">
+                Crear Receta de Producto
+            </h1>
+        </header>
+
+        <!-- CARD PRINCIPAL -->
+        <div class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-8 xl:p-10">
+            <form method="POST" class="space-y-10">
+
+                {{ form.hidden_tag() }}
+
+                <!-- NOMBRE DEL PRODUCTO E INSTRUCCIONES -->
+                <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div>
+                        <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+                            Nombre del producto *
+                        </label>
+                        <input type="text" name="nombre_producto" required
+                               class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm"
+                               placeholder="Ej: Camisa Azul">
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+                            Instrucciones del proceso
+                        </label>
+                        <textarea name="instrucciones_proceso"
+                                  class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm"
+                                  placeholder="Describe cómo se debe procesar esta prenda" required></textarea>
+                    </div>
+                </section>
+
+                <!-- DETALLE DE INSUMOS -->
+                <section>
+                    <h2 class="text-sm font-bold uppercase text-neutral-500 tracking-widest mb-4">
+                        Insumos necesarios
+                    </h2>
+
+                    <div id="insumos-container" class="space-y-4">
+                        <div class="detalle-item grid md:grid-cols-6 gap-4 p-5 border border-neutral-200 rounded-xl bg-neutral-50">
+
+                            <!-- INSUMO -->
+                            <div class="md:col-span-2">
+                                <label class="text-[10px] text-neutral-400 font-bold uppercase">Insumo</label>
+                                <select name="uuid_insumo[]" required onchange="mostrarInfo(this)"
+                                        class="w-full mt-2 px-3 py-3 bg-white border border-neutral-200 rounded-lg text-sm">
+                                    <option value="">Selecciona...</option>
+                                    {% for insumo in insumos %}
+                                    <option value="{{ insumo.uuid_insumo }}"
+                                            data-unidad="{{ insumo.unidad_medida }}"
+                                            data-cantidad="{{ insumo.contenido_cantidad }}"
+                                            data-unidaduso="{{ insumo.contenido_unidad_medida }}"
+                                            data-ancho="{{ insumo.ancho or 0 }}">
+                                        {{ insumo.nombre }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="info-insumo text-xs text-neutral-400 mt-1">
+                                    Esperando selección...
+                                </div>
+                            </div>
+
+                            <!-- CANTIDAD POR PRENDA -->
+                            <div class="md:col-span-2">
+                                <label class="text-[10px] text-neutral-400 font-bold uppercase">Cantidad por prenda</label>
+                                <input type="number" name="consumo_teorico_unitario[]" required min="0.01" step="0.01"
+                                       placeholder="Metros a lo largo por prenda" class="w-full mt-2 px-3 py-3 border border-neutral-200 rounded-lg text-center text-sm"
+                                       oninput="validarCantidad(this)">
+                            </div>
+
+                            <!-- ANCHO (SOLO ROLLOS) -->
+                            <div class="md:col-span-1">
+                                <label class="text-[10px] text-neutral-400 font-bold uppercase">Ancho (m)</label>
+                                <input type="number" name="ancho_referencia[]" step="0.01"
+                                       placeholder="Solo ROLLO" class="w-full mt-2 px-3 py-3 border border-neutral-200 rounded-lg text-center text-sm">
+                            </div>
+
+                            <!-- ELIMINAR -->
+                            <div class="md:col-span-1 flex items-end justify-end">
+                                <button type="button" onclick="eliminarFila(this)"
+                                        class="text-red-500 hover:text-red-700 text-sm font-bold">
+                                     Quitar
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- BOTÓN AGREGAR INSUMO -->
+                    <button type="button" onclick="agregarFila()"
+                            class="mt-4 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-xs font-bold rounded-lg border">
+                        + Agregar otro insumo
+                    </button>
+                </section>
+
+                <!-- BOTÓN GUARDAR -->
+                <div class="flex justify-end mt-8">
+                    <button type="submit"
+                            class="px-10 py-3 bg-black hover:bg-neutral-800 text-white text-xs font-black tracking-widest rounded-xl shadow-md uppercase transition-all">
+                        Guardar Receta
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+function mostrarInfo(select) {
+    let o = select.selectedOptions[0];
+    let div = select.parentElement.querySelector(".info-insumo");
+    let cantidadInput = select.closest(".detalle-item").querySelector('input[name="consumo_teorico_unitario[]"]');
+    let anchoInput = select.closest(".detalle-item").querySelector('input[name="ancho_referencia[]"]');
+
+    if (!o.value) {
+        div.innerText = "Esperando selección...";
+        cantidadInput.placeholder = "Cantidad";
+        cantidadInput.max = "";
+        cantidadInput.min = "0.01";
+        cantidadInput.step = "any";
+        anchoInput.parentElement.style.display = "block";
+        anchoInput.min = "0.01";
+        return;
+    }
+
+    let unidad = o.dataset.unidad;
+    let cantidad = parseFloat(o.dataset.cantidad);
+    let unidadUso = o.dataset.unidaduso;
+    let ancho = parseFloat(o.dataset.ancho);
+
+    if (unidad === "PIEZA") {
+        div.innerText = `Se compra por piezas. (1 pieza = 1 pieza)`;
+        cantidadInput.placeholder = "Número de piezas";
+        cantidadInput.max = "";
+        cantidadInput.min = "1"; // mínimo 1 pieza
+        cantidadInput.step = "1"; // solo enteros
+        cantidadInput.value = Math.floor(cantidadInput.value) || "";
+        anchoInput.parentElement.style.display = "none";
+    } else {
+        div.innerText = `1 ROLLO = ${cantidad} ${unidadUso} | Ancho: ${ancho} m`;
+        cantidadInput.placeholder = "Metros a lo largo por prenda";
+        cantidadInput.max = cantidad;
+        cantidadInput.min = "0.01"; // mínimo 0.01 metros
+        cantidadInput.step = "0.01"; // permitir decimales
+        anchoInput.parentElement.style.display = "block";
+        anchoInput.max = ancho;
+        anchoInput.min = "0.01"; // mínimo 0.01 metros
+        anchoInput.step = "0.01";
+    }
+}
+
+function validarCantidad(input) {
+    let select = input.closest('.detalle-item').querySelector('select[name="uuid_insumo[]"]');
+    let unidad = select.selectedOptions[0].dataset.unidad;
+
+    // PIEZA → solo enteros
+    if (unidad === "PIEZA") {
+        input.value = Math.floor(input.value) || "";
+    }
+
+    // Validar min
+    if (input.min && parseFloat(input.value) < parseFloat(input.min)) {
+       
+        input.value = input.min;
+    }
+
+    // Validar max
+    if (input.max && parseFloat(input.value) > parseFloat(input.max)) {
+        
+        input.value = input.max;
+    }
+
+    // Evitar cero o negativo
+    if (parseFloat(input.value) <= 0) {
+        input.value = input.min || 1;
+    }
+}
+
+function validarAncho(input) {
+    if (input.min && parseFloat(input.value) < parseFloat(input.min)) {
+       
+        input.value = input.min;
+    }
+
+    if (input.max && parseFloat(input.value) > parseFloat(input.max)) {
+      
+        input.value = input.max;
+    }
+
+    if (parseFloat(input.value) > 0) {
+        input.value = input.min || 0.01;
+    }
+}
+function agregarFila() {
+    let container = document.getElementById('insumos-container');
+    let fila = container.children[0].cloneNode(true);
+
+    fila.querySelectorAll('input').forEach(i => i.value = '');
+    fila.querySelector('select').selectedIndex = 0;
+    fila.querySelector('.info-insumo').innerText = 'Esperando selección...';
+    fila.querySelector('input[name="ancho_referencia[]"]').parentElement.style.display = 'block';
+    container.appendChild(fila);
+}
+
+function eliminarFila(btn) {
+    let container = document.getElementById('insumos-container');
+    btn.closest('.detalle-item').remove();
+    if (container.children.length === 0) {
+        agregarFila(); // siempre deja una fila vacía
+    }
+}
+</script>
+
+{% endblock %}

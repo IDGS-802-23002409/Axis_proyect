@@ -1,0 +1,208 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="min-h-screen bg-white text-neutral-900 font-sans p-8 xl:p-12">
+    <a href="{{ url_for('inventario_bp.index') }}"
+            class="inline-flex items-center gap-2 text-[14px] font-bold text-slate-400 hover:text-black uppercase tracking-wider mb-8 transition-colors">
+            <i class="fas fa-arrow-left text-xs"></i> Regresar
+        </a>
+
+    <!-- HEADER -->
+    <div class="mb-10 border-b pb-6">
+        <h1 class="text-xl font-bold uppercase text-black">
+            Detalle de Inventario
+        </h1>
+        <p class="text-sm text-neutral-400 mt-2">
+            {{ insumo.nombre }} ({{ insumo.sku }})
+        </p>
+    </div>
+
+    <!-- ============================= -->
+    <!-- RESUMEN -->
+    <!-- ============================= -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+
+        {% if insumo.unidad_medida == 'ROLLO' %}
+
+        <div class="bg-white border p-6 rounded-2xl shadow-sm">
+            <span class="text-xs text-neutral-400 uppercase">Rollos</span>
+            <div class="text-3xl font-bold">{{ resumen.total_rollos }}</div>
+        </div>
+
+        <div class="bg-white border p-6 rounded-2xl shadow-sm">
+            <span class="text-xs text-neutral-400 uppercase">Metros Iniciales</span>
+            <div class="text-3xl font-bold">{{ resumen.metros_iniciales }} m</div>
+        </div>
+
+        <div class="bg-white border p-6 rounded-2xl shadow-sm">
+            <span class="text-xs text-neutral-400 uppercase">Metros Usados</span>
+            <div class="text-3xl font-bold text-red-500">{{ resumen.metros_usados }} m</div>
+        </div>
+
+        <div class="bg-white border p-6 rounded-2xl shadow-sm">
+            <span class="text-xs text-neutral-400 uppercase">Stock Actual</span>
+            <div class="text-3xl font-bold text-green-600">{{ resumen.metros_actuales }} m</div>
+        </div>
+
+        <div class="bg-white border p-6 rounded-2xl shadow-sm">
+            <span class="text-xs text-neutral-400 uppercase">Merma</span>
+            <div class="text-3xl font-bold text-red-600">{{ resumen.merma }} m</div>
+        </div>
+
+        <div class="bg-white border p-6 rounded-2xl shadow-sm">
+            <span class="text-xs text-neutral-400 uppercase">Retazos</span>
+            <div class="text-3xl font-bold text-yellow-500">{{ resumen.retazos }} m</div>
+        </div>
+
+        {% else %}
+
+        <!-- PIEZAS -->
+        <div class="bg-white border p-6 rounded-2xl shadow-sm">
+            <span class="text-xs text-neutral-400 uppercase">Stock Total</span>
+            <div class="text-3xl font-bold">
+                {{ resumen.piezas_actuales }} {{ insumo.contenido_unidad_medida }}
+            </div>
+        </div>
+
+        <div class="bg-white border p-6 rounded-2xl shadow-sm">
+            <span class="text-xs text-neutral-400 uppercase">Usados</span>
+            <div class="text-3xl font-bold text-red-500">
+                {{ resumen.piezas_usadas }} {{ insumo.contenido_unidad_medida }}
+            </div>
+        </div>
+
+        <div class="bg-white border p-6 rounded-2xl shadow-sm">
+            <span class="text-xs text-neutral-400 uppercase">Merma</span>
+            <div class="text-3xl font-bold text-red-600">
+                {{ resumen.merma }} {{ insumo.contenido_unidad_medida }}
+            </div>
+        </div>
+
+        {% endif %}
+    </div>
+
+    <!-- ============================= -->
+    <!-- SOLO ROLLOS -->
+    <!-- ============================= -->
+    {% if insumo.unidad_medida == 'ROLLO' %}
+
+    <!-- DETALLE POR ROLLO -->
+    <div class="mb-14">
+        <h2 class="text-sm font-bold uppercase text-neutral-500 mb-4">
+            Detalle por Rollo
+        </h2>
+
+        <table class="min-w-full text-sm border border-neutral-200">
+            <thead class="bg-neutral-100 text-xs uppercase text-neutral-600">
+                <tr>
+                    <th class="px-4 py-3">Rollo</th>
+                    <th class="px-4 py-3">Inicial</th>
+                    <th class="px-4 py-3">Actual</th>
+                    <th class="px-4 py-3">Usado</th>
+                </tr>
+            </thead>
+
+            <tbody class="divide-y">
+                {% for r in rollos %}
+                <tr class="hover:bg-neutral-50">
+                    <td class="px-4 py-3">{{ r.uuid[:8] }}</td>
+                    <td class="px-4 py-3">{{ r.inicial }} m</td>
+                    <td class="px-4 py-3 text-green-600">{{ r.actual }} m</td>
+                    <td class="px-4 py-3 text-red-500">{{ r.usado }} m</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% endif %}
+
+    <!-- ============================= -->
+    <!-- USO EN PRODUCCIÓN (AMBOS) -->
+    <!-- ============================= -->
+    <div class="mb-14">
+        <h2 class="text-sm font-bold uppercase text-neutral-500 mb-4">
+            Uso en Producción
+        </h2>
+
+        <table class="min-w-full text-sm border border-neutral-200">
+            <thead class="bg-neutral-100 text-xs uppercase text-neutral-600">
+                <tr>
+                    <th class="px-4 py-3">Fecha</th>
+                    <th class="px-4 py-3">Referencia</th>
+                    <th class="px-4 py-3">Cantidad Usada</th>
+                    <th class="px-4 py-3">Merma</th>
+                </tr>
+            </thead>
+
+            <tbody class="divide-y">
+                {% for e in ejecuciones %}
+                <tr class="hover:bg-neutral-50">
+                    <td class="px-4 py-3">{{ e.fecha_proceso }}</td>
+
+                    <td class="px-4 py-3">
+                        {% if insumo.unidad_medida == 'ROLLO' %}
+                            {{ e.uuid_rollo_usado[:8] }}
+                        {% else %}
+                            Producción
+                        {% endif %}
+                    </td>
+
+                    <td class="px-4 py-3 text-red-500">
+                        {% if insumo.unidad_medida == 'ROLLO' %}
+                            {{ e.metros_sacados_bodega }} m
+                        {% else %}
+                            {{ e.metros_sacados_bodega }} {{ insumo.contenido_unidad_medida }}
+                        {% endif %}
+                    </td>
+
+                    <td class="px-4 py-3 text-red-600">
+                        {% if insumo.unidad_medida == 'ROLLO' %}
+                            {{ e.merma_real_calculada }} m
+                        {% else %}
+                            {{ e.merma_real_calculada }} {{ insumo.contenido_unidad_medida }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ============================= -->
+    <!-- RETAZOS SOLO ROLLOS -->
+    <!-- ============================= -->
+    {% if insumo.unidad_medida == 'ROLLO' %}
+
+    <div>
+        <h2 class="text-sm font-bold uppercase text-neutral-500 mb-4">
+            Retazos Generados
+        </h2>
+
+        <table class="min-w-full text-sm border border-neutral-200">
+            <thead class="bg-neutral-100 text-xs uppercase text-neutral-600">
+                <tr>
+                    <th class="px-4 py-3">Fecha</th>
+                    <th class="px-4 py-3">Rollo</th>
+                    <th class="px-4 py-3">Metraje</th>
+                    <th class="px-4 py-3">Motivo</th>
+                </tr>
+            </thead>
+
+            <tbody class="divide-y">
+                {% for r in retazos %}
+                <tr class="hover:bg-neutral-50">
+                    <td class="px-4 py-3">{{ r.fecha_creacion }}</td>
+                    <td class="px-4 py-3">{{ r.uuid_rollo_origen[:8] }}</td>
+                    <td class="px-4 py-3 text-yellow-600">{{ r.metraje }} m</td>
+                    <td class="px-4 py-3 text-neutral-500">{{ r.motivo_merma }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% endif %}
+
+</div>
+{% endblock %}

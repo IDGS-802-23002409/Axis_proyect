@@ -1,0 +1,275 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+
+<div class="flex min-h-screen bg-white text-neutral-900 font-sans">
+
+    <main class="flex-1 p-8 xl:p-12">
+<div class="mb-10">
+                <a href="{{ url_for('compras_bp.index') }}"
+                    class="bg-neutral-200 text-black px-6 py-3 rounded-lg text-xs font-black tracking-widest hover:bg-neutral-300 transition-all uppercase">
+                    ← Volver
+                </a>
+            </div>
+        <!-- HEADER -->
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h1 class="text-xl font-bold tracking-tight uppercase text-black">
+                    Registrar Compra
+                </h1>
+            </div>
+
+
+            
+        </header>
+
+        <!-- CARD PRINCIPAL -->
+        <div class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-8 xl:p-10">
+
+            <form method="POST" id="formCompra" class="space-y-10">
+                {{ form.hidden_tag() }}
+
+                <!-- INFO -->
+                <section>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                        <div>
+                            <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+                                Folio *
+                            </label>
+                            {{ form.folio_factura(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200
+                            rounded-xl text-sm") }}
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+                                Proveedor *
+                            </label>
+                            {{ form.uuid_proveedor(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200
+                            rounded-xl text-sm") }}
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+                                Estatus
+                            </label>
+                            {{ form.estatus(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200
+                            rounded-xl text-sm") }}
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- DETALLE -->
+                <section>
+
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-sm font-bold uppercase text-neutral-500 tracking-widest">
+                            Detalle de Insumos
+                        </h2>
+                    </div>
+
+                    <div id="detalle-container" class="space-y-4">
+
+                        <div
+                            class="detalle-item grid md:grid-cols-12 gap-4 p-5 border border-neutral-200 rounded-xl bg-neutral-50">
+
+                            <!-- INSUMO -->
+                            <div class="md:col-span-5">
+                                <label class="text-[10px] text-neutral-400 font-bold uppercase">Insumo</label>
+
+                                <select name="uuid_insumo[]" required onchange="mostrarInfo(this)"
+                                    class="w-full mt-2 px-3 py-3 bg-white border border-neutral-200 rounded-lg text-sm">
+
+                                    <option value="">Selecciona...</option>
+
+                                    {% for insumo in insumos %}
+                                    <option value="{{ insumo.uuid_insumo }}" data-unidad="{{ insumo.unidad_medida }}"
+                                        data-cantidad="{{ insumo.contenido_cantidad }}"
+                                        data-unidaduso="{{ insumo.contenido_unidad_medida }}"
+                                        >
+                                        {{ insumo.nombre }}
+                                    </option>
+                                    {% endfor %}
+
+                                </select>
+
+                                <div class="info-insumo text-xs text-neutral-400 mt-1">
+                                    Esperando selección...
+                                </div>
+                            </div>
+
+                            <!-- CANTIDAD -->
+                            <div class="md:col-span-2">
+                                <label class="text-[10px] text-neutral-400 font-bold uppercase">Cantidad</label>
+
+                                <input type="number" name="cantidad[]" required min="1" step="1"
+                                    class="w-full mt-2 px-3 py-3 border border-neutral-200 rounded-lg text-center text-sm">
+                            </div>
+
+                            <!-- COSTO -->
+                            <div class="md:col-span-2">
+                                <label class="text-[10px] text-neutral-400 font-bold uppercase">Costo</label>
+
+                                <input type="number" name="costo[]" required min="0" step="0.01"
+                                    class="w-full mt-2 px-3 py-3 border border-neutral-200 rounded-lg text-right text-sm">
+                            </div>
+
+                            <!-- SUBTOTAL -->
+                            <div class="md:col-span-2 flex flex-col justify-end items-end">
+                                <span class="text-[10px] text-neutral-400 uppercase">Subtotal</span>
+                                <span class="subtotal font-mono text-sm font-bold">$ 0.00</span>
+                            </div>
+
+                            <!-- ELIMINAR -->
+                            <div class="md:col-span-1 flex items-end justify-end">
+                                <button type="button" onclick="eliminarFila(this)"
+                                    class="text-red-400 hover:text-red-600 text-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- AGREGAR -->
+                    <button type="button" onclick="agregarFila()"
+                        class="mt-4 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-xs font-bold rounded-lg border">
+                        + Agregar Insumo
+                    </button>
+
+                </section>
+
+                <!-- TOTAL -->
+                <div class="flex justify-end border-t pt-6">
+                    <div class="text-right">
+                        <span class="text-xs text-neutral-400 uppercase">Total</span>
+                        <div class="text-2xl font-bold text-black">
+                            $ <span id="total">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTÓN -->
+                <div class="flex justify-end">
+                    <button type="submit"
+                        class="px-10 py-3 bg-black hover:bg-neutral-800 text-white text-xs font-black tracking-widest rounded-xl shadow-md uppercase transition-all">
+                        Guardar Compra
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </main>
+</div>
+
+
+<!-- ========================= -->
+<!-- SCRIPT INTELIGENTE -->
+<!-- ========================= -->
+<script>
+
+    function mostrarInfo(select) {
+
+        let o = select.selectedOptions[0];
+        let div = select.parentElement.querySelector(".info-insumo");
+        let fila = select.closest(".detalle-item");
+        let cantidadInput = fila.querySelector('[name="cantidad[]"]');
+
+        if (!o.value) {
+            div.innerText = "Esperando selección...";
+            return;
+        }
+
+        let unidad = o.dataset.unidad;
+        let cantidad = o.dataset.cantidad;
+        let unidadUso = o.dataset.unidaduso;
+        
+
+        // MENSAJE INTELIGENTE
+        if (unidad === "PIEZA") {
+            div.innerText = `Se compra por piezas. (1 pieza = 1 pieza)`;
+            cantidadInput.step = "1";
+            cantidadInput.min = "1";
+
+        } else {
+            div.innerText = `1 ROLLO = ${cantidad} ${unidadUso} `;
+            cantidadInput.step = "1";
+            cantidadInput.min = "1";
+        }
+    }
+
+    function calcularSubtotal(fila) {
+        let c = parseFloat(fila.querySelector('[name="cantidad[]"]').value) || 0;
+        let p = parseFloat(fila.querySelector('[name="costo[]"]').value) || 0;
+
+        let sub = c * p;
+
+        fila.querySelector(".subtotal").innerText = "$ " + sub.toFixed(2);
+        calcularTotal();
+    }
+
+    function calcularTotal() {
+        let total = 0;
+
+        document.querySelectorAll(".detalle-item").forEach(f => {
+            let txt = f.querySelector(".subtotal").innerText.replace("$", "");
+            total += parseFloat(txt) || 0;
+        });
+
+        document.getElementById("total").innerText = "$ " + total.toFixed(2);
+    }
+
+    document.addEventListener("input", e => {
+        if (e.target.name === "cantidad[]" || e.target.name === "costo[]") {
+            calcularSubtotal(e.target.closest(".detalle-item"));
+        }
+    });
+
+    function agregarFila() {
+        let fila = document.querySelector(".detalle-item").cloneNode(true);
+
+        fila.querySelectorAll("input").forEach(i => i.value = "");
+        fila.querySelector("select").selectedIndex = 0;
+        fila.querySelector(".subtotal").innerText = "$ 0.00";
+        fila.querySelector(".info-insumo").innerText = "Esperando selección...";
+
+        document.getElementById("detalle-container").appendChild(fila);
+    }
+
+    function eliminarFila(btn) {
+        let filas = document.querySelectorAll(".detalle-item");
+
+        if (filas.length > 1) {
+            btn.closest(".detalle-item").remove();
+            calcularTotal();
+        }
+    }
+
+    document.getElementById("formCompra").addEventListener("submit", function (e) {
+
+        let insumos = new Set();
+        let valido = true;
+
+        document.querySelectorAll(".detalle-item").forEach(f => {
+            let ins = f.querySelector('[name="uuid_insumo[]"]').value;
+
+            if (insumos.has(ins)) {
+                alert("No puedes repetir el mismo insumo");
+                valido = false;
+            }
+
+            insumos.add(ins);
+        });
+
+        if (!valido) {
+            e.preventDefault();
+        }
+    });
+
+</script>
+
+{% endblock %}

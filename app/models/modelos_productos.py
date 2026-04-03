@@ -24,6 +24,7 @@ class ProductoTerminado(db.Model):
 
     uuid_producto = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     uuid_modelo = Column(String(36), ForeignKey('modelos_ropa.uuid_modelo'), nullable=False)
+    uuid_explosion = Column(String(36), ForeignKey('explosion_materiales_cabecera.uuid_explosion'), nullable=False)
     sku_especifico = Column(String(50), unique=True, nullable=False)
     talla = Column(Enum('XSS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'Unica'), nullable=False)
     precio_venta = Column(Numeric(12, 2), nullable=False)
@@ -36,8 +37,12 @@ class ProductoTerminado(db.Model):
     __table_args__ = (
         CheckConstraint('stock_fisico_actual >= 0', name='check_stock_producto_positivo'),
     )
+    
 
     modelo = db.relationship('ModeloRopa', backref=db.backref('productos', lazy=True))
-
+    explosion = db.relationship(
+        'ExplosionMaterialesCabecera',
+        backref=db.backref('productos', lazy='selectin')
+    )
     def __repr__(self):
         return f'<ProductoTerminado {self.sku_especifico}>'

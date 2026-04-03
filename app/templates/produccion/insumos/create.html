@@ -1,0 +1,210 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="min-h-screen bg-neutral-50 text-neutral-900 font-sans p-6 md:p-12">
+
+    <div class="mb-10">
+        <a href="{{ url_for('insumos_bp.index') }}"
+            class="group inline-flex items-center gap-2 text-[11px] font-bold text-neutral-400 hover:text-black uppercase tracking-[0.2em] transition-all">
+            <i class="fas fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
+            Volver a Insumos
+        </a>
+    </div>
+
+    <div class="w-full bg-white p-8 md:p-12 rounded-xl shadow-sm border border-neutral-100">
+        <header class="mb-12">
+            <h1 class="text-4xl font-black uppercase tracking-tight mb-2">Registrar Insumo</h1>
+            <p class="text-neutral-500 max-w-lg">
+                Define cómo se compra y cómo se usa el insumo para mantener un control de inventario preciso.
+            </p>
+        </header>
+
+        <form method="POST" class="space-y-12">
+            {{ form.hidden_tag() }}
+
+            <!-- INFO -->
+            <section>
+                <h2 class="text-[11px] font-black uppercase text-neutral-400 mb-8 border-b pb-2">
+                    Información Básica
+                </h2>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <label class="text-xs font-bold uppercase">Nombre *</label>
+                        {{ form.nombre(class="w-full border-b-2 border-neutral-200 py-2") }}
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold uppercase">SKU</label>
+                        {{ form.sku(class="w-full border-b-2 border-neutral-200 py-2") }}
+                    </div>
+
+                    <div >
+                        <label class="text-xs font-bold uppercase">Categoría</label>
+                        {{ form.uuid_categoria(class="w-full bg-neutral-100 p-3 rounded-lg") }}
+                    </div>
+                </div>
+            </section>
+
+            <!-- UNIDADES -->
+            <section>
+                <h2 class="text-[11px] font-black uppercase text-neutral-400 mb-8 border-b pb-2">
+                    Configuración de Unidades
+                </h2>
+
+                <div class="grid md:grid-cols-3 gap-6 p-6 bg-neutral-50 rounded-xl">
+
+                    <!-- COMPRA -->
+                    <div>
+                        <label class="text-xs font-bold uppercase">¿Cómo se compra?</label>
+                        {{ form.unidad_medida(class="w-full border-b py-2") }}
+                    </div>
+
+
+                    <!-- CONFIGURACIÓN DINÁMICA -->
+                    <div id="grupo-config" class="flex gap-6 md:col-span-2 transition-all">
+
+                        <div class="flex-1">
+                            <label class="text-xs font-bold uppercase">Cantidad interna</label>
+                            {{ form.contenido_cantidad(class="w-full border-b py-2") }}
+                        </div>
+
+                        <div class="flex-1">
+                            <label class="text-xs font-bold uppercase">Unidad de uso</label>
+                            {{ form.contenido_unidad_medida(class="w-full border-b py-2") }}
+                        </div>
+
+                    </div>
+
+                    <!--  ANCHO (FUERA DEL FLEX) -->
+                    <div id="grupo-ancho" class="flex-1">
+                        <label class="text-xs font-bold uppercase">Ancho (metros) *</label>
+                        {{ form.ancho(class="w-full border-b py-2") }}
+                    </div>
+
+                    <!-- MENSAJE INTELIGENTE -->
+                    <div id="mensaje-info" class="md:col-span-3 text-xs text-neutral-500 hidden">
+                        Este insumo se maneja como unidad individual. No requiere conversión.
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ALERTA -->
+            <section>
+                <h2 class="text-[11px] font-black uppercase text-neutral-400 mb-8 border-b pb-2">
+                    Control de Alertas
+                </h2>
+
+                <div class="max-w-xs">
+                    <label class="text-xs font-bold uppercase">Stock mínimo</label>
+                    {{ form.stock_minimo_alerta(class="w-full border-b-2 py-2") }}
+                </div>
+            </section>
+
+            <!-- BOTONES -->
+            <div class="pt-10 flex gap-4 border-t">
+                <button type="submit" name="submit"
+                    class="px-8 py-4 bg-black text-white text-xs font-bold uppercase rounded">
+                    Guardar
+                </button>
+
+                <button type="submit" name="submit_add"
+                    class="px-8 py-4 border-2 border-black text-xs font-bold uppercase rounded">
+                    Guardar y crear otro
+                </button>
+
+                <a href="{{ url_for('insumos_bp.index') }}"
+                    class="ml-auto text-neutral-400 text-xs font-bold uppercase">
+                    Cancelar
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const unidad = document.querySelector("[name='unidad_medida']");
+        const unidadUso = document.querySelector("[name='contenido_unidad_medida']");
+
+        const grupo = document.getElementById("grupo-config");
+        const mensaje = document.getElementById("mensaje-info");
+
+        const grupoAncho = document.getElementById("grupo-ancho");
+        const anchoInput = document.querySelector("[name='ancho']");
+
+        const cantidad = document.querySelector("[name='contenido_cantidad']");
+
+        function actualizar() {
+
+            if (!unidad) return;
+
+            const tipo = unidad.value;
+
+            // 🔹 CASO PIEZA
+            if (tipo === "PIEZA") {
+
+                grupo.style.display = "none";
+                mensaje.classList.remove("hidden");
+
+                grupoAncho.classList.add("hidden");
+
+                if (anchoInput) {
+                    anchoInput.value = "";
+                    anchoInput.required = false;
+                }
+
+                if (cantidad) {
+                    cantidad.value = 1;
+                    cantidad.readOnly = true;
+                }
+
+                if (unidadUso) {
+                    unidadUso.value = "PIEZA";
+                    unidadUso.disabled = true;
+                }
+
+            } else {
+
+                // 🔹 CASO ROLLO
+                grupo.style.display = "flex";
+                mensaje.classList.add("hidden");
+
+                grupoAncho.classList.remove("hidden");
+
+                if (anchoInput) {
+                    anchoInput.required = true;
+                }
+
+                if (cantidad) {
+                    cantidad.readOnly = false;
+                    if (cantidad.value == 1) cantidad.value = "";
+                }
+
+                if (unidadUso) {
+                    unidadUso.disabled = false;
+
+                    // 🔥 FORZAR METRO Y BLOQUEAR PIEZA
+                    unidadUso.value = "METRO";
+
+                    // deshabilitar opción PIEZA
+                    for (let option of unidadUso.options) {
+                        if (option.value === "PIEZA") {
+                            option.disabled = true;
+                        } else {
+                            option.disabled = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        unidad.addEventListener("change", actualizar);
+        actualizar();
+    });
+</script>
+
+{% endblock %}
