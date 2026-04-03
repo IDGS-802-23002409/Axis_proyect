@@ -1,0 +1,53 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="flex min-h-screen bg-white text-neutral-900 font-sans items-center justify-center">
+
+    <main class="w-full max-w-lg p-8 bg-white shadow-lg rounded-2xl">
+
+        <!-- HEADER -->
+        <header class="mb-8 text-center">
+            <h1 class="text-2xl font-bold tracking-tight uppercase text-black">Registrar Nuevo Modelo</h1>
+        </header>
+
+        <!-- FORMULARIO -->
+        <form method="POST" class="space-y-6">
+            {{ form.hidden_tag() }}
+
+            <!-- Nombre del Modelo -->
+            <div>
+                {{ form.nombre_modelo.label(class="block text-sm font-bold text-neutral-800") }}
+                {{ form.nombre_modelo(class="mt-2 w-full px-4 py-3 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black") }}
+                {% if form.nombre_modelo.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.nombre_modelo.errors[0] }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Descripción -->
+            <div>
+                {{ form.descripcion.label(class="block text-sm font-bold text-neutral-800") }}
+                {{ form.descripcion(class="mt-2 w-full px-4 py-3 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black") }}
+                {% if form.descripcion.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.descripcion.errors[0] }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Categoría -->
+            <div>
+                {{ form.uuid_categoria.label(class="block text-sm font-bold text-neutral-800") }}
+                {{ form.uuid_categoria(class="mt-2 w-full px-4 py-3 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black") }}
+                {% if form.uuid_categoria.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.uuid_categoria.errors[0] }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Botón Guardar -->
+            <div>
+                {{ form.submit(class="w-full bg-black text-white px-6 py-3 rounded-xl font-bold text-sm tracking-widest hover:bg-neutral-800 transition-all") }}
+            </div>
+
+        </form>
+
+    </main>
+</div>
+{% endblock %}
