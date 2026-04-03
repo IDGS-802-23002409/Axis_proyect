@@ -4,7 +4,7 @@ from app.blueprints.productos_terminados.form import ProductoTerminadoForm
 from app.models.modelos_productos import ProductoTerminado, ModeloRopa
 from app.utils.database_connection import db
 
-@productos_bp.route('/productos')
+@productos_bp.route('/')
 def index():
     modelo_id = request.args.get('modelo', '').strip()
     talla = request.args.get('talla', '').strip()
@@ -62,44 +62,82 @@ def index():
     )
 
 
-@productos_bp.route('/productos/registro', methods=['GET', 'POST'])
+from app.models.explosion_materiales import ExplosionMaterialesCabecera
+
+@productos_bp.route('/registro', methods=['GET', 'POST'])
 def registro_producto():
     form = ProductoTerminadoForm()
 
+    
+    explosiones = ExplosionMaterialesCabecera.query.filter_by(estatus='ACTIVO').all()
+
+    data_explosiones = []
+    for e in explosiones:
+        detalles = []
+        for d in e.detalles:
+            detalles.append({
+                "insumo": d.insumo.nombre,
+                "consumo": float(d.consumo_teorico_unitario)
+            })
+
+        data_explosiones.append({
+            "id": e.uuid_explosion,
+            "detalles": detalles
+        })
+
     if form.validate_on_submit():
-        producto = ProductoTerminado(
-            uuid_modelo=form.modelo.data,
-            sku_especifico=form.sku_especifico.data.strip(),
-            talla=form.talla.data,
-            precio_venta=form.precio_venta.data,
-            stock_fisico_actual=form.stock_fisico_actual.data,
-            stock_minimo_alerta=form.stock_minimo_alerta.data,
-        )
-        uniqueSKU = ProductoTerminado.query.filter_by(
-            sku_especifico = form.sku_especifico.data.strip()
+        try:
+            sku = form.sku_especifico.data.strip()
+
+            existe = ProductoTerminado.query.filter_by(
+                sku_especifico=sku
             ).first()
-        if uniqueSKU:
-            flash('El sku debe ser unico', 'error')
-            return redirect(url_for('productos.registro_producto'))
-        db.session.add(producto)
-        db.session.commit()
 
-        flash('Producto terminado creado correctamente', 'success')
-        return redirect(url_for('productos.index'))
+            if existe:
+                flash('El SKU ya existe', 'error')
+                return render_template(
+                    'produccion/productos_terminados/registro_producto.html',
+                    form=form,
+                    explosiones_data=data_explosiones
+                )
 
-    return render_template('produccion/productos_terminados/registro_producto.html', form=form)
+            producto = ProductoTerminado(
+                uuid_modelo=form.modelo.data,
+                uuid_explosion=form.explosion.data,
+                sku_especifico=sku,
+                talla=form.talla.data,
+                precio_venta=float(form.precio_venta.data),
+                stock_fisico_actual=0,
+                stock_minimo_alerta=form.stock_minimo_alerta.data or 0,
+                active=bool(form.active.data)
+            )
 
+            db.session.add(producto)
+            db.session.commit()
 
-@productos_bp.route('/productos/editar/<uuid>', methods=['GET', 'POST'])
+            flash('Producto terminado creado correctamente', 'success')
+            return redirect(url_for('productos_bp.index'))
+
+        except Exception as e:
+            db.session.rollback()
+            print("ERROR:", e)
+            flash('Error al crear el producto', 'error')
+
+    return render_template(
+        'produccion/productos_terminados/registro_producto.html',
+        form=form,
+        explosiones_data=data_explosiones  
+    )
+
+@productos_bp.route('/editar/<uuid>', methods=['GET', 'POST'])
 def editar_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
     form = ProductoTerminadoForm(obj=producto)
 
     if form.validate_on_submit():
-        nuevo_active = bool(form.active.data)
-        nuevo_stock = form.stock_fisico_actual.data if form.stock_fisico_actual.data is not None else producto.stock_fisico_actual
         nuevo_sku = form.sku_especifico.data.strip()
 
+        # Validar SKU duplicado
         sku_duplicado = ProductoTerminado.query.filter(
             ProductoTerminado.sku_especifico == nuevo_sku,
             ProductoTerminado.uuid_producto != producto.uuid_producto
@@ -109,29 +147,23 @@ def editar_producto(uuid):
             flash('El SKU ya existe en otro producto', 'error')
             return redirect(url_for('productos.editar_producto', uuid=uuid))
 
-        if nuevo_stock > 0 and not nuevo_active:
-            flash('No se puede desactivar un producto con stock físico > 0', 'error')
-            return redirect(url_for('productos.editar_producto', uuid=uuid))
-
+        # Actualizar datos (SIN stock)
         producto.uuid_modelo = form.modelo.data
         producto.sku_especifico = nuevo_sku
         producto.talla = form.talla.data
         producto.precio_venta = form.precio_venta.data
-        producto.active = nuevo_active
+        producto.active = bool(form.active.data)
 
-        if form.stock_fisico_actual.data is not None:
-            producto.stock_fisico_actual = form.stock_fisico_actual.data
-
+        # Solo mínimo alerta (opcional)
         if form.stock_minimo_alerta.data is not None:
             producto.stock_minimo_alerta = form.stock_minimo_alerta.data
 
         db.session.commit()
 
         flash('Producto terminado actualizado correctamente', 'success')
-        return redirect(url_for('productos.index'))
+        return redirect(url_for('productos_bp.index'))
 
-    # Cargar datos actuales en GET
-    form.stock_fisico_actual.data = producto.stock_fisico_actual
+    # Cargar datos en GET (SIN stock físico)
     form.stock_minimo_alerta.data = producto.stock_minimo_alerta
     form.active.data = 1 if producto.active else 0
 
@@ -141,22 +173,18 @@ def editar_producto(uuid):
         producto=producto
     )
 
-@productos_bp.route('/productos/eliminar/<uuid>', methods=['POST'])
+@productos_bp.route('/eliminar/<uuid>', methods=['POST'])
 def eliminar_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
-
-    if producto.stock_fisico_actual > 0:
-        flash('No se puede eliminar un producto con stock físico > 0', 'error')
-        return redirect(url_for('productos.index'))
 
     producto.active = False
     db.session.commit()
 
     flash('Producto terminado desactivado correctamente', 'success')
-    return redirect(url_for('productos.index'))
+    return redirect(url_for('productos_bp.index'))
 
 
-@productos_bp.route('/productos/detalle/<uuid>')
+@productos_bp.route('/detalle/<uuid>')
 def detalle_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
     modelo = producto.modelo
