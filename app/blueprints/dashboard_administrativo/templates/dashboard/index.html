@@ -124,4 +124,88 @@
             </table>
         </div>
     </div>
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+@media print {
+    aside, nav, .sticky,
+    #btn-actualizar,
+    button[onclick="generarReporte()"]
+    { display: none !important; }
+    body { background: white !important; }
+    .flex.min-h-screen { display: block !important; }
+    main { padding: 0 !important; }
+    .bg-\[\#111111\] {
+        background-color: #f9fafb !important;
+        border: 1px solid #e5e7eb !important;
+    }
+    .text-white { color: #111 !important; }
+}
+</style>
+
+<script>
+function actualizarDashboard() {
+    const icon = document.getElementById('icon-refresh');
+    const btn  = document.getElementById('btn-actualizar');
+    icon.style.transition = 'transform 0.6s ease';
+    icon.style.transform  = 'rotate(360deg)';
+    btn.disabled = true;
+    setTimeout(() => {
+        icon.style.transform  = 'rotate(0deg)';
+        icon.style.transition = 'none';
+        btn.disabled = false;
+        window.location.reload();
+    }, 600);
+}
+
+function generarReporte() {
+    window.print();
+}
+
+const ctx = document.getElementById('salesChart').getContext('2d');
+// Jinja2 convertirá estas listas de Python a JSON de JS
+    const labels = {{ chart_labels | tojson }};
+    const dataVentas = {{ chart_data | tojson }};
+
+    // Validar en consola si los datos están llegando
+    console.log("Labels:", labels);
+    console.log("Data:", dataVentas);
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Ventas ($)',
+                data: dataVentas,
+                borderColor: '#111827', 
+                backgroundColor: 'rgba(17, 24, 39, 0.05)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4, 
+                pointRadius: 4,
+                pointBackgroundColor: '#111827'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#f3f4f6' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
 {% endblock %}
