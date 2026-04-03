@@ -119,6 +119,97 @@ def insumos_por_op(uuid_op):
     })
 
 
+@merma_bp.route('/insumo-por-corte/<uuid_corte>')
+@login_required
+@roles_required("admin")
+def insumo_por_corte(uuid_corte):
+    """
+    devuelve el insumo (tela) que se usó en una ejecución de corte,
+    basado en el producto asociado a su OP.
+    """
+    ejecucion = EjecucionCorte.query.get_or_404(uuid_corte)
+    
+    if not ejecucion.orden_produccion or not ejecucion.orden_produccion.producto:
+        return jsonify({'insumo': None, 'error': 'No se encontró producto para este corte'})
+    
+    # El insumo de un corte es el TELA (METRO) del producto de la OP
+    producto = ejecucion.orden_produccion.producto
+    if not producto.explosion:
+        return jsonify({'insumo': None, 'error': 'El producto no tiene explosión de materiales'})
+    
+    insumo_tela = (
+        ExplosionMaterialesDetalle.query
+        .filter_by(uuid_explosion=producto.explosion.uuid_explosion)
+        .join(Insumo)
+        .filter(Insumo.contenido_unidad_medida == 'METRO')
+        .first()
+    )
+    
+    if not insumo_tela:
+        return jsonify({'insumo': None, 'error': 'No se encontró insumo TELA para este producto'})
+    
+    return jsonify({
+        'insumo': {
+            'uuid_insumo': insumo_tela.uuid_insumo,
+            'nombre': insumo_tela.insumo.nombre,
+            'sku': insumo_tela.insumo.sku,
+            'stock_actual': float(insumo_tela.insumo.stock_total_acumulado),
+        },
+        'error': None
+    })
+
+
+@merma_bp.route('/rollos-por-corte/<uuid_corte>')
+@login_required
+@roles_required("admin")
+def rollos_por_corte(uuid_corte):
+    """
+    devuelve los rollos disponibles que coincidan con el insumo (TELA)
+    del producto de la OP asociada al corte seleccionado.
+    """
+    ejecucion = EjecucionCorte.query.get_or_404(uuid_corte)
+    
+    if not ejecucion.orden_produccion or not ejecucion.orden_produccion.producto:
+        return jsonify({'rollos': [], 'error': 'No se encontró producto para este corte'})
+    
+    producto = ejecucion.orden_produccion.producto
+    if not producto.explosion:
+        return jsonify({'rollos': [], 'error': 'El producto no tiene explosión de materiales'})
+    
+    insumo_tela = (
+        ExplosionMaterialesDetalle.query
+        .filter_by(uuid_explosion=producto.explosion.uuid_explosion)
+        .join(Insumo)
+        .filter(Insumo.contenido_unidad_medida == 'METRO')
+        .first()
+    )
+    
+    if not insumo_tela:
+        return jsonify({'rollos': [], 'error': 'No se encontró insumo TELA para este producto'})
+    
+    # Obtener rollos del insumo TELA con metraje disponible
+    rollos = (
+        RolloInventario.query
+        .filter_by(uuid_insumo=insumo_tela.uuid_insumo)
+        .filter(RolloInventario.metraje_continuo_actual > 0)
+        .order_by(RolloInventario.fecha_creacion.desc())
+        .all()
+    )
+    
+    return jsonify({
+        'rollos': [
+            {
+                'uuid_rollo': r.uuid_rollo,
+                'nombre': f"{r.insumo.nombre if r.insumo else 'N/A'}",
+                'metraje_disponible': float(r.metraje_continuo_actual),
+                'display': f"{r.insumo.nombre if r.insumo else 'N/A'} · {float(r.metraje_continuo_actual):.2f} m disponibles"
+            }
+            for r in rollos
+        ],
+        'error': None
+    })
+
+
 @merma_bp.route('/registro', methods=['GET', 'POST'])
 @login_required
 @roles_required("admin")
@@ -248,7 +339,53 @@ def registro_retazo():
     if form.validate_on_submit():
         try:
             metraje = float(form.metraje.data)
+            
+            # Validaciones
+            ejecucion = EjecucionCorte.query.get(form.ejecucion_corte.data)
+            if not ejecucion:
+                flash('La ejecución de corte no existe.', 'error')
+                return redirect(url_for('merma.registro_retazo'))
+            
+            rollo = RolloInventario.query.get(form.rollo_origen.data)
+            if not rollo:
+                flash('El rollo no existe.', 'error')
+                return redirect(url_for('merma.registro_retazo'))
+            
+            # Verificar que el rollo tiene suficiente metraje
+            if float(rollo.metraje_continuo_actual) < metraje:
+                flash(f'El rollo no tiene suficiente metraje. Disponible: {float(rollo.metraje_continuo_actual):.2f}m, Solicitado: {metraje:.2f}m', 'error')
+                return redirect(url_for('merma.registro_retazo'))
+            
+            # Verificar coincidencia de insumo TELA del corte
+            if not ejecucion.orden_produccion or not ejecucion.orden_produccion.producto:
+                flash('La orden de producción no tiene producto asociado.', 'error')
+                return redirect(url_for('merma.registro_retazo'))
+            
+            producto = ejecucion.orden_produccion.producto
+            if not producto.explosion:
+                flash('El producto no tiene explosión de materiales.', 'error')
+                return redirect(url_for('merma.registro_retazo'))
+            
+            insumo_tela_esperado = (
+                ExplosionMaterialesDetalle.query
+                .filter_by(uuid_explosion=producto.explosion.uuid_explosion)
+                .join(Insumo)
+                .filter(Insumo.contenido_unidad_medida == 'METRO')
+                .first()
+            )
+            
+            if not insumo_tela_esperado:
+                flash('No se encontró insumo TELA para este producto.', 'error')
+                return redirect(url_for('merma.registro_retazo'))
+            
+            if rollo.uuid_insumo != insumo_tela_esperado.uuid_insumo:
+                flash(
+                    f'El rollo ({rollo.insumo.nombre}) no pertenece al insumo TELA del corte ({insumo_tela_esperado.insumo.nombre}).',
+                    'error'
+                )
+                return redirect(url_for('merma.registro_retazo'))
 
+            # Crear retazo
             retazo = RetazoInventario(
                 uuid_rollo_origen=form.rollo_origen.data,
                 uuid_corte_origen=form.ejecucion_corte.data,
@@ -257,7 +394,6 @@ def registro_retazo():
             )
             db.session.add(retazo)
 
-            rollo = RolloInventario.query.get(form.rollo_origen.data)
             stock_rollo_antes = float(rollo.metraje_continuo_actual)
             stock_insumo_antes = float(rollo.insumo.stock_total_acumulado)
 
@@ -272,10 +408,11 @@ def registro_retazo():
 
             logger.info(
                 f"[RETAZO-STOCK] EsDefecto={bool(form.motivo_merma.data)} | "
-                f"Rollo={rollo.uuid_rollo} | "
+                f"Corte={ejecucion.uuid_corte[:8]} | "
+                f"Rollo={rollo.uuid_rollo[:8]} | "
                 f"Insumo={rollo.insumo.nombre} | "
-                f"Rollo antes={stock_rollo_antes} → después={float(rollo.metraje_continuo_actual)} m | "
-                f"Stock insumo antes={stock_insumo_antes} → después={float(rollo.insumo.stock_total_acumulado)} m | "
+                f"Rollo antes={stock_rollo_antes:.2f}m → después={float(rollo.metraje_continuo_actual):.2f}m | "
+                f"Stock insumo antes={stock_insumo_antes:.2f}m → después={float(rollo.insumo.stock_total_acumulado):.2f}m | "
                 f"Usuario={current_user.email}"
             )
 
@@ -285,9 +422,11 @@ def registro_retazo():
 
         except Exception as e:
             db.session.rollback()
+            logger.error(f"[RETAZO-ERROR] {str(e)}", exc_info=True)
             flash(f'Error al registrar retazo: {str(e)}', 'error')
 
     return render_template('produccion/merma/registro_retazo.html', form=form)
+
 
 
 @merma_bp.route('/retazos/detalle/<uuid_retazo>')

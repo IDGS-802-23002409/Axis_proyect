@@ -15,6 +15,14 @@
       </p>
     </div>
 
+    <!-- Insumo esperado -->
+    <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg hidden" id="insumo-section">
+      <p class="text-sm text-amber-800">
+        <span class="font-semibold">Insumo (Tela) esperado del corte:</span>
+        <br><span id="insumo-display" class="font-mono text-amber-900">—</span>
+      </p>
+    </div>
+
     <form method="POST" action="{{ url_for('merma.registro_retazo') }}" class="space-y-4" novalidate>
       {{ form.hidden_tag() }}
       {% import "produccion/usuarios/_macros.html" as macros %}
@@ -35,4 +43,92 @@
     </form>
   </div>
 </div>
+
+<script>
+// URL base para endpoints AJAX
+const BASE_URL = '/merma';
+
+// Obtener referencias a elementos
+const ejecucionCorteSelect = document.querySelector('[name="ejecucion_corte"]');
+const rolloOrigenSelect = document.querySelector('[name="rollo_origen"]');
+const insumoSection = document.getElementById('insumo-section');
+const insumoDisplay = document.getElementById('insumo-display');
+
+// Guardar opciones originales de rollos
+const rollosOriginales = Array.from(rolloOrigenSelect.options).map(o => ({
+  value: o.value,
+  text: o.text
+}));
+
+// Cuando cambia el corte seleccionado
+ejecucionCorteSelect.addEventListener('change', async function() {
+  const uuidCorte = this.value;
+  
+  if (!uuidCorte) {
+    // Restaurar estado inicial
+    rolloOrigenSelect.innerHTML = '';
+    rollosOriginales.forEach(opt => {
+      const optEl = document.createElement('option');
+      optEl.value = opt.value;
+      optEl.text = opt.text;
+      rolloOrigenSelect.appendChild(optEl);
+    });
+    insumoSection.classList.add('hidden');
+    insumoDisplay.textContent = '—';
+    return;
+  }
+  
+  try {
+    // Obtener insumo del corte
+    const insumoResponse = await fetch(`${BASE_URL}/insumo-por-corte/${uuidCorte}`);
+    const insumoData = await insumoResponse.json();
+    
+    if (insumoData.error) {
+      console.error('Error al obtener insumo:', insumoData.error);
+      insumoSection.classList.add('hidden');
+      return;
+    }
+    
+    // Mostrar insumo esperado
+    if (insumoData.insumo) {
+      insumoDisplay.textContent = `${insumoData.insumo.nombre} (${insumoData.insumo.sku}) - Stock: ${insumoData.insumo.stock_actual.toFixed(2)}m`;
+      insumoSection.classList.remove('hidden');
+    }
+    
+    // Obtener rollos del corte
+    const rollosResponse = await fetch(`${BASE_URL}/rollos-por-corte/${uuidCorte}`);
+    const rollosData = await rollosResponse.json();
+    
+    if (rollosData.error) {
+      console.error('Error al obtener rollos:', rollosData.error);
+      return;
+    }
+    
+    // Actualizar opciones de rollos
+    rolloOrigenSelect.innerHTML = '<option value="">Selecciona un rollo</option>';
+    
+    if (rollosData.rollos.length === 0) {
+      const optEl = document.createElement('option');
+      optEl.text = '— No hay rollos disponibles para este corte —';
+      optEl.disabled = true;
+      rolloOrigenSelect.appendChild(optEl);
+    } else {
+      rollosData.rollos.forEach(rollo => {
+        const optEl = document.createElement('option');
+        optEl.value = rollo.uuid_rollo;
+        optEl.text = rollo.display;
+        rolloOrigenSelect.appendChild(optEl);
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error en filtrado de rollos:', error);
+  }
+});
+
+// Disparar evento de cambio al cargar si hay corte preseleccionado
+if (ejecucionCorteSelect.value) {
+  ejecucionCorteSelect.dispatchEvent(new Event('change'));
+}
+</script>
 {% endblock %}

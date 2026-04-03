@@ -90,11 +90,10 @@ class MermaForm(FlaskForm):
 
 class RetazoForm(FlaskForm):
     """
-    Formulario para registrar retazos de tela — casos extraordinarios.
+    Formulario para registrar retazos de tela en inventario.
 
-    Dos situaciones posibles:
-    - SOBRANTE_TRAZO: geometría normal del corte, no modifica merma_real_calculada
-    - PRENDA_DEFECTUOSA / DAÑO_PROCESO: sí actualiza EjecucionCorte.merma_real_calculada
+    Si se completa el campo motivo_merma es porque es un defecto que
+    afecta la merma calculada de la OP. Si está vacío, es un sobrante normal.
     """
 
     ejecucion_corte = SelectField(
@@ -107,18 +106,6 @@ class RetazoForm(FlaskForm):
         'Rollo de origen',
         coerce=str,
         validators=[validators.DataRequired(message='El rollo es requerido')]
-    )
-
-    tipo = SelectField(
-        'Tipo de retazo',
-        coerce=str,
-        validators=[validators.DataRequired(message='El tipo es requerido')],
-        choices=[
-            ('',                  'Selecciona un tipo'),
-            ('SOBRANTE_TRAZO',    'Sobrante de trazo — corte normal'),
-            ('PRENDA_DEFECTUOSA', 'Prenda defectuosa — falla de calidad'),
-            ('DAÑO_PROCESO',      'Daño en proceso — confección'),
-        ]
     )
 
     metraje = DecimalField(
