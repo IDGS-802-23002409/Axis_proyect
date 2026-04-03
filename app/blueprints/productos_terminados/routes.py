@@ -3,8 +3,11 @@ from app.blueprints.productos_terminados import productos_bp
 from app.blueprints.productos_terminados.form import ProductoTerminadoForm
 from app.models.modelos_productos import ProductoTerminado, ModeloRopa
 from app.utils.database_connection import db
+from flask_security import login_required, roles_accepted
 
 @productos_bp.route('/')
+@login_required
+@roles_accepted('admin', 'produccion')
 def index():
     modelo_id = request.args.get('modelo', '').strip()
     talla = request.args.get('talla', '').strip()
@@ -65,6 +68,8 @@ def index():
 from app.models.explosion_materiales import ExplosionMaterialesCabecera
 
 @productos_bp.route('/registro', methods=['GET', 'POST'])
+@login_required
+@roles_accepted('admin', 'produccion')
 def registro_producto():
     form = ProductoTerminadoForm()
 
@@ -130,6 +135,8 @@ def registro_producto():
     )
 
 @productos_bp.route('/editar/<uuid>', methods=['GET', 'POST'])
+@login_required
+@roles_accepted('admin', 'produccion')
 def editar_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
     form = ProductoTerminadoForm(obj=producto)
@@ -174,6 +181,8 @@ def editar_producto(uuid):
     )
 
 @productos_bp.route('/eliminar/<uuid>', methods=['POST'])
+@login_required
+@roles_accepted('admin', 'produccion')
 def eliminar_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
 
@@ -185,6 +194,8 @@ def eliminar_producto(uuid):
 
 
 @productos_bp.route('/detalle/<uuid>')
+@login_required
+@roles_accepted('admin', 'produccion')
 def detalle_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
     modelo = producto.modelo

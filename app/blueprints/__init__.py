@@ -9,3 +9,4 @@ from app.blueprints.inventario import inventario_bp
 from app.blueprints.recetas import recetas_bp
 from app.blueprints.modelo import modelos_bp
 from app.blueprints.productos_terminados import productos_bp
+from app.blueprints.orden_produccion import orden_bp
