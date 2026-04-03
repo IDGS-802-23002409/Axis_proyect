@@ -1,0 +1,15 @@
+{% macro field(field, class_name="") %}
+<div>
+  <label class="block text-sm font-medium mb-1">
+    {{ field.label }}
+  </label>
+
+  {{ field(class=class_name) }}
+
+  {% if field.errors %}
+    {% for error in field.errors %}
+      <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+    {% endfor %}
+  {% endif %}
+</div>
+{% endmacro %}

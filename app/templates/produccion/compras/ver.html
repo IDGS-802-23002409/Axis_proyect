@@ -1,0 +1,172 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="flex min-h-screen bg-white text-neutral-900 font-sans">
+
+    <main class="flex-1 p-8 xl:p-12">
+
+        <!-- HEADER -->
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <a href="{{ url_for('compras_bp.index') }}"
+                   class="text-[10px] font-bold text-neutral-400 hover:text-black uppercase tracking-widest">
+                    ← Volver
+                </a>
+                <h1 class="text-xl font-bold tracking-tight uppercase text-black mt-2">
+                    Detalle de Compra
+                </h1>
+            </div>
+        </header>
+
+        <!-- INFO GENERAL -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+
+            <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm">
+                <span class="text-[10px] text-neutral-400 uppercase tracking-widest">Folio</span>
+                <div class="text-lg font-bold mt-2">
+                    {{ compra.folio_factura or 'Sin folio' }}
+                </div>
+            </div>
+
+            <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm">
+                <span class="text-[10px] text-neutral-400 uppercase tracking-widest">Proveedor</span>
+                <div class="text-sm font-medium mt-2">
+                    {{ compra.proveedor.razon_social if compra.proveedor else 'Sin proveedor' }}
+                </div>
+            </div>
+
+            <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm">
+                <span class="text-[10px] text-neutral-400 uppercase tracking-widest">Fecha</span>
+                <div class="text-sm mt-2">
+                    {{ compra.fecha_compra.strftime('%d/%m/%Y') if compra.fecha_compra else '' }}
+                </div>
+            </div>
+
+            <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm text-center">
+                <span class="text-[10px] text-neutral-400 uppercase tracking-widest">Estatus</span>
+                <div class="mt-3">
+                    {% if compra.estatus == 'PENDIENTE' %}
+                        <span class="px-3 py-1 bg-yellow-50 text-yellow-600 text-[10px] font-bold rounded border">
+                            Pendiente
+                        </span>
+                    {% elif compra.estatus == 'RECIBIDO' %}
+                        <span class="px-3 py-1 bg-green-50 text-green-600 text-[10px] font-bold rounded border">
+                            Recibido
+                        </span>
+                    {% elif compra.estatus == 'CANCELADO' %}
+                        <span class="px-3 py-1 bg-red-50 text-red-600 text-[10px] font-bold rounded border">
+                            Cancelado
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- DETALLE -->
+        <div class="bg-white border border-neutral-200 rounded-2xl shadow-sm overflow-hidden">
+
+            <div class="px-6 py-4 border-b border-neutral-100">
+                <h2 class="text-xs font-bold uppercase tracking-widest text-neutral-500">
+                    Detalle de Insumos
+                </h2>
+            </div>
+
+            <div class="w-full overflow-x-auto">
+                <table class="w-full text-left">
+
+                    <thead>
+                        <tr class="text-[10px] uppercase tracking-[0.2em] text-neutral-400 border-b">
+                            <th class="px-6 py-4 font-bold">Insumo</th>
+                            <th class="px-6 py-4 font-bold">Unidad</th>
+                            <th class="px-6 py-4 font-bold">Cantidad</th>
+                            <th class="px-6 py-4 font-bold">Detalle</th>
+                            <th class="px-6 py-4 font-bold">Costo Unitario</th>
+                            <th class="px-6 py-4 font-bold text-right">Subtotal</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-neutral-50">
+
+                        {% for d in compra.detalles %}
+                        <tr class="hover:bg-neutral-50 transition">
+
+                            <!-- INSUMO -->
+                            <td class="px-6 py-4 text-sm font-medium text-neutral-800">
+                                {{ d.insumo.nombre }}
+                            </td>
+
+                            <!-- UNIDAD -->
+                            <td class="px-6 py-4 text-xs text-neutral-500 uppercase">
+                                {{ d.insumo.unidad_medida }}
+                            </td>
+
+                            <!-- CANTIDAD -->
+                            <td class="px-6 py-4 text-xs text-neutral-600">
+                                {{ '{:g}'.format(d.cantidad_comprada|float) }}
+                            </td>
+
+                            <!-- EQUIVALENTE -->
+                            <td class="px-6 py-4 text-xs text-neutral-600">
+
+                                {% if d.insumo.unidad_medida == "ROLLO" %}
+                                    
+                                    <div class="flex flex-col">
+                                        <span class="text-neutral-400">
+                                            {{ '{:g}'.format(d.cantidad_comprada|float) }} × 
+                                            {{ '{:g}'.format(d.insumo.contenido_cantidad|float) }}
+                                        </span>
+
+                                        <span class="font-bold text-black">
+                                            = {{ '{:g}'.format((d.cantidad_comprada * d.insumo.contenido_cantidad)|float) }}
+                                            {{ d.insumo.contenido_unidad_medida }}
+                                        </span>
+
+                                        <span class="text-[10px] text-neutral-400 italic">
+                                            (cada rollo contiene 
+                                            {{ '{:g}'.format(d.insumo.contenido_cantidad|float) }} 
+                                            {{ d.insumo.contenido_unidad_medida }})
+                                        </span>
+                                    </div>
+
+                                {% else %}
+                                    {{ '{:g}'.format(d.cantidad_comprada|float) }} {{ d.insumo.unidad_medida }}
+                                {% endif %}
+
+                            </td>
+
+                            <!-- COSTO -->
+                            <td class="px-6 py-4 text-xs text-neutral-600">
+                                $ {{ "{:.2f}".format(d.costo_unitario_compra|float) }}
+                            </td>
+
+                            <!-- SUBTOTAL -->
+                            <td class="px-6 py-4 text-right text-sm font-bold text-black">
+                                $ {{ "{:.2f}".format((d.cantidad_comprada * d.costo_unitario_compra)|float) }}
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+
+                    </tbody>
+
+                    <!-- TOTAL GENERAL -->
+                    <tfoot>
+                        <tr class="border-t">
+                            <td colspan="5" class="px-6 py-4 text-right text-xs font-bold text-neutral-500 uppercase">
+                                Total Compra
+                            </td>
+                            <td class="px-6 py-4 text-right text-lg font-bold text-black">
+                                $ {{ "{:.2f}".format(total_compra|float) }}
+                            </td>
+                        </tr>
+                    </tfoot>
+
+                </table>
+            </div>
+
+        </div>
+
+    </main>
+</div>
+{% endblock %}

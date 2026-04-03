@@ -7,22 +7,81 @@
 <div class="px-10 pb-10">
   <div class="max-w-2xl mx-auto bg-card border border-border rounded-lg p-8">
     <h2 class="text-xl font-bold mb-4">Nuevo Producto</h2>
+
     <form method="post" class="space-y-4" novalidate>
       {{ form.hidden_tag() }}
       {% import "produccion/usuarios/_macros.html" as macros %}
 
       {{ macros.fieldUser(form.modelo, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+
+      {{ macros.fieldUser(form.explosion, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+
+      
+      <div id="detalle-receta" class="mt-4 p-4 border rounded-md bg-gray-50 text-sm hidden">
+          <p class="font-semibold mb-2">Insumos de la receta:</p>
+          <ul id="lista-insumos" class="list-disc pl-5 space-y-1"></ul>
+      </div>
+
       {{ macros.fieldUser(form.sku_especifico, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
       {{ macros.fieldUser(form.talla, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
       {{ macros.fieldUser(form.precio_venta, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
-      {{ macros.fieldUser(form.stock_fisico_actual, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
       {{ macros.fieldUser(form.stock_minimo_alerta, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
 
       <div class="flex justify-end gap-3 pt-4">
-        <a href="{{ url_for('productos.index') }}" class="px-4 py-2 border border-border rounded-md text-sm">Cancelar</a>
-        <button type="submit" class="px-4 py-2 bg-black text-white rounded-md text-sm">Guardar</button>
+        <a href="{{ url_for('productos_bp.index') }}" 
+           class="px-4 py-2 border border-border rounded-md text-sm">
+           Cancelar
+        </a>
+
+        <button type="submit" 
+                class="px-4 py-2 bg-black text-white rounded-md text-sm">
+          Guardar
+        </button>
       </div>
     </form>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const explosiones = {{ explosiones_data | tojson | safe }};
+
+    const select = document.querySelector('[name="explosion"]');
+    const contenedor = document.getElementById('detalle-receta');
+    const lista = document.getElementById('lista-insumos');
+
+    if (!select) return; 
+
+    function renderDetalle(seleccion) {
+        const receta = explosiones.find(e => e.id === seleccion);
+
+        lista.innerHTML = '';
+
+        if (receta && receta.detalles.length > 0) {
+            receta.detalles.forEach(d => {
+                const li = document.createElement('li');
+                li.textContent = `${d.insumo}: ${d.consumo}`;
+                lista.appendChild(li);
+            });
+
+            contenedor.classList.remove('hidden');
+        } else {
+            contenedor.classList.add('hidden');
+        }
+    }
+
+   
+    select.addEventListener('change', function () {
+        renderDetalle(this.value);
+    });
+
+    
+    if (select.value) {
+        renderDetalle(select.value);
+    }
+
+});
+</script>
+
 {% endblock %}

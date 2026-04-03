@@ -1,0 +1,28 @@
+from flask_wtf import FlaskForm
+from wtforms import SelectField, IntegerField, SubmitField
+from wtforms.validators import DataRequired, NumberRange, Optional
+
+
+class OrdenProduccionForm(FlaskForm):
+
+    uuid_producto = SelectField(
+        'Producto',
+        validators=[DataRequired()],
+        coerce=str
+    )
+
+    cantidad_a_producir = IntegerField(
+        'Cantidad a producir',
+        validators=[
+            DataRequired(),
+            NumberRange(min=1, message="Debe ser mayor a 0")
+        ]
+    )
+
+    uuid_venta_detalle = SelectField(
+        'Venta relacionada (opcional)',
+        validators=[Optional()],
+        coerce=str
+    )
+
+    submit = SubmitField('Guardar')
