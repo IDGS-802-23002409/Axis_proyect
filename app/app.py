@@ -166,6 +166,8 @@ def create_app():
     application.register_blueprint(bp.categorias_bp, url_prefix='/categorias')
     application.register_blueprint(bp.recetas_bp, url_prefix='/recetas')
     application.register_blueprint(bp.modelos_bp, url_prefix='/modelos')
+    application.register_blueprint(bp.productos_bp, url_prefix='/productos_terminados')
+    application.register_blueprint(bp.orden_bp, url_prefix='/orden_produccion')
     application.register_blueprint(bp.security_bp, url_prefix='/security')
     application.register_blueprint(bp.catalog_bp, url_prefix='')
     application.register_blueprint(bp.checkout_bp, url_prefix='')

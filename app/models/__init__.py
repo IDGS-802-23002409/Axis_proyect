@@ -11,3 +11,4 @@ from app.models.explosion_materiales import ExplosionMaterialesCabecera, Explosi
 from app.models.produccion import OrdenProduccion, EjecucionCorte  # noqa: F401
 from app.models.ventas import VentaEncabezado, VentaDetalle  # noqa: F401
 from app.models.pedidos_proveedor import PedidoProveedorEncabezado
+

@@ -19,15 +19,11 @@
       <p class="text-2xl font-bold text-rose-500">{{ agotados }}</p>
     </div>
     <div class="p-4 bg-card border border-border rounded-lg flex items-center justify-between">
-      <div>
-        <p class="text-xs text-muted-foreground">Acción</p>
-        <button onclick="window.location.href='productos/registro';"
-      class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
-      <i data-lucide="plus" class="w-4 h-4"></i>
-      Nuevo Producto
-  </button>
-      </div>
-
+      <a href="{{ url_for('productos_bp.registro_producto') }}"
+   class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
+    <i data-lucide="plus" class="w-4 h-4"></i>
+    Nuevo Producto
+</a>
     </div>
   </div>
 
@@ -36,7 +32,8 @@
       <h3 class="font-semibold">Catálogo de Productos</h3>
 
       <button id="filterToggle" type="button"
-        class="h-9 w-9 p-2 bg-card border border-border rounded-md text-muted-foreground hover:bg-secondary" title="Mostrar/Ocultar filtros">
+        class="h-9 w-9 p-2 bg-card border border-border rounded-md text-muted-foreground hover:bg-secondary"
+        title="Mostrar/Ocultar filtros">
         <i data-lucide="filter" class="w-4 h-4"></i>
       </button>
     </div>
@@ -45,7 +42,8 @@
       <form method="GET" class="grid grid-cols-1 md:grid-cols-6 gap-3">
         <div>
           <label class="text-xs text-muted-foreground" for="sku">SKU</label>
-          <input type="text" name="sku" id="sku" placeholder="Buscar SKU" class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm" value="{{ filtro_sku }}">
+          <input type="text" name="sku" id="sku" placeholder="Buscar SKU"
+            class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm" value="{{ filtro_sku }}">
         </div>
 
         <div>
@@ -53,7 +51,8 @@
           <select name="modelo" id="modelo" class="w-full border border-border bg-input rounded-md px-3 py-2">
             <option value="">Todas</option>
             {% for m in modelos %}
-            <option value="{{ m.uuid_modelo }}" {% if filtro_modelo == m.uuid_modelo %}selected{% endif %}>{{ m.nombre_modelo }}</option>
+            <option value="{{ m.uuid_modelo }}" {% if filtro_modelo==m.uuid_modelo %}selected{% endif %}>{{
+              m.nombre_modelo }}</option>
             {% endfor %}
           </select>
         </div>
@@ -63,7 +62,7 @@
           <select name="talla" id="talla" class="w-full border border-border bg-input rounded-md px-3 py-2">
             <option value="">Todas</option>
             {% for t in ['XSS','XS','S','M','L','XL','XXL','Unica'] %}
-            <option value="{{ t }}" {% if filtro_talla == t %}selected{% endif %}>{{ t }}</option>
+            <option value="{{ t }}" {% if filtro_talla==t %}selected{% endif %}>{{ t }}</option>
             {% endfor %}
           </select>
         </div>
@@ -72,8 +71,8 @@
           <label class="text-xs text-muted-foreground" for="estatus">Estatus</label>
           <select name="estatus" id="estatus" class="w-full border border-border bg-input rounded-md px-3 py-2">
             <option value="">Todos</option>
-            <option value="activo" {% if filtro_estatus == 'activo' %}selected{% endif %}>Activo</option>
-            <option value="inactivo" {% if filtro_estatus == 'inactivo' %}selected{% endif %}>Inactivo</option>
+            <option value="activo" {% if filtro_estatus=='activo' %}selected{% endif %}>Activo</option>
+            <option value="inactivo" {% if filtro_estatus=='inactivo' %}selected{% endif %}>Inactivo</option>
           </select>
         </div>
 
@@ -81,14 +80,15 @@
           <label class="text-xs text-muted-foreground" for="filtro">Filtro de Stock</label>
           <select name="filtro" id="filtro" class="w-full border border-border bg-input rounded-md px-3 py-2">
             <option value="">Todos</option>
-            <option value="bajo_stock" {% if filtro_stock == 'bajo_stock' %}selected{% endif %}>Bajo stock</option>
-            <option value="agotado" {% if filtro_stock == 'agotado' %}selected{% endif %}>Agotado</option>
+            <option value="bajo_stock" {% if filtro_stock=='bajo_stock' %}selected{% endif %}>Bajo stock</option>
+            <option value="agotado" {% if filtro_stock=='agotado' %}selected{% endif %}>Agotado</option>
           </select>
         </div>
 
         <div class="flex items-end gap-2">
           <button type="submit" class="px-4 py-2 rounded-md bg-black text-white text-sm">Filtrar</button>
-          <a href="{{ url_for('productos.index') }}" class="px-4 py-2 rounded-md border border-border text-sm">Limpiar</a>
+          <a href="{{ url_for('productos_bp.index') }}"
+            class="px-4 py-2 rounded-md border border-border text-sm">Limpiar</a>
         </div>
       </form>
     </div>
@@ -112,17 +112,23 @@
             <td class="px-4 py-3">{{ p.modelo.nombre_modelo }}</td>
             <td class="px-4 py-3">{{ p.talla }}</td>
             <td class="px-4 py-3">
-              <span class="px-2 py-1 rounded-full text-xs font-semibold {% if p.stock_fisico_actual == 0 %}bg-rose-500 text-white{% elif p.stock_fisico_actual <= p.stock_minimo_alerta %}bg-amber-500 text-gray-800{% else %}bg-emerald-500 text-white{% endif %}">{{ p.stock_fisico_actual }}</span>
+              <span
+                class="px-2 py-1 rounded-full text-xs font-semibold {% if p.stock_fisico_actual == 0 %}bg-rose-500 text-white{% elif p.stock_fisico_actual <= p.stock_minimo_alerta %}bg-amber-500 text-gray-800{% else %}bg-emerald-500 text-white{% endif %}">{{
+                p.stock_fisico_actual }}</span>
             </td>
             <td class="px-4 py-3">${{ '%.2f'|format(p.precio_venta) }}</td>
             <td class="px-4 py-3 text-right flex justify-end items-center gap-2">
-              <a href="{{ url_for('productos.detalle_producto', uuid=p.uuid_producto) }}" class="text-primary hover:text-primary/80 transition-colors" title="Ver detalles">
-                 <i data-lucide="info" class="w-4 h-4 cursor-pointer hover:text-blue-600"></i>
+              <a href="{{ url_for('productos_bp.detalle_producto', uuid=p.uuid_producto) }}"
+                class="text-primary hover:text-primary/80 transition-colors" title="Ver detalles">
+                <i data-lucide="info" class="w-4 h-4 cursor-pointer hover:text-blue-600"></i>
               </a>
-              <a href="{{ url_for('productos.editar_producto', uuid=p.uuid_producto) }}" class="text-blue-500 hover:text-blue-700">
+              <a href="{{ url_for('productos_bp.editar_producto', uuid=p.uuid_producto) }}"
+                class="text-blue-500 hover:text-blue-700">
                 <i data-lucide="edit-2" class="w-4 h-4"></i>
               </a>
-              <button type="button" onclick="openDeleteModal('{{ p.uuid_producto }}')" class="text-red-500 hover:text-red-700 {% if not p.active %}opacity-50 cursor-not-allowed{% endif %}" {% if not p.active %}disabled{% endif %}>
+              <button type="button" onclick="openDeleteModal('{{ p.uuid_producto }}')"
+                class="text-red-500 hover:text-red-700 {% if not p.active %}opacity-50 cursor-not-allowed{% endif %}" {%
+                if not p.active %}disabled{% endif %}>
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
               </button>
             </td>
@@ -161,7 +167,7 @@
 
 <script>
   // Toggle para mostrar/ocultar filtros
-  document.getElementById('filterToggle').addEventListener('click', function() {
+  document.getElementById('filterToggle').addEventListener('click', function () {
     const filterPanel = document.getElementById('filterPanel');
     filterPanel.classList.toggle('hidden');
   });
@@ -175,7 +181,7 @@
     const modal = document.getElementById("deleteModal");
     const form = document.getElementById("deleteForm");
 
-    form.action = `/productos/eliminar/${uuid}`;
+    form.action = "{{ url_for('productos_bp.eliminar_producto', uuid='__uuid__') }}".replace('__uuid__', uuid);
     modal.classList.remove("hidden");
     modal.classList.add("flex");
   }
