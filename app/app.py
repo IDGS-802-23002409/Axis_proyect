@@ -170,7 +170,9 @@ def create_app():
     application.register_blueprint(bp.orden_bp, url_prefix='/orden_produccion')
     application.register_blueprint(bp.security_bp, url_prefix='/security')
     application.register_blueprint(bp.catalog_bp, url_prefix='')
+    application.register_blueprint(bp.productos_bp, url_prefix='')
     application.register_blueprint(bp.checkout_bp, url_prefix='')
+    application.register_blueprint(bp.costo_utilidad_bp, url_prefix='')
 
     # ── Context Processor for Dynamic Layout ──────────────────
     @application.context_processor
