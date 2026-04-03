@@ -1,7 +1,13 @@
 import uuid
 from app.utils.database_connection import db
 from sqlalchemy import Boolean, Column, String, Integer, Numeric, DateTime, Enum, Text, ForeignKey, func, CheckConstraint
+from sqlalchemy import Enum
 
+estatus = Column(
+    Enum('ACTIVO', 'INACTIVO', name='estatus_modelo'),
+    default='ACTIVO',
+    nullable=False
+)
 
 class ModeloRopa(db.Model):
     __tablename__ = 'modelos_ropa'
@@ -12,6 +18,13 @@ class ModeloRopa(db.Model):
     uuid_categoria = Column(String(36), ForeignKey('categorias.uuid_categoria'), nullable=False)
     fecha_creacion = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    #falto estatus
+    estatus = Column(
+        Enum('ACTIVO', 'INACTIVO', name='estatus_modelo'),
+        default='ACTIVO',
+        nullable=False
+    )
 
     categoria = db.relationship('Categoria', backref=db.backref('modelos', lazy=True))
 
