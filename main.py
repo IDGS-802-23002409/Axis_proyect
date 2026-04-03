@@ -1,4 +1,8 @@
 from app.app import app
+from app.utils.database_connection import db
+
+with app.app_context():
+    db.create_all()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",debug=True, port=3030)
+    app.run(debug=True, port=3030)

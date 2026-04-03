@@ -8,7 +8,9 @@ class RolloInventario(db.Model):
 
     uuid_rollo = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     uuid_insumo = Column(String(36), ForeignKey('insumos.uuid_insumo'), nullable=False)
-    uuid_detalle_compra = Column(String(36), ForeignKey('compras_detalle.uuid_detalle_compra'))
+    #uuid_detalle_compra = Column(String(36), ForeignKey('compras_detalle.uuid_detalle_compra'))
+    uuid_detalle_compra = Column(String(36), ForeignKey('compras_detalle.uuid_detalle_compra'), nullable=False)
+
     metraje_inicial = Column(Numeric(12, 4), nullable=False)
     metraje_continuo_actual = Column(Numeric(12, 4), nullable=False)
     fecha_creacion = Column(DateTime, server_default=func.now())

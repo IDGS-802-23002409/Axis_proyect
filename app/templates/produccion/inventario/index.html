@@ -1,0 +1,200 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="min-h-screen bg-white text-neutral-900 font-sans p-8 xl:p-12">
+
+    <!-- HEADER -->
+    <div class="mb-10 border-b pb-6">
+        <h1 class="text-xl font-bold uppercase text-black">
+            Inventario General
+        </h1>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+
+        <!--  TOTAL METROS DISPONIBLES -->
+        <div
+            class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm hover:border-neutral-300 transition-all">
+
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+                    Metros Totales
+                </span>
+                <i class="fas fa-ruler-combined text-neutral-300"></i>
+            </div>
+
+            <div class="text-4xl font-bold mb-1 text-black">
+                {{ total_metros_global }} m
+            </div>
+
+            <div class="text-[10px] text-neutral-400 font-medium">
+                Disponible en rollos
+            </div>
+        </div>
+
+        <!--  STOCK CRÍTICO -->
+        <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-red-500">
+                    Stock Crítico
+                </span>
+                <i class="fas fa-exclamation-circle text-red-200"></i>
+            </div>
+
+            {% set criticos = inventario | selectattr('stock_total', 'lt', 10) | list %}
+
+            <div class="text-4xl font-bold mb-1 text-black">
+                {{ criticos|length }}
+            </div>
+
+            <div class="text-[10px] text-neutral-400 uppercase">
+                Requieren reposición
+            </div>
+        </div>
+
+        <!--  MERMA TOTAL -->
+        <div class="bg-white border border-neutral-200 p-6 rounded-2xl shadow-sm">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-red-500">
+                    Merma de Rollos
+                </span>
+                <i class="fas fa-cut text-red-200"></i>
+            </div>
+
+            <div class="text-4xl font-bold mb-1 text-black">
+                {{ merma_total }} m
+            </div>
+
+            <div class="text-[10px] text-neutral-400 uppercase">
+                Total de material desperdiciado
+            </div>
+        </div>
+
+    </div>
+    <!-- ============================= -->
+    <!--  TABLA ROLLOS -->
+    <!-- ============================= -->
+    <div class="mb-14">
+        <h2 class="text-sm font-bold uppercase text-neutral-500 mb-4">
+            Insumos por Rollo
+        </h2>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm border border-neutral-200">
+
+                <thead class="bg-neutral-100 text-xs uppercase text-neutral-600">
+                    <tr>
+                        <th class="px-4 py-3 text-left">Insumo</th>
+                        <th class="px-4 py-3 text-left">SKU</th>
+                        <th class="px-4 py-3 text-left">Rollos</th>
+                        <th class="px-4 py-3 text-left">Metros Totales</th>
+                        <th class="px-4 py-3 text-left">Nota</th>
+                        <th class="px-4 py-3 text-center">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y">
+                    {% for insumo in inventario if insumo.tipo == 'ROLLO' %}
+                    <tr class="hover:bg-neutral-50">
+
+                        <!-- NOMBRE -->
+                        <td class="px-4 py-3 font-semibold">
+                            {{ insumo.nombre }}
+                        </td>
+
+                        <!-- SKU -->
+                        <td class="px-4 py-3 font-semibold">
+                            {{ insumo.sku }}
+                        </td>
+
+
+
+                        <!-- ROLLOS -->
+                        <td class="px-4 py-3 font-medium">
+                            {{ insumo.total_rollos }}
+                        </td>
+
+                        <!-- METROS -->
+                        <td class="px-4 py-3 font-bold">
+                            {{ insumo.total_metros }} m
+                        </td>
+                        <!-- EXPLICACION DE CUANTO TRAE CADA ROLLO -->
+                        <td class="px-4 py-3 text-xs text-neutral-500">
+                            <div class="flex flex-col">
+                                <span class="font-bold">
+                                    1 ROLLO
+                                </span>
+                                <span class="text-neutral-400">
+                                    = {{ insumo.contenido }} {{ insumo.unidad_base }}
+                                </span>
+                            </div>
+                        </td>
+
+                        <!-- ACCIONES -->
+                        <td class="px-4 py-3 text-center">
+                            <a href="{{ url_for('inventario_bp.ver_insumo', uuid=insumo.uuid_insumo) }}"
+                                class="text-xs font-bold text-white bg-black px-4 py-2 rounded hover:bg-neutral-800">
+                                Ver
+                            </a>
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+    <!-- ============================= -->
+    <!--  TABLA PIEZAS -->
+    <!-- ============================= -->
+    <div>
+        <h2 class="text-sm font-bold uppercase text-neutral-500 mb-4">
+            Insumos por Pieza
+        </h2>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm border border-neutral-200">
+
+                <thead class="bg-neutral-100 text-xs uppercase text-neutral-600">
+                    <tr>
+                        <th class="px-4 py-3 text-left">Insumo</th>
+                        <th class="px-4 py-3 text-left">SKU</th>
+                        <th class="px-4 py-3 text-left">Stock Total</th>
+                        <th class="px-4 py-3 text-center">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y">
+                    {% for insumo in inventario if insumo.tipo == 'PIEZA' %}
+                    <tr class="hover:bg-neutral-50">
+
+                        <td class="px-4 py-3 font-semibold">
+                            {{ insumo.nombre }}
+                        </td>
+
+                        <td class="px-4 py-3 font-semibold">
+                            {{ insumo.sku }}
+                        </td>
+
+                        <td class="px-4 py-3 font-bold">
+                            {{ insumo.stock_total }} {{ insumo.unidad_base }}
+                        </td>
+
+                        <td class="px-4 py-3 text-center">
+                            <a href="{{ url_for('inventario_bp.ver_insumo', uuid=insumo.uuid_insumo) }}"
+                                class="text-xs font-bold text-white bg-black px-4 py-2 rounded hover:bg-neutral-800">
+                                Ver
+                            </a>
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
