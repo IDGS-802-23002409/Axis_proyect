@@ -87,7 +87,7 @@
                                     <option value="{{ insumo.uuid_insumo }}" data-unidad="{{ insumo.unidad_medida }}"
                                         data-cantidad="{{ insumo.contenido_cantidad }}"
                                         data-unidaduso="{{ insumo.contenido_unidad_medida }}"
-                                        data-ancho="{{ insumo.ancho or 0 }}">
+                                        >
                                         {{ insumo.nombre }}
                                     </option>
                                     {% endfor %}
@@ -187,7 +187,7 @@
         let unidad = o.dataset.unidad;
         let cantidad = o.dataset.cantidad;
         let unidadUso = o.dataset.unidaduso;
-        let ancho = o.dataset.ancho;
+        
 
         // MENSAJE INTELIGENTE
         if (unidad === "PIEZA") {
@@ -196,7 +196,7 @@
             cantidadInput.min = "1";
 
         } else {
-            div.innerText = `1 ROLLO = ${cantidad} ${unidadUso} | Ancho: ${ancho} m`;
+            div.innerText = `1 ROLLO = ${cantidad} ${unidadUso} `;
             cantidadInput.step = "1";
             cantidadInput.min = "1";
         }
