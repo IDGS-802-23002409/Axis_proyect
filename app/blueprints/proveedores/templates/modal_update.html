@@ -1,0 +1,38 @@
+{% import "_macros.html" as m %}
+
+<div id="modal-update" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden px-4">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 transform transition-all">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-black text-xl uppercase italic tracking-tighter text-primary">Actualizar Proveedor</h3>
+            <button onclick="document.getElementById('modal-update').classList.add('hidden')" class="text-muted-foreground hover:text-black transition">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <form id="form-update" action="" method="POST" class="space-y-4">
+            {{ form.csrf_token }}
+
+            {{ m.render_field(form.razon_social, id="upd_razon_social") }}
+            {{ m.render_field(form.rfc, id="upd_rfc") }}
+            
+            <div class="grid grid-cols-2 gap-4">
+                {{ m.render_field(form.telefono, id="upd_telefono") }}
+                {{ m.render_field(form.categoria_insumo, id="upd_categoria") }}
+            </div>
+
+            {{ m.render_field(form.contacto_nombre, id="upd_contacto") }}
+
+            <!-- Campo de Estatus (Solo en edición) -->
+            <div class="flex items-center gap-3 p-3 bg-sidebar rounded-lg border border-border">
+                {{ form.estatus(id="upd_estatus", class="w-4 h-4 rounded border-gray-300 text-black focus:ring-black") }}
+                <label for="upd_estatus" class="text-xs font-bold uppercase tracking-tighter">Proveedor Activo</label>
+            </div>
+
+            <div class="pt-4">
+                <button type="submit" class="w-full bg-black text-white py-3 rounded-xl font-bold uppercase text-xs tracking-[0.2em] hover:bg-zinc-800 transition-all shadow-lg active:scale-95">
+                    Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

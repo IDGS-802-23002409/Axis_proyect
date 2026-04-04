@@ -1,0 +1,31 @@
+{% import "_macros.html" as m %}
+
+<div id="modal-registro" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-black text-xl uppercase italic tracking-tighter">Nuevo Proveedor</h3>
+            <button onclick="document.getElementById('modal-registro').classList.add('hidden')" class="text-muted-foreground hover:text-black">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <form action="{{ url_for('proveedores.guardar') }}" method="POST" class="space-y-4">
+            {{ form.csrf_token }}
+            {{ m.render_field(form.razon_social, "AXIS SOLUTIONS S.A.") }}
+            {{ m.render_field(form.rfc, "ABC123456XYZ") }}
+            
+            <div class="grid grid-cols-2 gap-4">
+                {{ m.render_field(form.telefono, "5512345678") }}
+                {{ m.render_field(form.categoria_insumo, "Telas") }}
+            </div>
+            
+            {{ m.render_field(form.contacto_nombre, "Nombre del responsable") }}
+
+            <div class="pt-4">
+                <button type="submit" class="w-full bg-black text-white py-3 rounded-xl font-bold uppercase text-xs tracking-[0.2em] hover:bg-zinc-800 transition-all shadow-lg active:scale-95">
+                    Registrar en Sistema
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

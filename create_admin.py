@@ -51,4 +51,4 @@ def create_admin(email, password, name):
 
 if __name__ == "__main__":
     # Datos por defecto — cámbialos si lo deseas
-    create_admin("unsunken06@gmail.com", "12345678", "Administrador Axis")
+    create_admin("hguzmanp.1@gmail.com", "12345678", "Administrador Axis")

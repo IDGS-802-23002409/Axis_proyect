@@ -1,0 +1,405 @@
+{% extends "dashboard/layout_admin.html" %}
+
+{% block content %}
+
+{# ══ Encabezado ══════════════════════════════════════════════════════════════ #}
+<div class="flex items-start justify-between mb-8">
+    <div>
+        <div class="flex items-center gap-3 mb-2">
+            <span class="text-[10px] font-bold tracking-widest uppercase text-gray-500 border border-gray-700 px-2 py-0.5 rounded">
+                Reporte de Rentabilidad
+            </span>
+            <span class="text-[10px] font-bold tracking-widest uppercase bg-yellow-400 text-gray-900 px-2 py-0.5 rounded">
+                Costo Real · Últ. 5 Compras
+            </span>
+        </div>
+
+        {% if prenda_activa %}
+        <h1 class="text-3xl font-black text-white uppercase tracking-tighter leading-none">
+            {{ prenda_activa.nombre_modelo }}
+        </h1>
+        <p class="text-xs text-gray-500 mt-1 uppercase tracking-widest">
+            SKU: {{ prenda_activa.sku_especifico }}
+            {% if prenda_activa.coleccion %}&nbsp;·&nbsp; Colección: {{ prenda_activa.coleccion }}{% endif %}
+            &nbsp;·&nbsp; Talla: {{ prenda_activa.talla }}
+        </p>
+        {% else %}
+        <h1 class="text-3xl font-black text-black uppercase tracking-tighter leading-none">
+            Gestión de Prendas
+        </h1>
+        <p class="text-xs text-gray-500 mt-1 uppercase tracking-widest">
+            Selecciona una prenda para ver su análisis de costos y rentabilidad
+        </p>
+        {% endif %}
+    </div>
+
+    {% if prenda_activa %}
+    <button onclick="window.print()"
+        class="flex items-center gap-2 px-4 py-2 border border-gray-700 rounded-lg text-sm font-semibold
+               text-gray-400 hover:border-gray-500 hover:text-white transition-colors mt-1">
+        <i data-lucide="printer" class="w-4 h-4"></i>
+        Exportar PDF
+    </button>
+    {% endif %}
+</div>
+
+{# ══ Layout: sidebar + panel ═════════════════════════════════════════════════ #}
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    {# ── Sidebar ──────────────────────────────────────────────────────────── #}
+    <aside class="lg:col-span-3">
+        <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden sticky top-24">
+
+            <div class="px-4 py-3 border-b border-gray-800">
+                <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Catálogo de Prendas</h2>
+            </div>
+
+            {# Buscador #}
+            <div class="px-3 py-2 border-b border-gray-800">
+                <div class="relative">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-gray-600 absolute left-2.5 top-2.5 pointer-events-none"></i>
+                    <input type="text" id="buscador-prendas" placeholder="Buscar prenda..."
+                        class="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-800 border border-gray-700 rounded-md
+                               focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-300 placeholder-gray-600">
+                </div>
+            </div>
+
+            <ul class="divide-y divide-gray-800/50 max-h-[62vh] overflow-y-auto" id="lista-prendas">
+                {% for p in prendas %}
+                <li data-searchable="{{ p.nombre_modelo }} {{ p.talla }} {{ p.sku_especifico }}">
+                    <a href="{{ url_for('prendas.detalle', uuid_producto=p.uuid_producto) }}"
+                        class="flex items-center gap-3 px-4 py-3 transition-colors group border-l-2
+                               {% if prenda_activa and prenda_activa.uuid_producto == p.uuid_producto %}
+                                   bg-gray-800 border-blue-500
+                               {% else %}
+                                   border-transparent hover:bg-gray-800/50 hover:border-gray-600
+                               {% endif %}">
+                        <div class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="shirt" class="w-4 h-4 text-gray-600 group-hover:text-blue-400 transition-colors"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-gray-200 truncate leading-tight">{{ p.nombre_modelo }}</p>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-wide">
+                                {{ p.talla }} · {{ p.sku_especifico }}
+                            </p>
+                        </div>
+                        {% if p.margen_pct is defined %}
+                        <span class="ml-auto text-[10px] font-bold flex-shrink-0
+                            {% if p.margen_pct >= 50 %}text-green-400
+                            {% elif p.margen_pct >= 30 %}text-yellow-400
+                            {% else %}text-red-400{% endif %}">
+                            {{ "%.0f"|format(p.margen_pct) }}%
+                        </span>
+                        {% endif %}
+                    </a>
+                </li>
+                {% else %}
+                <li class="px-4 py-10 text-center text-xs text-gray-600">
+                    Sin prendas activas registradas.
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </aside>
+
+    {# ── Panel de detalle ─────────────────────────────────────────────────── #}
+    <div class="lg:col-span-9 space-y-5">
+
+        {% if not prenda_activa %}
+        <div class="bg-gray-900 border border-gray-800 rounded-xl flex flex-col items-center justify-center py-28 text-center">
+            <div class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                <i data-lucide="shirt" class="w-8 h-8 text-gray-700"></i>
+            </div>
+            <p class="text-sm font-bold text-gray-500 uppercase tracking-widest">Ninguna prenda seleccionada</p>
+            <p class="text-xs text-gray-600 mt-2 max-w-xs leading-relaxed">
+                Elige una prenda del catálogo para ver su desglose de costos y margen de ganancia.
+            </p>
+        </div>
+
+        {% else %}
+
+        {# ── KPIs ─────────────────────────────────────────────────────────── #}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Costo Insumos</p>
+                    <i data-lucide="package" class="w-4 h-4 text-gray-700"></i>
+                </div>
+                <p class="text-2xl font-black text-white tracking-tight">
+                    ${{ "{:,.2f}".format(resumen_costos.costo_insumos) }}
+                </p>
+                <p class="text-[10px] text-gray-600 mt-1">
+                    {{ resumen_costos.num_materiales }} insumos · precio real
+                </p>
+            </div>
+
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Costo Confección</p>
+                    <i data-lucide="scissors" class="w-4 h-4 text-gray-700"></i>
+                </div>
+                <p class="text-2xl font-black text-white tracking-tight">
+                    ${{ "{:,.2f}".format(resumen_costos.costo_confeccion) }}
+                </p>
+                <p class="text-[10px] text-gray-600 mt-1">Corte y manufactura</p>
+            </div>
+
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Costo Total (COGS)</p>
+                    <i data-lucide="layers" class="w-4 h-4 text-gray-700"></i>
+                </div>
+                <p class="text-2xl font-black text-white tracking-tight">
+                    ${{ "{:,.2f}".format(resumen_costos.cogs) }}
+                </p>
+                <p class="text-[10px] text-gray-600 mt-1">Por unidad producida</p>
+            </div>
+
+            {# Margen — tarjeta destacada #}
+            <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Margen de Ganancia</p>
+                    <i data-lucide="trending-up" class="w-4 h-4 text-blue-400"></i>
+                </div>
+                <p class="text-3xl font-black tracking-tight
+                    {% if resumen_costos.margen_pct >= 50 %}text-green-400
+                    {% elif resumen_costos.margen_pct >= 30 %}text-yellow-400
+                    {% else %}text-red-400{% endif %}">
+                    {{ "%.1f"|format(resumen_costos.margen_pct) }}%
+                </p>
+                <p class="text-[10px] text-gray-500 mt-1">
+                    Basado en retail ${{ "{:,.2f}".format(resumen_costos.precio_venta) }}
+                </p>
+            </div>
+        </div>
+
+        {# ── BOM + Resumen ─────────────────────────────────────────────────── #}
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+            {# Tabla BOM #}
+            <div class="lg:col-span-7 bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="list-tree" class="w-4 h-4 text-blue-400"></i>
+                        <h2 class="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                            Desglose de Insumos (BOM)
+                        </h2>
+                    </div>
+                    <span class="text-[10px] text-gray-600 uppercase tracking-widest">
+                        Precio prom. últ. 5 compras
+                    </span>
+                </div>
+
+                <table class="w-full text-sm">
+                    <thead class="text-[10px] uppercase tracking-widest text-gray-600 border-b border-gray-800">
+                        <tr>
+                            <th class="px-6 py-3 text-left">Insumo Requerido</th>
+                            <th class="px-4 py-3 text-right">Consumo</th>
+                            <th class="px-4 py-3 text-right">Precio Prom.</th>
+                            <th class="px-4 py-3 text-right">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-800/60">
+                        {% for linea in bom_activo %}
+                        <tr class="hover:bg-gray-800/40 transition-colors group">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-7 h-7 rounded-md bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                        <i data-lucide="layers" class="w-3.5 h-3.5 text-gray-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-200 text-xs leading-tight">
+                                            {{ linea.nombre_insumo }}
+                                        </p>
+                                        <p class="text-[10px] text-gray-600 capitalize">
+                                            {{ linea.categoria }}
+                                            {% if linea.ancho %}· {{ linea.ancho }}cm{% endif %}
+                                        </p>
+                                        {# Mini-historial de precios #}
+                                        {% if linea.historial %}
+                                        <div class="flex items-center gap-1 mt-1">
+                                            {% for h in linea.historial %}
+                                            <span class="text-[9px] text-gray-700 bg-gray-800 px-1 py-0.5 rounded"
+                                                  title="{{ h.fecha }}">${{ "%.2f"|format(h.precio) }}</span>
+                                            {% endfor %}
+                                            {% if linea.n_compras < 5 %}
+                                            <span class="text-[9px] text-yellow-600">
+                                                ({{ linea.n_compras }}/5)
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        {% else %}
+                                        <span class="text-[9px] text-yellow-700 mt-0.5 block">
+                                            Sin compras · usando catálogo
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-4 text-right text-xs font-medium text-gray-300">
+                                {{ linea.consumo }}
+                            </td>
+                            <td class="px-4 py-4 text-right text-xs text-gray-500">
+                                ${{ "{:,.4f}".format(linea.precio_promedio) }}
+                            </td>
+                            <td class="px-4 py-4 text-right text-xs font-bold text-gray-200">
+                                ${{ "{:,.2f}".format(linea.subtotal) }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-xs text-gray-600">
+                                No hay explosión de materiales definida para esta prenda.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    {% if bom_activo %}
+                    <tfoot class="border-t border-gray-700">
+                        <tr class="bg-gray-800/40">
+                            <td colspan="3" class="px-6 py-3 text-xs font-bold uppercase tracking-widest text-gray-500">
+                                Total Insumos
+                            </td>
+                            <td class="px-4 py-3 text-right text-sm font-black text-white">
+                                ${{ "{:,.2f}".format(resumen_costos.costo_insumos) }}
+                            </td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
+                </table>
+            </div>
+
+            {# Panel derecho: Estructura + Semáforo #}
+            <div class="lg:col-span-5 flex flex-col gap-4">
+
+                {# Resumen de Estructura #}
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                    <div class="flex items-center gap-2 mb-5">
+                        <i data-lucide="pie-chart" class="w-4 h-4 text-blue-400"></i>
+                        <h2 class="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                            Resumen de Estructura
+                        </h2>
+                    </div>
+
+                    <div class="space-y-3 text-xs">
+                        <div class="flex justify-between items-center">
+                            <span class="flex items-center gap-2 text-gray-400">
+                                <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                                Total Materiales
+                            </span>
+                            <span class="font-bold text-white">
+                                ${{ "{:,.2f}".format(resumen_costos.costo_insumos) }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="flex items-center gap-2 text-gray-400">
+                                <span class="w-2 h-2 rounded-full bg-gray-500 inline-block"></span>
+                                Total Confección
+                            </span>
+                            <span class="font-bold text-white">
+                                ${{ "{:,.2f}".format(resumen_costos.costo_confeccion) }}
+                            </span>
+                        </div>
+                        <div class="border-t border-gray-800 pt-3 flex justify-between items-center">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-gray-300">
+                                Costo Base de Prenda
+                            </span>
+                            <span class="font-black text-white">${{ "{:,.2f}".format(resumen_costos.cogs) }}</span>
+                        </div>
+                    </div>
+
+                    {# Barra de composición #}
+                    {% if resumen_costos.cogs > 0 %}
+                    {% set pct_mat = (resumen_costos.costo_insumos / resumen_costos.cogs * 100) | round(1) %}
+                    <div class="mt-4 h-1.5 rounded-full overflow-hidden flex bg-gray-800">
+                        <div class="h-full bg-blue-500 transition-all" style="width: {{ pct_mat }}%"></div>
+                        <div class="h-full bg-gray-500 flex-1"></div>
+                    </div>
+                    <div class="flex justify-between mt-1.5 text-[10px] text-gray-600">
+                        <span>Materiales {{ pct_mat }}%</span>
+                        <span>Confección {{ (100 - pct_mat) | round(1) }}%</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {# Estrategia de Venta — SOLO LECTURA #}
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="tag" class="w-4 h-4 text-blue-400"></i>
+                        <h2 class="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                            Estrategia de Venta (Retail)
+                        </h2>
+                    </div>
+
+                    <div class="space-y-3 text-xs">
+                        <div class="flex justify-between items-center bg-gray-800 rounded-lg px-4 py-3">
+                            <span class="text-gray-400">Precio de Venta</span>
+                            <span class="font-black text-white text-base">
+                                ${{ "{:,.2f}".format(resumen_costos.precio_venta) }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center bg-gray-800 rounded-lg px-4 py-3">
+                            <span class="text-gray-400">Utilidad Neta / Prenda</span>
+                            <span class="font-black
+                                {% if resumen_costos.utilidad_neta > 0 %}text-green-400{% else %}text-red-400{% endif %} text-base">
+                                ${{ "{:,.2f}".format(resumen_costos.utilidad_neta) }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center bg-gray-800 rounded-lg px-4 py-3">
+                            <span class="text-gray-400">Margen</span>
+                            <span class="font-black text-xl
+                                {% if resumen_costos.margen_pct >= 50 %}text-green-400
+                                {% elif resumen_costos.margen_pct >= 30 %}text-yellow-400
+                                {% else %}text-red-400{% endif %}">
+                                {{ "%.1f"|format(resumen_costos.margen_pct) }}%
+                            </span>
+                        </div>
+                    </div>
+
+                    {# Semáforo de rentabilidad #}
+                    <div class="mt-4 pt-4 border-t border-gray-800 grid grid-cols-3 gap-2 text-center text-[10px]">
+                        <div class="rounded-lg p-2
+                            {% if resumen_costos.margen_pct >= 50 %}bg-green-900/40 ring-1 ring-green-800{% else %}bg-gray-800{% endif %}">
+                            <p class="font-black text-green-400">≥ 50%</p>
+                            <p class="text-gray-600 mt-0.5">Óptimo</p>
+                        </div>
+                        <div class="rounded-lg p-2
+                            {% if 30 <= resumen_costos.margen_pct < 50 %}bg-yellow-900/40 ring-1 ring-yellow-800{% else %}bg-gray-800{% endif %}">
+                            <p class="font-black text-yellow-400">30–49%</p>
+                            <p class="text-gray-600 mt-0.5">Aceptable</p>
+                        </div>
+                        <div class="rounded-lg p-2
+                            {% if resumen_costos.margen_pct < 30 %}bg-red-900/40 ring-1 ring-red-800{% else %}bg-gray-800{% endif %}">
+                            <p class="font-black text-red-400">&lt; 30%</p>
+                            <p class="text-gray-600 mt-0.5">Revisar</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>{# fin col derecha #}
+        </div>{# fin grid BOM #}
+
+        {% endif %}{# fin prenda_activa #}
+    </div>{# fin panel #}
+</div>{# fin grid principal #}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    lucide.createIcons();
+
+    // Buscador del sidebar
+    const buscador = document.getElementById('buscador-prendas');
+    const items    = document.querySelectorAll('#lista-prendas li[data-searchable]');
+    if (buscador) {
+        buscador.addEventListener('input', () => {
+            const q = buscador.value.toLowerCase();
+            items.forEach(li => {
+                li.style.display = li.dataset.searchable.toLowerCase().includes(q) ? '' : 'none';
+            });
+        });
+    }
+</script>
+{% endblock %}
