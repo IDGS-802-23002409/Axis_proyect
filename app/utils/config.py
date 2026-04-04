@@ -10,6 +10,7 @@ DB_PASSWORD = os.getenv('DB_PASSWORD', 'flask_password')
 DB_HOST = os.getenv('DB_HOST', 'localhost')
 DB_PORT = os.getenv('DB_PORT', '3306')
 DB_NAME = os.getenv('DB_NAME', 'flask_db')
+SECRET_KEY = os.getenv('clave_secreta_axis')
 
 # ── Mail ─────────────────────────────────────
 MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')

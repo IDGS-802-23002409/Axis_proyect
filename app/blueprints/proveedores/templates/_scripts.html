@@ -1,0 +1,80 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<script>
+    // Inicializar íconos
+    lucide.createIcons();
+
+    // ── Función Actualizar ─────────────────────────────────────────
+    function actualizarDashboard() {
+        const icon = document.getElementById('icon-refresh');
+        const btn = document.getElementById('btn-actualizar');
+        icon.style.transition = 'transform 0.6s ease';
+        icon.style.transform = 'rotate(360deg)';
+        btn.disabled = true;
+
+        setTimeout(() => {
+            window.location.reload();
+        }, 600);
+    }
+
+    // ── Función Reporte PDF ────────────────────────────────────────
+    function generarReporte() {
+        window.print();
+    }
+
+    // ── Configuración de la Gráfica ─────────────────────────────────
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    const labels = {{ chart_labels | tojson }};
+    const dataVentas = {{ chart_data | tojson }};
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Ventas ($)',
+                data: dataVentas,
+                borderColor: '#111827', 
+                backgroundColor: 'rgba(17, 24, 39, 0.05)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4, 
+                pointRadius: 4,
+                pointBackgroundColor: '#111827'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f3f4f6' }, ticks: { size: 10, color: '#9ca3af' } },
+                x: { grid: { display: false }, ticks: { size: 10, color: '#9ca3af' } }
+            }
+        }
+    });
+</script>
+
+<style>
+@media print {
+    /* Ocultar aside, nav y botones */
+    aside, nav, .print\:hidden, #btn-actualizar, .flex.justify-end {
+        display: none !important;
+    }
+    
+    main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+    .bg-white, .bg-\[\#111111\] { border: 1px solid #ddd !important; shadow: none !important; }
+    
+    /* Encabezado de Reporte solo para impresión */
+    body::before {
+        content: "AXIS STREETWEAR - REPORTE DE RENDIMIENTO DASHBOARD";
+        display: block;
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 20px;
+        border-bottom: 2px solid black;
+        padding-bottom: 10px;
+    }
+}
+</style>

@@ -12,8 +12,11 @@ from app.utils.config import (
 )
 from app.utils.database_connection import db
 import app.models 
+from app.utils.config import SECRET_KEY
+import app.models  # noqa: F401 — ensures all models are registered with SQLAlchemy
 from app.models.usuarios import Usuario, Role
 import app.blueprints as bp
+from app.blueprints import dashboard_administrativo
 from flask_wtf.csrf import CSRFProtect
 
 csrf = CSRFProtect()
@@ -112,6 +115,21 @@ def create_app():
     db.init_app(application)
     mail.init_app(application)
     Migrate(application, db)
+
+    from app.blueprints.dashboard_administrativo import dashboard_bp
+    application.register_blueprint(dashboard_bp, url_prefix='/dashboard_administrativo')
+
+    from app.blueprints.proveedores import proveedores_bp
+    application.register_blueprint(proveedores_bp, url_prefix='/proveedores')
+
+    from app.blueprints.alertas import alertas_bp
+    application.register_blueprint(alertas_bp, url_prefix='/alertas')
+
+    from app.blueprints.prendas import prendas_bp
+    application.register_blueprint(prendas_bp, url_prefix='/prendas')
+
+    from app.blueprints.ventas import ventas_bp
+    application.register_blueprint(ventas_bp, url_prefix='/ventas')
 
     # Flask-Security datastore
     user_datastore = SQLAlchemyUserDatastore(db, Usuario, Role)

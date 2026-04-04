@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
-
+ 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AXIS - {% block title %}{% endblock %}</title>
-
-  <!-- Tailwind CDN -->
+ 
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pE7d+0WXj+q8phl5kI+4XKg+QFQ5R4x1A8hM/6kVRkZC44kY6d6LhhC/0L0K74uhdLr50QpQ9QKNV+6w4b7+g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
@@ -32,23 +31,136 @@
       }
     }
   </script>
-
-  <!-- Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-
+ 
 <body class="bg-background text-foreground font-sans">
-
   <div class="flex min-h-screen">
-
+ 
     <!-- SIDEBAR -->
-    <aside class="w-64 bg-sidebar border-r border-border p-6 flex flex-col gap-8">
-
+    <aside class="w-64 bg-sidebar border-r border-border p-6 flex flex-col gap-8 sticky top-0 h-screen overflow-y-auto">
+ 
       <!-- Brand -->
       <div>
         <h1 class="text-2xl font-extrabold tracking-wide">AXIS</h1>
         <p class="text-xs tracking-[0.2em] text-muted-foreground">URBAN APPAREL</p>
       </div>
+ 
+      <nav class="flex flex-col gap-6 flex-1">
+ 
+        {# ── Overview ──────────────────────────────── #}
+        <div>
+          <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Overview</p>
+          <a href="{{ url_for('dashboard_administrativo.index') }}"
+            class="flex items-center gap-3 px-4 h-10 rounded-md transition-colors text-sm
+              {% if request.blueprint == 'dashboard_administrativo' %}
+                bg-black text-white
+              {% else %}
+                text-muted-foreground hover:bg-secondary hover:text-black
+              {% endif %}">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+            Dashboard
+          </a>
+        </div>
+ 
+        {# ── Operations ────────────────────────────── #}
+        <div>
+          <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Operations</p>
+          <div class="flex flex-col gap-1">
+ 
+            <a href="#"
+              class="flex items-center gap-3 px-4 h-10 rounded-md transition-colors text-sm
+                text-muted-foreground hover:bg-secondary hover:text-black">
+              <i data-lucide="package" class="w-4 h-4"></i>
+              Insumos & Stocks
+            </a>
+ 
+            <a href="{{ url_for('prendas.index') }}"
+              class="flex items-center gap-3 px-4 h-10 rounded-md transition-colors text-sm
+                {% if request.blueprint == 'prendas' %}
+                  bg-black text-white
+                {% else %}
+                  text-muted-foreground hover:bg-secondary hover:text-black
+                {% endif %}">
+              <i data-lucide="shirt" class="w-4 h-4"></i>
+              Prendas
+            </a>
+ 
+            <a href="{{ url_for('ventas.index') }}"
+              class="flex items-center gap-3 px-4 h-10 rounded-md transition-colors text-sm
+                text-muted-foreground hover:bg-secondary hover:text-black">
+              <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+              Ventas
+            </a>
+ 
+          </div>
+        </div>
+ 
+        {# ── Control ───────────────────────────────── #}
+        <div>
+          <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Control</p>
+          <div class="flex flex-col gap-1">
+ 
+            <a href="{{ url_for('alertas.index') }}"
+              class="flex items-center gap-3 px-4 h-10 rounded-md transition-colors text-sm
+                {% if request.blueprint == 'alertas' %}
+                  bg-black text-white
+                {% else %}
+                  text-muted-foreground hover:bg-secondary hover:text-black
+                {% endif %}">
+              <i data-lucide="bell" class="w-4 h-4"></i>
+              Alertas
+            </a>
+ 
+            <a href="#"
+              class="flex items-center gap-3 px-4 h-10 rounded-md transition-colors text-sm
+                text-muted-foreground hover:bg-secondary hover:text-black">
+              <i data-lucide="settings" class="w-4 h-4"></i>
+              Configuración
+            </a>
+ 
+          </div>
+        </div>
+ 
+        {# ── Administración ────────────────────────── #}
+        <div>
+          <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Administración</p>
+          <div class="flex flex-col gap-1">
+ 
+            {% if current_user.has_role('admin') %}
+            <a href="{{ url_for('usuarios.index') }}"
+              class="flex items-center gap-3 px-4 h-10 rounded-md transition-colors text-sm
+                {% if request.blueprint == 'usuarios' %}
+                  bg-black text-white
+                {% else %}
+                  text-muted-foreground hover:bg-secondary hover:text-black
+                {% endif %}">
+              <i data-lucide="users" class="w-4 h-4"></i>
+              Usuarios
+            </a>
+            {% endif %}
+ 
+            {% if current_user.has_role('admin') or current_user.has_role('gerente') or current_user.has_role('produccion') %}
+            <a href="{{ url_for('proveedores.index') }}"
+              class="flex items-center gap-3 px-4 h-10 rounded-md transition-colors text-sm
+                {% if request.blueprint == 'proveedores' %}
+                  bg-black text-white
+                {% else %}
+                  text-muted-foreground hover:bg-secondary hover:text-black
+                {% endif %}">
+              <i data-lucide="truck" class="w-4 h-4"></i>
+              Proveedores
+            </a>
+            {% endif %}
+ 
+          </div>
+        </div>
+ 
+      </nav>
+ 
+      <!-- Footer del sidebar -->
+      <div class="text-[10px] uppercase tracking-widest text-muted-foreground">
+        Axis Streetwear · Live<br>Store Ops
 
       <!-- Nav -->
       <div>
@@ -82,62 +194,53 @@
           Costo y Utilidad
         </a>
       </div>
-
+ 
     </aside>
-
+ 
     <!-- MAIN -->
     <main class="flex-1 flex flex-col">
-
+ 
       <!-- TOPBAR -->
-      <div class="h-20 px-10 flex items-center justify-between">
-        <h2 class="uppercase font-bold text-lg">
-          {% block header %}{% endblock %}
-        </h2>
-
+      <div class="h-20 px-10 flex items-center justify-between border-b border-border sticky top-0 bg-white z-40">
+        <div>
+          <h2 class="uppercase font-bold text-lg">{% block header %}{% endblock %}</h2>
+          <p class="text-xs text-muted-foreground uppercase tracking-wider">{% block subheader %}{% endblock %}</p>
+        </div>
+ 
         <div class="flex items-center gap-4">
-
-          <!-- User -->
           <div class="flex items-center gap-3 bg-card border border-border px-3 py-1 rounded-full">
             <div class="text-right text-xs">
-              <p class="font-semibold">Admin</p>
-              <p class="text-muted-foreground uppercase">Taller</p>
+              <p class="font-semibold">
+                {{ current_user.nombre_completo.split()[0] if current_user.is_authenticated else 'Admin' }} · AXIS
+              </p>
+              <p class="text-muted-foreground uppercase">Store Manager</p>
             </div>
             <img class="w-9 h-9 rounded-full object-cover"
               src="https://storage.googleapis.com/banani-avatars/avatar%2Fmale%2F25-35%2FHispanic%2F1">
           </div>
-
         </div>
       </div>
-
+ 
+      {# Flash messages #}
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
       <div class="fixed top-4 right-4 z-50 space-y-2">
         {% for category, message in messages %}
-        <div class="flex items-center p-4 mb-4 text-sm rounded-lg shadow-lg border flash-message-enter
-{% if category == 'success' %} bg-green-50 border-green-200 text-green-800
-{% elif category == 'error' %} bg-red-50 border-red-200 text-red-800
-{% elif category == 'warning' %} bg-yellow-50 border-yellow-200 text-yellow-800
-{% elif category == 'info' %} bg-blue-50 border-blue-200 text-blue-800
-{% else %} bg-gray-50 border-gray-200 text-gray-800
-{% endif %}">
+        <div class="flex items-center p-4 text-sm rounded-lg shadow-lg border
+          {% if category == 'success' %}bg-green-50 border-green-200 text-green-800
+          {% elif category == 'error' or category == 'danger' %}bg-red-50 border-red-200 text-red-800
+          {% elif category == 'warning' %}bg-yellow-50 border-yellow-200 text-yellow-800
+          {% elif category == 'info' %}bg-blue-50 border-blue-200 text-blue-800
+          {% else %}bg-gray-50 border-gray-200 text-gray-800{% endif %}">
           <div class="shrink-0 mr-3">
-            {% if category == 'success' %}
-            <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
-            {% elif category == 'error' %}
-            <i data-lucide="x-circle" class="w-5 h-5 text-red-600"></i>
-            {% elif category == 'warning' %}
-            <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-600"></i>
-            {% elif category == 'info' %}
-            <i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
-            {% else %}
-            <i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>
-            {% endif %}
+            {% if category == 'success' %}<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
+            {% elif category == 'error' or category == 'danger' %}<i data-lucide="x-circle" class="w-5 h-5 text-red-600"></i>
+            {% elif category == 'warning' %}<i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-600"></i>
+            {% elif category == 'info' %}<i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
+            {% else %}<i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>{% endif %}
           </div>
-          <div class="flex-1 font-medium">
-            {{ message }}
-          </div>
-          <button type="button" class="ml-3 shrink-0 text-current hover:opacity-75 transition-opacity"
-            onclick="this.parentElement.remove()">
+          <div class="flex-1 font-medium">{{ message }}</div>
+          <button onclick="this.parentElement.remove()" class="ml-3 shrink-0 hover:opacity-75">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
@@ -145,12 +248,13 @@
       </div>
       {% endif %}
       {% endwith %}
-
+ 
       <!-- CONTENT -->
-      {% block container%}
-      {% endblock %}
+      <div class="flex-1 p-8 bg-background">
+        {% block content %}{% endblock %}
+      </div>
+ 
     </main>
-
   </div>
 
   <script>
@@ -164,7 +268,7 @@
     // Recrear iconos después de un pequeño delay para asegurar que se rendericen
     setTimeout(refreshIcons, 100);
   </script>
-
+{% block scripts %}{% endblock %}
 </body>
 
 </html>

@@ -1,0 +1,109 @@
+{% extends "produccion/layout.html" %}
+{% import "_macros.html" as m %}
+
+{% block content %}
+<div class="px-10 py-6 relative">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h3 class="text-xl font-bold uppercase tracking-tight">Directorio de Proveedores</h3>
+            <p class="text-[10px] text-muted-foreground font-mono uppercase">Total: {{ proveedores|length }} registros</p>
+        </div>
+        
+        {# SOLO ADMIN Y GERENTE VEN EL BOTÓN DE NUEVO #}
+        {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
+        <button onclick="document.getElementById('modal-registro').classList.remove('hidden')"
+            class="bg-black text-white px-6 py-2 rounded-md flex items-center gap-2">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span class="text-xs font-bold uppercase">Nuevo Proveedor</span>
+        </button>
+        {% endif %}
+    </div>
+
+    {% include "_filtros.html" %}
+
+    <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-sidebar border-b">
+                <tr class="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    <th class="px-6 py-4">Razón Social</th>
+                    <th class="px-6 py-4">Télefono</th>
+                    <th class="px-6 py-4">RFC</th>
+                    <th class="px-6 py-4">Categoría</th>
+                    <th class="px-6 py-4 text-center">Estado</th>
+                    <th class="px-6 py-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in proveedores %}
+                <tr class="hover:bg-sidebar/50 border-b transition-colors">
+                    <td class="px-6 py-4 text-sm font-medium uppercase">{{ p.razon_social }}</td>
+                    <td class="px-6 py-4 text-sm font-mono text-muted-foreground">
+                        {% if p.telefono and p.telefono|length >= 10 %}
+                        {{ p.telefono[:3] }}-{{ p.telefono[3:6] }}-{{ p.telefono[6:8] }}-{{ p.telefono[8:10] }}
+                        {% else %}
+                        {{ p.telefono or '---' }}
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm font-mono text-muted-foreground">{{ p.rfc }}</td>
+                    <td class="px-6 py-4 text-xs italic text-muted-foreground">{{ p.categoria_insumo or '---' }}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="status-badge px-3 py-1 text-[10px] font-bold uppercase rounded-full {{ 'bg-green-100 text-green-700' if p.estatus else 'bg-zinc-100 text-zinc-400' }}">
+                            {{ 'Activo' if p.estatus else 'Inactivo' }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex justify-center gap-3">
+                            <!-- Ver Detalles (Todos los roles permitidos) -->
+                            <button class="details-trigger text-muted-foreground hover:text-primary transition"
+                                data-uid="{{ p.uuid_proveedor }}" title="Ver detalles">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+
+                            <!-- Editar (Admin y Gerente) -->
+                            {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
+                            <button class="edit-trigger text-muted-foreground hover:text-black transition"
+                                data-uid="{{ p.uuid_proveedor }}" title="Editar">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                            </button>
+                            {% endif %}
+
+                            <!-- Eliminar (Solo Admin) -->
+                            {% if current_user.has_role('admin') %}
+                            <button class="delete-trigger text-muted-foreground hover:text-destructive transition"
+                                data-uid="{{ p.uuid_proveedor }}" title="Eliminar">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+
+                <!-- Fila de no resultados -->
+                <tr id="no-results-row" class="hidden">
+                    <td colspan="5" class="px-6 py-20 text-center">
+                        <div class="flex flex-col items-center gap-3 opacity-40">
+                            <i data-lucide="search-x" class="w-12 h-12"></i>
+                            <div>
+                                <p class="text-sm font-bold uppercase tracking-widest text-primary">No se encontraron
+                                    coincidencias</p>
+                                <button onclick="window.location.reload()"
+                                    class="mt-2 text-[10px] font-bold uppercase underline hover:text-black">Limpiar
+                                    filtros</button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# CARGA DE TODOS LOS MODALES #}
+{% include "modal_registro.html" %}
+{% include "modal_update.html" %}
+{% include "modal_delete.html" %}
+{% include "modal_detalles.html" %}
+{% include "_scripts.html" %}
+
+{% endblock %}
