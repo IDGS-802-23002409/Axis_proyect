@@ -1,0 +1,124 @@
+{% extends "produccion/layout.html" %}
+{% block title %}Inventario de Retazos de Tela{% endblock %}
+{% block header %}Inventario de Retazos de Tela{% endblock %}
+
+{% block container %}
+<div class="px-10 pb-10">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="p-4 bg-card border border-border rounded-lg">
+      <p class="text-xs text-muted-foreground">Total de Retazos</p>
+      <p class="text-2xl font-bold">{{ retazos|length }}</p>
+    </div>
+    <div class="p-4 bg-card border border-border rounded-lg">
+      <p class="text-xs text-muted-foreground">Metraje Total</p>
+      {% set metraje_total = retazos|sum(attribute='metraje') %}
+      <p class="text-2xl font-bold text-blue-500">{{ "%.2f"|format(metraje_total) }} m</p>
+    </div>
+    <div class="p-4 bg-card border border-border rounded-lg">
+      <p class="text-xs text-muted-foreground">Retazos por Defecto</p>
+      {% set defectos = retazos|selectattr('motivo_merma')|list %}
+      <p class="text-2xl font-bold text-amber-500">{{ defectos|length }}</p>
+    </div>
+    <div class="p-4 bg-card border border-border rounded-lg flex items-center justify-between">
+      <div>
+        <p class="text-xs text-muted-foreground">Acción</p>
+        <a href="{{ url_for('merma.registro_retazo') }}"
+          class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          Nuevo Retazo
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-card border border-border rounded-lg overflow-hidden">
+    <div class="flex justify-between items-center p-4 border-b border-border">
+      <h3 class="font-semibold">Relación de Retazos Registrados</h3>
+    </div>
+
+    {% if retazos %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-secondary border-b border-border">
+          <tr>
+            <th class="px-4 py-3 text-left font-semibold">Corte</th>
+            <th class="px-4 py-3 text-left font-semibold">Insumo / Tela</th>
+            <th class="px-4 py-3 text-right font-semibold">Metraje</th>
+            <th class="px-4 py-3 text-left font-semibold">Motivo</th>
+            <th class="px-4 py-3 text-left font-semibold">Fecha</th>
+            <th class="px-4 py-3 text-center font-semibold">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for retazo in retazos %}
+          <tr class="border-b border-border hover:bg-secondary transition">
+            <td class="px-4 py-3 font-mono text-xs">
+              {{ retazo.uuid_corte_origen[:8] }}…
+            </td>
+            <td class="px-4 py-3">
+              {% if retazo.rollo_origen and retazo.rollo_origen.insumo %}
+                <span class="font-semibold">{{ retazo.rollo_origen.insumo.nombre }}</span>
+                <span class="text-xs text-muted-foreground block">Rollo: {{ retazo.uuid_rollo_origen[:8] }}…</span>
+              {% else %}
+                <span class="text-muted-foreground">N/A</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-right font-semibold">
+              {{ "%.4f"|format(retazo.metraje) }} m
+            </td>
+            <td class="px-4 py-3 text-sm">
+              {% if retazo.motivo_merma %}
+                <span class="text-amber-600 font-medium wrap-break-word" title="{{ retazo.motivo_merma }}">
+                  {{ retazo.motivo_merma }}
+                </span>
+              {% else %}
+                <span class="text-gray-400 italic">Sin descripción</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-xs text-muted-foreground">
+              {{ retazo.fecha_creacion.strftime('%d/%m/%Y') if retazo.fecha_creacion else 'N/A' }}
+            </td>
+            <td class="px-4 py-3 text-center">
+              <div class="flex items-center justify-center gap-2">
+                <a href="{{ url_for('merma.detalle_retazo', uuid_retazo=retazo.uuid_retazo) }}"
+                   class="text-primary hover:underline text-xs">Ver</a>
+                
+                {% if retazo.ejecucion_corte and retazo.ejecucion_corte.orden_produccion and retazo.ejecucion_corte.orden_produccion.estado != 'Terminado' %}
+                <form method="POST"
+                      action="{{ url_for('merma.eliminar_retazo', uuid_retazo=retazo.uuid_retazo) }}"
+                      style="display:inline;"
+                      onsubmit="return confirm('¿Eliminar este retazo? Se revertirá el descuento de metraje.');">
+                  <button type="submit" class="text-rose-500 hover:underline text-xs">Eliminar</button>
+                </form>
+                {% else %}
+                <span class="text-xs text-muted-foreground" title="OP terminada — no editable">Bloqueada</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-8 text-center">
+      <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-4 text-muted-foreground"></i>
+      <p class="text-muted-foreground">No hay retazos registrados</p>
+      <a href="{{ url_for('merma.registro_retazo') }}" class="mt-4 inline-flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        Registrar Retazo
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const links = document.querySelectorAll('[data-lucide]');
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  });
+</script>
+{% endblock %}
