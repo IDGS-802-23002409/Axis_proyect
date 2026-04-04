@@ -43,6 +43,9 @@ def index():
 from decimal import Decimal, InvalidOperation
 
 
+from flask_security import current_user
+from decimal import Decimal, InvalidOperation
+
 @compras_bp.route("/create", methods=["GET", "POST"])
 @login_required
 @roles_accepted('admin', 'produccion')
@@ -67,38 +70,28 @@ def create():
             cantidades = request.form.getlist("cantidad[]")
             costos = request.form.getlist("costo[]")
 
-            # =========================
-            # VALIDACIÓN GENERAL
-            # =========================
             if not insumos_ids:
                 flash("Agrega al menos un insumo", "error")
                 return redirect(url_for("compras_bp.create"))
 
-            # =========================
             # CREAR ENCABEZADO
-            # =========================
             nueva_compra = CompraEncabezado(
                 folio_factura=form.folio_factura.data,
                 uuid_proveedor=form.uuid_proveedor.data,
-                uuid_usuario_registro="00000000-0000-0000-0000-000000000001",
+                uuid_usuario_registro=current_user.uuid_usuario,  # ahora toma el usuario logueado
                 estatus=form.estatus.data or "PENDIENTE",
             )
 
             db.session.add(nueva_compra)
             db.session.flush()
 
-            # IMPORTANTE: bandera clara
             es_recibido = nueva_compra.estatus == "RECIBIDO"
 
-            # =========================
-            # DETALLES
-            # =========================
+            # CREAR DETALLES
             for i in range(len(insumos_ids)):
-
                 if not insumos_ids[i]:
                     continue
 
-                # VALIDAR NUMÉRICOS
                 try:
                     cantidad = Decimal(cantidades[i])
                     costo = Decimal(costos[i])
@@ -106,88 +99,47 @@ def create():
                     flash("Cantidad o costo inválido", "error")
                     return redirect(url_for("compras_bp.create"))
 
-                if cantidad <= 0:
-                    flash("La cantidad debe ser mayor a 0", "error")
+                if cantidad <= 0 or costo < 0:
+                    flash("Cantidad o costo inválido", "error")
                     return redirect(url_for("compras_bp.create"))
 
-                if costo < 0:
-                    flash("El costo no puede ser negativo", "error")
-                    return redirect(url_for("compras_bp.create"))
-
-                # OBTENER INSUMO
                 insumo = Insumo.query.get(insumos_ids[i])
                 if not insumo:
                     flash("Insumo no encontrado", "error")
                     return redirect(url_for("compras_bp.create"))
 
-                # CREAR DETALLE
                 detalle = CompraDetalle(
                     uuid_compra=nueva_compra.uuid_compra,
                     uuid_insumo=insumo.uuid_insumo,
                     cantidad_comprada=cantidad,
-                    costo_unitario_compra=costo,
+                    costo_unitario_compra=costo
                 )
                 db.session.add(detalle)
                 db.session.flush()
 
-                # =========================
-                # SOLO SI ES RECIBIDO
-                # =========================
                 if es_recibido:
-
-                    #  CALCULAR STOCK BASE
+                    # CALCULAR STOCK
                     if insumo.unidad_medida == "PIEZA":
                         cantidad_base = cantidad
-
                     elif insumo.unidad_medida == "ROLLO":
                         cantidad_base = cantidad * Decimal(insumo.contenido_cantidad)
-
                     else:
                         cantidad_base = cantidad
 
-                    #  ACTUALIZAR STOCK
                     insumo.stock_total_acumulado += cantidad_base
 
-                    # =========================
-                    # CREAR ROLLOS
-                    # =========================
+                    # CREAR ROLLOS (sin ancho)
                     if insumo.unidad_medida == "ROLLO":
-
-                        #  VALIDACIÓN REAL DEL ANCHO
-                        if insumo.ancho is None:
-                            flash(f"El insumo '{insumo.nombre}' no tiene ancho definido", "error")
-                            return redirect(url_for("compras_bp.create"))
-
-                        try:
-                            ancho_real = Decimal(insumo.ancho)
-                        except (InvalidOperation, TypeError):
-                            flash(f"El ancho del insumo '{insumo.nombre}' es inválido", "error")
-                            return redirect(url_for("compras_bp.create"))
-
-                        if ancho_real <= 0:
-                            flash(f"El ancho del insumo '{insumo.nombre}' debe ser mayor a 0", "error")
-                            return redirect(url_for("compras_bp.create"))
-
-                        #  CREACIÓN DE ROLLOS
                         for _ in range(int(cantidad)):
-
                             rollo = RolloInventario(
                                 uuid_insumo=insumo.uuid_insumo,
                                 uuid_detalle_compra=detalle.uuid_detalle_compra,
                                 metraje_inicial=Decimal(insumo.contenido_cantidad),
-                                metraje_continuo_actual=Decimal(insumo.contenido_cantidad),
-
-                                #  AQUÍ SE MANDA CORRECTAMENTE
-                                ancho_real_recibido=ancho_real
+                                metraje_continuo_actual=Decimal(insumo.contenido_cantidad)
                             )
-
                             db.session.add(rollo)
 
-            # =========================
-            # COMMIT FINAL
-            # =========================
             db.session.commit()
-
             flash("Compra creada correctamente", "success")
             return redirect(url_for("compras_bp.index"))
 
@@ -334,7 +286,7 @@ def recibir(uuid_compra):
                             uuid_detalle_compra=detalle.uuid_detalle_compra,
                             metraje_inicial=Decimal(insumo.contenido_cantidad),
                             metraje_continuo_actual=Decimal(insumo.contenido_cantidad),
-                            ancho_real_recibido=ancho_real
+                            
                         )
                         db.session.add(rollo)
 

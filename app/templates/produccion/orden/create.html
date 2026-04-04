@@ -1,0 +1,104 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="flex min-h-screen bg-white text-neutral-900 font-sans">
+
+    <main class="flex-1 p-8 xl:p-12 max-w-3xl mx-auto">
+
+        <!-- HEADER -->
+        <header class="mb-10">
+            <h1 class="text-xl font-bold tracking-tight uppercase">
+                Nueva Orden de Producción
+            </h1>
+            <p class="text-sm text-neutral-500">
+                Genera una orden basada en la receta del producto
+            </p>
+        </header>
+
+        <!-- ALERTAS -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6 space-y-3">
+                    {% for category, message in messages %}
+                        <div class="px-4 py-3 rounded-lg 
+                            {% if category == 'danger' %}
+                                bg-red-100 text-red-700
+                            {% elif category == 'success' %}
+                                bg-green-100 text-green-700
+                            {% else %}
+                                bg-neutral-100 text-neutral-700
+                            {% endif %}
+                        ">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- FORM -->
+        <form method="POST" class="space-y-8 bg-white border rounded-xl p-8 shadow-sm">
+            {{ form.hidden_tag() }}
+
+            <!-- PRODUCTO -->
+            <div>
+                <label class="block text-sm font-medium mb-2">
+                    Producto
+                </label>
+                {{ form.uuid_producto(
+                    class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-black outline-none"
+                ) }}
+                <p class="text-xs text-neutral-400 mt-1">
+                    Selecciona el producto a fabricar
+                </p>
+            </div>
+
+            <!-- CANTIDAD -->
+            <div>
+                <label class="block text-sm font-medium mb-2">
+                    Cantidad a producir
+                </label>
+                {{ form.cantidad_a_producir(
+                    class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-black outline-none"
+                ) }}
+                <p class="text-xs text-neutral-400 mt-1">
+                    Debe ser mayor a 0
+                </p>
+            </div>
+
+            <!-- VENTA OPCIONAL -->
+            <div>
+                <label class="block text-sm font-medium mb-2">
+                    Venta relacionada (opcional)
+                </label>
+                {{ form.uuid_venta_detalle(
+                    class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-black outline-none"
+                ) }}
+            </div>
+
+            <!-- INFO IMPORTANTE -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
+                ⚠️ La orden consumirá automáticamente los insumos del inventario según la receta.
+                <br>
+                Si no hay suficiente material, la orden no se podrá crear.
+            </div>
+
+            <!-- BOTONES -->
+            <div class="flex justify-between items-center pt-4">
+
+                <a href="{{ url_for('orden_bp.index') }}"
+                   class="text-neutral-500 hover:text-black text-sm">
+                    ← Cancelar
+                </a>
+
+                {{ form.submit(
+                    class="bg-black text-white px-6 py-3 rounded-lg hover:bg-neutral-800 transition"
+                ) }}
+
+            </div>
+
+        </form>
+
+    </main>
+</div>
+{% endblock %}

@@ -7,11 +7,22 @@ class ExplosionMaterialesCabecera(db.Model):
     __tablename__ = 'explosion_materiales_cabecera'
 
     uuid_explosion = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    uuid_producto = Column(String(36), ForeignKey('productos_terminados.uuid_producto'), unique=True, nullable=False)
+    #uuid_producto = Column(String(36), ForeignKey('productos_terminados.uuid_producto'), unique=True, nullable=False)
     instrucciones_proceso = Column(Text)
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    #falta saber quien lo hizo
+    # NUEVO: usuario que creó la receta
+    uuid_usuario = Column(String(36), nullable=False)
 
-    producto = db.relationship('ProductoTerminado', backref=db.backref('explosion', uselist=False))
+    # NUEVO CAMPO ESTATUS
+    estatus = Column(
+        Enum('ACTIVO', 'INACTIVO', name='estatus_receta'),
+        default='ACTIVO',
+        nullable=False
+    )
+
+# relacion al reves porque producto apunta a la receta no al reves ocupas tener la receta antes que un prod terminado
+   # producto = db.relationship('ProductoTerminado', backref=db.backref('explosion', uselist=False))
 
     def __repr__(self):
         return f'<ExplosionMaterialesCabecera {self.uuid_explosion}>'
