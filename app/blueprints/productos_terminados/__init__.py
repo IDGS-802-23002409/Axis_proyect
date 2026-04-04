@@ -1,5 +1,10 @@
+
 from flask import Blueprint
 
-productos_bp = Blueprint('productos', __name__, template_folder='templates/produccion/productos_terminados')
+productos_bp= Blueprint(
+    "productos_bp",
+    __name__,
+    url_prefix="/productos_terminados"
+)
 
 from . import routes

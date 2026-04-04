@@ -33,6 +33,7 @@ class RetazoInventario(db.Model):
     fecha_creacion = Column(DateTime, server_default=func.now())
 
     rollo_origen = db.relationship('RolloInventario', backref=db.backref('retazos', lazy=True))
+    ejecucion_corte = db.relationship('EjecucionCorte', backref=db.backref('retazos_inventario', lazy=True))
 
     def __repr__(self):
         return f'<RetazoInventario {self.uuid_retazo}>'

@@ -1,0 +1,160 @@
+{% extends "produccion/layout.html" %}
+{% block title %}Detalle de Retazo{% endblock %}
+{% block header %}Detalle de Retazo{% endblock %}
+
+{% block container %}
+<div class="px-10 pb-10">
+  <div class="max-w-4xl mx-auto">
+
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h2 class="text-2xl font-bold">Retazo {{ retazo.uuid_retazo[:8] }}…</h2>
+        {% if retazo.ejecucion_corte and retazo.ejecucion_corte.orden_produccion and retazo.ejecucion_corte.orden_produccion.estado == 'Terminado' %}
+        <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md">
+          OP Terminada — solo lectura
+        </span>
+        {% endif %}
+      </div>
+      <div class="flex gap-3">
+        {% if retazo.ejecucion_corte and retazo.ejecucion_corte.orden_produccion and retazo.ejecucion_corte.orden_produccion.estado != 'Terminado' %}
+        <form method="POST"
+              action="{{ url_for('merma.eliminar_retazo', uuid_retazo=retazo.uuid_retazo) }}"
+              onsubmit="return confirm('¿Eliminar este retazo? Se revertirá el descuento de metraje.');">
+          <button type="submit"
+            class="flex items-center gap-2 px-4 py-2 border border-rose-200 text-rose-600 rounded-md text-sm hover:bg-rose-50">
+            <i data-lucide="trash" class="w-4 h-4"></i>
+            Eliminar
+          </button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('merma.index_retazos') }}"
+           class="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-secondary">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          Volver
+        </a>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- Información General -->
+      <div class="bg-card border border-border rounded-lg p-6">
+        <h3 class="font-semibold mb-4 border-b border-border pb-3">Información General</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs text-muted-foreground">Ejecución de Corte</label>
+            <p class="font-mono font-semibold">{{ retazo.uuid_corte_origen[:8] }}…</p>
+          </div>
+
+          <div>
+            <label class="text-xs text-muted-foreground">Orden de Producción</label>
+            {% if retazo.ejecucion_corte and retazo.ejecucion_corte.orden_produccion %}
+            <p class="font-semibold font-mono">
+              OP {{ retazo.ejecucion_corte.orden_produccion.uuid_op[:8] }}…
+              <span class="ml-2 text-xs px-2 py-0.5 rounded-full
+                {% if retazo.ejecucion_corte.orden_produccion.estado == 'Terminado' %}bg-gray-100 text-gray-600
+                {% elif retazo.ejecucion_corte.orden_produccion.estado == 'Pendiente' %}bg-yellow-100 text-yellow-700
+                {% else %}bg-blue-100 text-blue-700{% endif %}">
+                {{ retazo.ejecucion_corte.orden_produccion.estado }}
+              </span>
+            </p>
+            {% else %}
+            <p class="text-muted-foreground italic">No disponible</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <label class="text-xs text-muted-foreground">Rollo de Origen</label>
+            <p class="font-mono font-semibold">{{ retazo.uuid_rollo_origen[:8] }}…</p>
+            {% if retazo.rollo_usado and retazo.rollo_usado.insumo %}
+            <p class="text-xs text-muted-foreground">{{ retazo.rollo_usado.insumo.nombre }}</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <label class="text-xs text-muted-foreground">Fecha de Registro</label>
+            <p class="font-semibold">{{ retazo.fecha_creacion.strftime('%d/%m/%Y %H:%M:%S') if retazo.fecha_creacion else 'N/A' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información de Metraje y Tipo -->
+      <div class="bg-card border border-border rounded-lg p-6">
+        <h3 class="font-semibold mb-4 border-b border-border pb-3">Datos del Retazo</h3>
+        <div class="space-y-4">
+          <div class="p-4 bg-blue-50 border border-blue-200 rounded-md">
+            <label class="text-xs text-blue-600 font-semibold">Metraje del Retazo</label>
+            <p class="text-2xl font-bold text-blue-800">{{ "%.4f"|format(retazo.metraje) }} m</p>
+          </div>
+
+          <div>
+            <label class="text-xs text-muted-foreground">Motivo (si aplica)</label>
+            <div class="mt-2">
+              {% if retazo.motivo_merma %}
+                <p class="text-sm bg-amber-50 p-3 rounded border border-amber-200">
+                  <strong class="text-amber-900">{{ retazo.motivo_merma }}</strong>
+                </p>
+              {% else %}
+                <p class="text-sm text-gray-400 italic">Sin descripción (retazo normal de corte)</p>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if retazo.rollo_origen and retazo.rollo_origen.insumo %}
+          <div class="p-3 bg-gray-50 border border-gray-200 rounded-md">
+            <label class="text-xs text-gray-600 font-semibold">Insumo Afectado</label>
+            <p class="font-semibold">{{ retazo.rollo_origen.insumo.nombre }}</p>
+            <p class="text-xs text-muted-foreground">
+              Stock actual: {{ "%.4f"|format(retazo.rollo_origen.insumo.stock_total_acumulado) }}
+              {% if retazo.rollo_origen.insumo.contenido_unidad_medida %}
+                {{ retazo.rollo_origen.insumo.contenido_unidad_medida }}
+              {% else %}
+                metros
+              {% endif %}
+            </p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Impacto en la OP -->
+      {% if retazo.ejecucion_corte %}
+      <div class="bg-card border border-border rounded-lg p-6 md:col-span-2">
+        <h3 class="font-semibold mb-4 border-b border-border pb-3">Impacto en Ejecución de Corte</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-md">
+            <label class="text-xs text-indigo-600 font-semibold">Metros Teóricos Requeridos</label>
+            <p class="text-lg font-bold text-indigo-800">
+              {{ "%.4f"|format(retazo.ejecucion_corte.metros_teoricos_requeridos) }} m
+            </p>
+          </div>
+          <div class="p-3 bg-amber-50 border border-amber-200 rounded-md">
+            <label class="text-xs text-amber-600 font-semibold">Metros Sacados Bodega</label>
+            <p class="text-lg font-bold text-amber-800">
+              {{ "%.4f"|format(retazo.ejecucion_corte.metros_sacados_bodega) }} m
+            </p>
+          </div>
+          <div class="p-3 bg-rose-50 border border-rose-200 rounded-md">
+            <label class="text-xs text-rose-600 font-semibold">Merma Real Calculada</label>
+            <p class="text-lg font-bold text-rose-800">
+              {{ "%.4f"|format(retazo.ejecucion_corte.merma_real_calculada) }} m
+            </p>
+          </div>
+        </div>
+        <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <p class="text-sm text-blue-800">
+            <strong>Nota:</strong>
+            {% if retazo.motivo_merma %}
+            Este retazo por defecto <strong>aumenta</strong> la merma real de la OP.
+            {% else %}
+            Este retazo es sobrante normal y <strong>no afecta</strong> la merma de la OP.
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

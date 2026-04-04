@@ -1,0 +1,201 @@
+{% extends "produccion/layout.html" %}
+{% block title %}Registrar Nueva Merma{% endblock %}
+{% block header %}Registrar Nueva Merma{% endblock %}
+
+{% block container %}
+<div class="px-10 pb-10">
+  <div class="max-w-2xl mx-auto bg-card border border-border rounded-lg p-8">
+    <h2 class="text-xl font-bold mb-1">Nueva Merma de Insumos</h2>
+    <p class="text-xs text-muted-foreground mb-6">
+      Solo insumos tipo <strong>Pieza</strong> asociados a la explosión de materiales de la OP seleccionada.
+    </p>
+
+    <form method="POST" action="{{ url_for('merma.registro_merma') }}" class="space-y-5" novalidate>
+      {{ form.hidden_tag() }}
+      {% import "produccion/usuarios/_macros.html" as macros %}
+
+      <!-- 1. Orden de Producción -->
+      <div>
+        {{ form.orden_produccion.label(class="text-xs text-muted-foreground mb-1 block") }}
+        {{ form.orden_produccion(
+            id="orden_produccion",
+            class="w-full border border-border bg-input px-3 py-2 rounded-md text-sm"
+        ) }}
+        {% if form.orden_produccion.errors %}
+          <p class="text-xs text-rose-500 mt-1">{{ form.orden_produccion.errors[0] }}</p>
+        {% endif %}
+      </div>
+
+      <!-- 2. Insumo — se llena vía AJAX -->
+      <div>
+        {{ form.insumo.label(class="text-xs text-muted-foreground mb-1 block") }}
+        <select id="insumo" name="insumo"
+          class="w-full border border-border bg-input px-3 py-2 rounded-md text-sm">
+          <option value="">Selecciona una orden primero</option>
+        </select>
+        {% if form.insumo.errors %}
+          <p class="text-xs text-rose-500 mt-1">{{ form.insumo.errors[0] }}</p>
+        {% endif %}
+
+        <!-- Info del insumo seleccionado -->
+        <div id="insumo-info" class="hidden mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md text-xs text-blue-800 space-y-0.5">
+          <p>Stock actual: <span id="info-stock" class="font-semibold"></span> pzas</p>
+          <p>Consumo teórico unitario: <span id="info-consumo-unitario" class="font-semibold"></span> pzas/prenda</p>
+          <p>Cantidad a producir en OP: <span id="info-cantidad-op" class="font-semibold"></span> prendas</p>
+        </div>
+
+        <!-- Advertencia si no hay insumos PIEZA en la OP -->
+        <div id="insumo-warning" class="hidden mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-800"></div>
+      </div>
+
+      <!-- 3. Cantidades -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          {{ form.cantidad_teorica.label(class="text-xs text-muted-foreground mb-1 block") }}
+          {{ form.cantidad_teorica(
+              id="cantidad_teorica",
+              class="w-full border border-border bg-input px-3 py-2 rounded-md text-sm",
+              placeholder="Se sugiere automáticamente"
+          ) }}
+          {% if form.cantidad_teorica.errors %}
+            <p class="text-xs text-rose-500 mt-1">{{ form.cantidad_teorica.errors[0] }}</p>
+          {% endif %}
+        </div>
+        <div>
+          {{ form.cantidad_real_consumida.label(class="text-xs text-muted-foreground mb-1 block") }}
+          {{ form.cantidad_real_consumida(
+              id="cantidad_real_consumida",
+              class="w-full border border-border bg-input px-3 py-2 rounded-md text-sm",
+              placeholder="Lo que realmente se usó"
+          ) }}
+          {% if form.cantidad_real_consumida.errors %}
+            <p class="text-xs text-rose-500 mt-1">{{ form.cantidad_real_consumida.errors[0] }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Preview de diferencia en tiempo real -->
+      <div id="diferencia-preview" class="hidden p-3 rounded-md border text-sm font-semibold"></div>
+
+      <!-- 4. Motivo -->
+      {{ macros.fieldUser(form.motivo, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+
+      <!-- 5. Observaciones -->
+      {{ macros.fieldUser(form.observaciones, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+
+      <div class="flex justify-end gap-3 pt-4">
+        <a href="{{ url_for('merma.index') }}"
+           class="px-4 py-2 border border-border rounded-md text-sm">Cancelar</a>
+        <button type="submit"
+           class="px-4 py-2 bg-black text-white rounded-md text-sm">Guardar Merma</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const selectOP      = document.getElementById('orden_produccion');
+const selectInsumo  = document.getElementById('insumo');
+const inputTeorica  = document.getElementById('cantidad_teorica');
+const inputReal     = document.getElementById('cantidad_real_consumida');
+const infoBox       = document.getElementById('insumo-info');
+const warningBox    = document.getElementById('insumo-warning');
+const diffPreview   = document.getElementById('diferencia-preview');
+
+// ── 1. Al cambiar OP → cargar insumos vía AJAX ──
+selectOP.addEventListener('change', async function () {
+  const uuid_op = this.value;
+
+  // Reset
+  selectInsumo.innerHTML = '<option value="">Cargando...</option>';
+  inputTeorica.value = '';
+  inputReal.value = '';
+  infoBox.classList.add('hidden');
+  warningBox.classList.add('hidden');
+  diffPreview.classList.add('hidden');
+
+  if (!uuid_op) {
+    selectInsumo.innerHTML = '<option value="">Selecciona una orden primero</option>';
+    return;
+  }
+
+  try {
+    const res  = await fetch(`{{ url_for('merma.insumos_por_op', uuid_op='__UUID__') }}`.replace('__UUID__', uuid_op));
+    const data = await res.json();
+
+    if (data.error || !data.insumos.length) {
+      selectInsumo.innerHTML = '<option value="">Sin insumos PIEZA disponibles</option>';
+      warningBox.textContent = data.error || 'Esta OP no tiene insumos tipo PIEZA en su explosión de materiales.';
+      warningBox.classList.remove('hidden');
+      return;
+    }
+
+    selectInsumo.innerHTML =
+      '<option value="">Selecciona un insumo</option>' +
+      data.insumos.map(i =>
+        `<option value="${i.uuid}"
+          data-stock="${i.stock_actual}"
+          data-consumo-unitario="${i.consumo_unitario}"
+          data-cantidad-op="${i.cantidad_op}"
+          data-teorica="${i.cantidad_teorica_sugerida}">
+          ${i.nombre} (${i.sku})
+        </option>`
+      ).join('');
+
+  } catch (e) {
+    selectInsumo.innerHTML = '<option value="">Error al cargar insumos</option>';
+    warningBox.textContent = 'No se pudo conectar con el servidor. Intenta de nuevo.';
+    warningBox.classList.remove('hidden');
+  }
+});
+
+// ── 2. Al cambiar insumo → prellenar cantidad teórica y mostrar info ──
+selectInsumo.addEventListener('change', function () {
+  const opt = this.selectedOptions[0];
+  infoBox.classList.add('hidden');
+  inputTeorica.value = '';
+  diffPreview.classList.add('hidden');
+
+  if (!opt || !opt.dataset.teorica) return;
+
+  inputTeorica.value = opt.dataset.teorica;
+
+  document.getElementById('info-stock').textContent           = parseInt(opt.dataset.stock);
+  document.getElementById('info-consumo-unitario').textContent = parseFloat(opt.dataset.consumoUnitario);
+  document.getElementById('info-cantidad-op').textContent      = opt.dataset.cantidadOp;
+  infoBox.classList.remove('hidden');
+
+  actualizarDiferencia();
+});
+
+// ── 3. Preview de diferencia en tiempo real ──
+function actualizarDiferencia() {
+  const t = parseInt(inputTeorica?.value) || 0;
+  const r = parseInt(inputReal?.value)    || 0;
+
+  if (!t && !r) { diffPreview.classList.add('hidden'); return; }
+
+  const diff = r - t;
+  diffPreview.classList.remove(
+    'hidden',
+    'bg-rose-50', 'border-rose-200', 'text-rose-700',
+    'bg-green-50', 'border-green-200', 'text-green-700',
+    'bg-gray-50',  'border-gray-200',  'text-gray-700'
+  );
+
+  if (diff > 0) {
+    diffPreview.classList.add('bg-rose-50', 'border-rose-200', 'text-rose-700');
+    diffPreview.textContent = `⚠ Merma: +${diff} piezas — se descontarán del stock del insumo`;
+  } else if (diff < 0) {
+    diffPreview.classList.add('bg-green-50', 'border-green-200', 'text-green-700');
+    diffPreview.textContent = `✓ Ahorro: ${Math.abs(diff)} piezas menos de lo esperado — stock no se modifica`;
+  } else {
+    diffPreview.classList.add('bg-gray-50', 'border-gray-200', 'text-gray-700');
+    diffPreview.textContent = 'Sin diferencia — stock no se modifica';
+  }
+}
+
+inputTeorica?.addEventListener('input', actualizarDiferencia);
+inputReal?.addEventListener('input', actualizarDiferencia);
+</script>
+{% endblock %}

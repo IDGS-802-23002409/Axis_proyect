@@ -1,0 +1,161 @@
+{% extends "produccion/layout.html" %}
+{% block title %}Detalle de Merma{% endblock %}
+{% block header %}Detalle de Merma{% endblock %}
+
+{% block container %}
+<div class="px-10 pb-10">
+  <div class="max-w-4xl mx-auto">
+
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h2 class="text-2xl font-bold">Merma {{ merma.uuid_merma[:8] }}…</h2>
+        {% if merma.orden_produccion and merma.orden_produccion.estado == 'Terminado' %}
+        <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md">
+          OP Terminada — solo lectura
+        </span>
+        {% endif %}
+      </div>
+      <div class="flex gap-3">
+        {% if merma.orden_produccion and merma.orden_produccion.estado != 'Terminado' %}
+        <form method="POST"
+              action="{{ url_for('merma.eliminar_merma', uuid_merma=merma.uuid_merma) }}"
+              onsubmit="return confirm('¿Eliminar esta merma? Se revertirá el descuento de stock si aplica.');">
+          <button type="submit"
+            class="flex items-center gap-2 px-4 py-2 border border-rose-200 text-rose-600 rounded-md text-sm hover:bg-rose-50">
+            <i data-lucide="trash" class="w-4 h-4"></i>
+            Eliminar
+          </button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('merma.index') }}"
+           class="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-secondary">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          Volver
+        </a>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <div class="bg-card border border-border rounded-lg p-6">
+        <h3 class="font-semibold mb-4 border-b border-border pb-3">Información General</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs text-muted-foreground">Orden de Producción</label>
+            <p class="font-semibold font-mono">OP {{ merma.uuid_op[:8] }}…
+              <span class="ml-2 text-xs px-2 py-0.5 rounded-full
+                {% if merma.orden_produccion.estado == 'Terminado' %}bg-gray-100 text-gray-600
+                {% elif merma.orden_produccion.estado == 'Pendiente' %}bg-yellow-100 text-yellow-700
+                {% else %}bg-blue-100 text-blue-700{% endif %}">
+                {{ merma.orden_produccion.estado }}
+              </span>
+            </p>
+          </div>
+          <div>
+            <label class="text-xs text-muted-foreground">Insumo</label>
+            <p class="font-semibold">{{ merma.insumo.nombre }}</p>
+            <p class="text-xs text-muted-foreground">SKU: {{ merma.insumo.sku }}</p>
+          </div>
+          <div>
+            <label class="text-xs text-muted-foreground">Unidad de Medida</label>
+            <p class="font-semibold">{{ merma.insumo.contenido_unidad_medida }}</p>
+          </div>
+          <div>
+            <label class="text-xs text-muted-foreground">Fecha de Registro</label>
+            <p class="font-semibold">{{ merma.fecha_registro.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+          </div>
+          <div>
+            <label class="text-xs text-muted-foreground">Registrado por</label>
+            <p class="font-semibold">
+              {% if usuario_registro %}
+                {{ usuario_registro.nombre_completo }}
+                <span class="text-xs text-muted-foreground">({{ usuario_registro.email }})</span>
+              {% else %}
+                <span class="text-gray-400">No disponible</span>
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-lg p-6">
+        <h3 class="font-semibold mb-4 border-b border-border pb-3">Análisis de Cantidades</h3>
+        <div class="space-y-4">
+          <div class="p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <label class="text-xs text-blue-600 font-semibold">Cantidad Teórica</label>
+            <p class="text-xl font-bold text-blue-800">
+              {{ "%.4f"|format(merma.cantidad_teorica) }}
+              <span class="text-sm font-normal">{{ merma.insumo.contenido_unidad_medida }}</span>
+            </p>
+          </div>
+
+          <div class="p-3 bg-amber-50 border border-amber-200 rounded-md">
+            <label class="text-xs text-amber-600 font-semibold">Cantidad Real Consumida</label>
+            <p class="text-xl font-bold text-amber-800">
+              {{ "%.4f"|format(merma.cantidad_real_consumida) }}
+              <span class="text-sm font-normal">{{ merma.insumo.contenido_unidad_medida }}</span>
+            </p>
+          </div>
+
+          <div class="p-3 rounded-md border
+            {% if diferencia > 0 %}bg-rose-50 border-rose-200
+            {% elif diferencia < 0 %}bg-green-50 border-green-200
+            {% else %}bg-gray-50 border-gray-200{% endif %}">
+            <label class="text-xs font-semibold
+              {% if diferencia > 0 %}text-rose-600
+              {% elif diferencia < 0 %}text-green-600
+              {% else %}text-gray-600{% endif %}">
+              {% if diferencia > 0 %}
+                ⚠ Merma — se descontó del stock
+              {% elif diferencia < 0 %}
+                ✓ Ahorro — stock no afectado
+              {% else %}
+                Sin diferencia — stock no afectado
+              {% endif %}
+            </label>
+            <p class="text-xl font-bold
+              {% if diferencia > 0 %}text-rose-800
+              {% elif diferencia < 0 %}text-green-800
+              {% else %}text-gray-800{% endif %}">
+              {{ "%+.4f"|format(diferencia) }}
+              <span class="text-sm font-normal">{{ merma.insumo.contenido_unidad_medida }}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-lg p-6 md:col-span-2">
+        <h3 class="font-semibold mb-4 border-b border-border pb-3">Detalles Adicionales</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs text-muted-foreground">Motivo</label>
+            <div class="mt-2">
+              {% if merma.motivo == 'DEFECTO_PROVEEDOR' %}
+                <span class="px-3 py-2 bg-red-100 text-red-800 rounded-md font-semibold text-sm">Defecto del Proveedor</span>
+              {% elif merma.motivo == 'DAÑO_EN_PROCESO' %}
+                <span class="px-3 py-2 bg-orange-100 text-orange-800 rounded-md font-semibold text-sm">Daño en Proceso</span>
+              {% elif merma.motivo == 'ERROR_OPERARIO' %}
+                <span class="px-3 py-2 bg-yellow-100 text-yellow-800 rounded-md font-semibold text-sm">Error del Operario</span>
+              {% elif merma.motivo == 'MUESTRA_PRUEBA' %}
+                <span class="px-3 py-2 bg-blue-100 text-blue-800 rounded-md font-semibold text-sm">Muestra de Prueba</span>
+              {% else %}
+                <span class="px-3 py-2 bg-gray-100 text-gray-800 rounded-md font-semibold text-sm">Otro</span>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if merma.observaciones %}
+          <div>
+            <label class="text-xs text-muted-foreground">Observaciones</label>
+            <p class="mt-2 text-sm bg-secondary p-3 rounded-md border border-border">
+              {{ merma.observaciones }}
+            </p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -8,7 +8,7 @@ class InventarioForm(FlaskForm):
     uuid_insumo = SelectField(
         "Insumo",
         choices=[],
-        coerce=str,   # 🔥 IMPORTANTE
+        coerce=str,  
         validators=[Optional()]
     )
 
