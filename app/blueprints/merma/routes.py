@@ -1,5 +1,5 @@
 from flask import flash, redirect, render_template, request, url_for, jsonify
-from flask_security import login_required, roles_required, current_user
+from flask_security import login_required, roles_required, roles_accepted, current_user
 
 from app.blueprints.merma import merma_bp
 from app.blueprints.merma.form import MermaForm, RetazoForm
@@ -23,7 +23,7 @@ def _registrar_retazo_defecto(uuid_corte: str, metraje: float) -> None:
 
 @merma_bp.route('/')
 @login_required
-@roles_required("admin")
+@roles_accepted('admin', 'gerente')
 def index():
     op_uuid     = request.args.get('op', '').strip()
     insumo_uuid = request.args.get('insumo', '').strip()
@@ -74,7 +74,7 @@ def index():
 
 @merma_bp.route('/insumos-por-op/<uuid_op>')
 @login_required
-@roles_required("admin")
+@roles_accepted('admin', 'gerente')
 def insumos_por_op(uuid_op):
     """
     AJAX — devuelve los insumos PIEZA de la explosión de materiales
@@ -121,7 +121,7 @@ def insumos_por_op(uuid_op):
 
 @merma_bp.route('/insumo-por-corte/<uuid_corte>')
 @login_required
-@roles_required("admin")
+@roles_accepted('admin', 'gerente')
 def insumo_por_corte(uuid_corte):
     """
     devuelve el insumo (tela) que se usó en una ejecución de corte,
@@ -161,7 +161,7 @@ def insumo_por_corte(uuid_corte):
 
 @merma_bp.route('/rollos-por-corte/<uuid_corte>')
 @login_required
-@roles_required("admin")
+@roles_accepted('admin', 'gerente')
 def rollos_por_corte(uuid_corte):
     """
     devuelve los rollos disponibles que coincidan con el insumo (TELA)
@@ -212,7 +212,7 @@ def rollos_por_corte(uuid_corte):
 
 @merma_bp.route('/registro', methods=['GET', 'POST'])
 @login_required
-@roles_required("admin")
+@roles_accepted('admin', 'gerente')
 def registro_merma():
     form = MermaForm()
 
@@ -258,7 +258,7 @@ def registro_merma():
 
 @merma_bp.route('/detalle/<uuid_merma>')
 @login_required
-@roles_required("admin")
+@roles_accepted('admin', 'gerente')
 def detalle_merma(uuid_merma):
     merma = MermaPiezas.query.get_or_404(uuid_merma)
 
@@ -278,7 +278,7 @@ def detalle_merma(uuid_merma):
 
 @merma_bp.route('/eliminar/<uuid_merma>', methods=['POST'])
 @login_required
-@roles_required("admin")
+@roles_accepted('admin', 'gerente')
 def eliminar_merma(uuid_merma):
     merma = MermaPiezas.query.get_or_404(uuid_merma)
 
@@ -320,7 +320,7 @@ def eliminar_merma(uuid_merma):
 
 @merma_bp.route('/retazos')
 @login_required
-@roles_required("admin")
+@roles_accepted('admin', 'gerente')
 def index_retazos():
     retazos = (
         RetazoInventario.query
@@ -332,7 +332,7 @@ def index_retazos():
 
 @merma_bp.route('/retazos/registro', methods=['GET', 'POST'])
 @login_required
-@roles_required("admin")
+@roles_accepted('admin', 'gerente')
 def registro_retazo():
     form = RetazoForm()
 
@@ -431,7 +431,7 @@ def registro_retazo():
 
 @merma_bp.route('/retazos/detalle/<uuid_retazo>')
 @login_required
-@roles_required("admin")
+@roles_accepted('admin', 'gerente')
 def detalle_retazo(uuid_retazo):
     retazo = RetazoInventario.query.get_or_404(uuid_retazo)
     return render_template('produccion/merma/detalle_retazo.html', retazo=retazo)
@@ -439,7 +439,7 @@ def detalle_retazo(uuid_retazo):
 
 @merma_bp.route('/retazos/eliminar/<uuid_retazo>', methods=['POST'])
 @login_required
-@roles_required("admin")
+@roles_accepted('admin', 'gerente')
 def eliminar_retazo(uuid_retazo):
     retazo = RetazoInventario.query.get_or_404(uuid_retazo)
 

@@ -4,7 +4,7 @@ Módulo de Ventas — Solo lectura
 Muestra: qué se compró, cuándo, cuánto, precio total y quién compró.
 """
 from flask import render_template, request
-from flask_security import login_required, roles_required
+from flask_security import login_required, roles_required, roles_accepted
 from . import ventas_bp
 from app.utils.database_connection import db
 from app.models.ventas import VentaEncabezado, VentaDetalle
@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 
 @ventas_bp.route('/')
 @login_required
-@roles_required('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def index():
     # ── Filtros GET ───────────────────────────────────────────────────────
     q          = request.args.get('q', '').strip()          # búsqueda por cliente

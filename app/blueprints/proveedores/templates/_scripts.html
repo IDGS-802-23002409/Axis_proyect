@@ -25,8 +25,8 @@
 
     // ── Configuración de la Gráfica ─────────────────────────────────
     const ctx = document.getElementById('salesChart').getContext('2d');
-    const labels = {{ chart_labels | tojson }};
-    const dataVentas = {{ chart_data | tojson }};
+    const labels = {{ (chart_labels | default ([])) | tojson }};
+    const dataVentas = {{ (chart_data | default ([])) | tojson }};
 
     new Chart(ctx, {
         type: 'line',
@@ -35,11 +35,11 @@
             datasets: [{
                 label: 'Ventas ($)',
                 data: dataVentas,
-                borderColor: '#111827', 
+                borderColor: '#111827',
                 backgroundColor: 'rgba(17, 24, 39, 0.05)',
                 borderWidth: 2,
                 fill: true,
-                tension: 0.4, 
+                tension: 0.4,
                 pointRadius: 4,
                 pointBackgroundColor: '#111827'
             }]
@@ -57,24 +57,38 @@
 </script>
 
 <style>
-@media print {
-    /* Ocultar aside, nav y botones */
-    aside, nav, .print\:hidden, #btn-actualizar, .flex.justify-end {
-        display: none !important;
+    @media print {
+
+        /* Ocultar aside, nav y botones */
+        aside,
+        nav,
+        .print\:hidden,
+        #btn-actualizar,
+        .flex.justify-end {
+            display: none !important;
+        }
+
+        main {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+
+        .bg-white,
+        .bg-\[\#111111\] {
+            border: 1px solid #ddd !important;
+            shadow: none !important;
+        }
+
+        /* Encabezado de Reporte solo para impresión */
+        body::before {
+            content: "AXIS STREETWEAR - REPORTE DE RENDIMIENTO DASHBOARD";
+            display: block;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+            border-bottom: 2px solid black;
+            padding-bottom: 10px;
+        }
     }
-    
-    main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
-    .bg-white, .bg-\[\#111111\] { border: 1px solid #ddd !important; shadow: none !important; }
-    
-    /* Encabezado de Reporte solo para impresión */
-    body::before {
-        content: "AXIS STREETWEAR - REPORTE DE RENDIMIENTO DASHBOARD";
-        display: block;
-        text-align: center;
-        font-weight: bold;
-        margin-bottom: 20px;
-        border-bottom: 2px solid black;
-        padding-bottom: 10px;
-    }
-}
 </style>

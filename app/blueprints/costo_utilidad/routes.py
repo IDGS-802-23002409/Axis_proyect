@@ -1,5 +1,5 @@
 from flask import render_template, request, redirect, url_for, flash
-from flask_security import login_required, roles_required
+from flask_security import login_required, roles_required, roles_accepted
 
 from app.blueprints.costo_utilidad import costo_utilidad_bp
 from app.models.modelos_productos import ProductoTerminado
@@ -260,7 +260,7 @@ def _construir_mermas_pieza(producto, detalles_explosion):
 
 @costo_utilidad_bp.route("/costo-utilidad", methods=["GET"])
 @login_required
-@roles_required("admin")
+@roles_accepted('admin', 'gerente')
 def index():
     productos = ProductoTerminado.query.order_by(
         ProductoTerminado.uuid_modelo,
@@ -275,7 +275,7 @@ def index():
 
 @costo_utilidad_bp.route("/costo-utilidad/<uuid_producto>", methods=["GET", "POST"])
 @login_required
-@roles_required("admin")
+@roles_accepted('admin', 'gerente')
 def detalle(uuid_producto):
     productos = ProductoTerminado.query.order_by(
         ProductoTerminado.fecha_actualizacion.desc()

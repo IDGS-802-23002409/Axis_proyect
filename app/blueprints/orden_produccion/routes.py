@@ -15,7 +15,7 @@ from .forms import OrdenProduccionForm
 
 @orden_bp.route('/')
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def index():
 
     ordenes = db.session.query(OrdenProduccion).join(
@@ -34,7 +34,7 @@ def index():
 
 @orden_bp.route('/crear', methods=['GET', 'POST'])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def create():
 
     form = OrdenProduccionForm()

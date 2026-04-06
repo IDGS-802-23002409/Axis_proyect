@@ -1,5 +1,5 @@
 from flask import flash, redirect, render_template, request, url_for
-from flask_security import login_required, roles_required
+from flask_security import login_required, roles_required, roles_accepted
 from app.blueprints.clientes import clientes_bp
 from app.blueprints.clientes.form import ClienteForm
 from app.models.clientes import Cliente
@@ -8,7 +8,7 @@ from app.utils.database_connection import db
 
 @clientes_bp.route("/")
 @login_required
-@roles_required('admin', 'gerente')
+@roles_accepted('admin', 'gerente')
 def index():
     q = request.args.get('q', '').strip()
     clientes = Cliente.query.join(Usuario)

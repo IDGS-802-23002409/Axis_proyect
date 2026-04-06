@@ -7,6 +7,24 @@ from app.utils.database_connection import db
 from flask_security import login_required, roles_accepted, roles_required, current_user
 import uuid
 import re
+from datetime import datetime, timedelta
+
+
+def _get_chart_data():
+    """Genera datos de gráfica para los últimos 6 meses basado en proveedores activos."""
+    today = datetime.utcnow()
+    labels = []
+    data = []
+    for i in range(5, -1, -1):
+        month = today - timedelta(days=i * 30)
+        label = month.strftime('%b %Y')
+        count = Proveedor.query.filter(
+            Proveedor.fecha_creacion <= month,
+            Proveedor.estatus == True
+        ).count()
+        labels.append(label)
+        data.append(count)
+    return labels, data
 
 
 # --- CONSULTAR (LISTADO PRINCIPAL) ---
@@ -16,7 +34,9 @@ import re
 def index():
     all_proveedores = Proveedor.query.order_by(Proveedor.fecha_creacion.desc()).all()
     form = ProveedorForm()
+    chart_labels, chart_data = _get_chart_data()
     return render_template('proveedores_index.html', proveedores=all_proveedores, form=form,
+                           chart_labels=chart_labels, chart_data=chart_data,
                            top_producto={'nombre': 'Shadow Hoodie', 'unidades': 42, 'monto': 12500.50, 'imagen': None},
                            bottom_producto={'nombre': 'Basic Tee White', 'stock': 85, 'imagen': None})
 
@@ -63,7 +83,10 @@ def guardar(uid=None):
     # Si falla la validación, recarga los errores
     all_proveedores = Proveedor.query.order_by(Proveedor.fecha_creacion.desc()).all()
     target_modal = 'modal-update' if uid else 'modal-registro'
+    chart_labels, chart_data = _get_chart_data()
     return render_template('proveedores_index.html', proveedores=all_proveedores, form=form, modal_to_open=target_modal,
+                           chart_labels=chart_labels, chart_data=chart_data,
+                           top_producto={}, bottom_producto={},
                            edit_uid=uid)
 
 # --- ELIMINAR ---
@@ -92,10 +115,12 @@ def detalles(uid):
     # Si NO viene el parámetro format=json, significa que el usuario entró desde la URL
     if request.args.get('format') != 'json':
         proveedores = Proveedor.query.all()
-        from .forms import ProveedorForm # Asegúrate de que el nombre sea correcto
+        from .forms import ProveedorForm
         form = ProveedorForm()
-        
-        return render_template('proveedores_index.html', proveedores=proveedores, form=form)
+        chart_labels, chart_data = _get_chart_data()
+        return render_template('proveedores_index.html', proveedores=proveedores, form=form,
+                               chart_labels=chart_labels, chart_data=chart_data,
+                               top_producto={}, bottom_producto={})
 
     uuid_a_mostrar = p.usuario_creo_uuid if p.usuario_creo_uuid else "SISTEMA"
     return jsonify({

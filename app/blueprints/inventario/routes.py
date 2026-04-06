@@ -14,7 +14,7 @@ from app.models.explosion_materiales import ExplosionMaterialesDetalle
 
 @inventario_bp.route("/")
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def index():
 
     #  MERMA TOTAL
@@ -83,7 +83,7 @@ def index():
 
 @inventario_bp.route('/<uuid>')
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def ver_insumo(uuid):
 
     # =============================

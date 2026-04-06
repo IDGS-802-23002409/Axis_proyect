@@ -14,7 +14,7 @@ from app.models.usuarios import Usuario
 # ── INDEX CON BÚSQUEDA Y SOLO RECETAS ACTIVAS ──────────────────────────────
 @recetas_bp.route('/', methods=['GET'])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def index():
     search_query = request.args.get('q', '').strip()  # obtener texto de búsqueda
 
@@ -39,7 +39,7 @@ def index():
 
 @recetas_bp.route('/create', methods=['GET', 'POST'])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def create():
     insumos_list = Insumo.query.filter_by(estatus='ACTIVO').all()
     form = RecetaForm()
@@ -139,7 +139,7 @@ def create():
 # ── VIEW ──────────────────────────────
 @recetas_bp.route('/ver/<uuid_explosion>')
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def ver(uuid_explosion):
     # Obtener la receta por UUID
     receta = ExplosionMaterialesCabecera.query.filter_by(uuid_explosion=uuid_explosion).first_or_404()
@@ -172,7 +172,7 @@ def ver(uuid_explosion):
 # ── ELIMINACIÓN LÓGICA ──────────────────────────────
 @recetas_bp.route("/delete/<string:uuid_explosion>", methods=["POST"])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def delete(uuid_explosion):
     receta = ExplosionMaterialesCabecera.query.get_or_404(uuid_explosion)
 
@@ -191,7 +191,7 @@ def delete(uuid_explosion):
 # ── RESTAURAR RECETA ──────────────────────────────
 @recetas_bp.route("/restore/<string:uuid_explosion>", methods=["POST"])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def restore(uuid_explosion):
     receta = ExplosionMaterialesCabecera.query.get_or_404(uuid_explosion)
 
@@ -209,7 +209,7 @@ def restore(uuid_explosion):
 # ── TRASH / RECETAS INACTIVAS ──────────────────────────────
 @recetas_bp.route("/trash")
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def trash():
     recetas = ExplosionMaterialesCabecera.query.filter_by(estatus='INACTIVO').all()
     return render_template("produccion/recetas/trash.html", recetas=recetas)

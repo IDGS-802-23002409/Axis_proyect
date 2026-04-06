@@ -10,7 +10,7 @@ Lógica de precio:
   Margen = (precio_venta - COGS) / precio_venta × 100
 """
 from flask import render_template, flash, redirect, url_for
-from flask_security import login_required, roles_required
+from flask_security import login_required, roles_required, roles_accepted
 from . import prendas_bp
 from app.utils.database_connection import db
 from app.models.modelos_productos import ProductoTerminado, ModeloRopa
@@ -193,7 +193,7 @@ def _sidebar_prendas() -> list:
 
 @prendas_bp.route('/')
 @login_required
-@roles_required('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def index():
     """Vista de entrada — sin prenda seleccionada."""
     try:
@@ -215,7 +215,7 @@ def index():
 
 @prendas_bp.route('/<uuid_producto>')
 @login_required
-@roles_required('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def detalle(uuid_producto: str):
     """Reporte de costo y utilidad de una prenda específica."""
     try:
