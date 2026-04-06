@@ -1,4 +1,5 @@
 from flask import render_template, flash, request
+from flask_security import login_required, roles_required
 from . import dashboard_bp
 from app.utils.database_connection import db
 from app.models.ventas import VentaEncabezado, VentaDetalle
@@ -28,6 +29,8 @@ def _suma_unidades(fecha_inicio, fecha_fin):
 
 
 @dashboard_bp.route('/')
+@login_required
+@roles_required('admin', 'gerente')
 def index():
     try:
         hoy  = datetime.now().date()

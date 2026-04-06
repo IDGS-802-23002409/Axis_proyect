@@ -49,6 +49,7 @@
       <nav class="flex flex-col gap-6 flex-1">
  
         {# ── Overview ──────────────────────────────── #}
+        {% if not current_user.has_role('produccion') %}
         <div>
           <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Overview</p>
           <a href="{{ url_for('dashboard_administrativo.index') }}"
@@ -62,18 +63,25 @@
             Dashboard
           </a>
         </div>
+        {% endif %}
  
         {# ── Operations ────────────────────────────── #}
         <div>
           <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Operations</p>
           <div class="flex flex-col gap-1">
  
-            <a href="#"
+            {% if not current_user.has_role('produccion') %}
+            <a href="{{ url_for('insumos_bp.index') }}"
               class="flex items-center gap-3 px-4 h-10 rounded-md transition-colors text-sm
-                text-muted-foreground hover:bg-secondary hover:text-black">
+                {% if request.blueprint == 'insumos' %}
+                  bg-black text-white
+                {% else %}
+                  text-muted-foreground hover:bg-secondary hover:text-black
+                {% endif %}">
               <i data-lucide="package" class="w-4 h-4"></i>
               Insumos & Stocks
             </a>
+            {% endif %}
  
             <a href="{{ url_for('prendas.index') }}"
               class="flex items-center gap-3 px-4 h-10 rounded-md transition-colors text-sm
@@ -97,6 +105,7 @@
         </div>
  
         {# ── Control ───────────────────────────────── #}
+        {% if not current_user.has_role('produccion') %}
         <div>
           <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Control</p>
           <div class="flex flex-col gap-1">
@@ -121,8 +130,10 @@
  
           </div>
         </div>
+        {% endif %}
  
         {# ── Administración ────────────────────────── #}
+        {% if not current_user.has_role('produccion') %}
         <div>
           <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Administración</p>
           <div class="flex flex-col gap-1">
@@ -140,7 +151,7 @@
             </a>
             {% endif %}
  
-            {% if current_user.has_role('admin') or current_user.has_role('gerente') or current_user.has_role('produccion') %}
+            {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
             <a href="{{ url_for('proveedores.index') }}"
               class="flex items-center gap-3 px-4 h-10 rounded-md transition-colors text-sm
                 {% if request.blueprint == 'proveedores' %}
@@ -155,6 +166,7 @@
  
           </div>
         </div>
+        {% endif %}
  
       </nav>
  

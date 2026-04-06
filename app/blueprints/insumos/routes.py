@@ -37,7 +37,7 @@ def calcular_costo_promedio(insumo_id, limite=5):
 
 @insumos_bp.route("/")
 @login_required
-@roles_accepted('admin', 'produccion')  # cualquiera de los dos roles puede acceder
+@roles_required('admin', 'gerente')  # cualquiera de los dos roles puede acceder
 def index():
     busqueda = request.args.get("q")
     categoria = request.args.get("categoria")
@@ -90,7 +90,7 @@ def index():
 
 @insumos_bp.route("/create", methods=["GET", "POST"])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_required('admin', 'gerente')
 def create():
     form = InsumoForm()
 
@@ -199,7 +199,7 @@ def create():
 
 @insumos_bp.route("/edit/<string:uuid_insumo>", methods=["GET", "POST"])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_required('admin', 'gerente')
 def edit(uuid_insumo):
     insumo = Insumo.query.get_or_404(uuid_insumo)
     form = InsumoForm(obj=insumo)
@@ -326,7 +326,7 @@ def edit(uuid_insumo):
 #VER
 @insumos_bp.route("/ver/<string:uuid_insumo>")
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_required('admin', 'gerente')
 def view(uuid_insumo):
     insumo = Insumo.query.get_or_404(uuid_insumo)
     return render_template("produccion/insumos/ver.html", insumo=insumo)
@@ -334,7 +334,7 @@ def view(uuid_insumo):
 #ELIMINACION LOGICA
 @insumos_bp.route("/delete/<string:uuid_insumo>", methods=["POST"])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_required('admin', 'gerente')
 def delete(uuid_insumo):
     insumo = Insumo.query.get_or_404(uuid_insumo)
 
@@ -374,7 +374,7 @@ def restore(uuid_insumo):
 
 @insumos_bp.route("/trash")
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_required('admin', 'gerente')
 def trash():
     insumos = Insumo.query.filter_by(estatus='INACTIVO').all()
     return render_template("produccion/insumos/trash.html", insumos=insumos)
