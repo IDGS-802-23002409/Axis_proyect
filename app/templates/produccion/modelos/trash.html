@@ -16,7 +16,7 @@
                 </p>
             </div>
 
-            <a href="{{ url_for('modelos_bp.index') }}"
+            <a href="{{ url_for('modelos.index') }}"
                 class="bg-neutral-200 text-black px-6 py-3 rounded-lg text-xs font-black tracking-widest hover:bg-neutral-300 transition-all uppercase">
                 ← Volver
             </a>
@@ -57,7 +57,8 @@
 
                         <!-- Estado -->
                         <td class="px-4 py-6 text-center">
-                            <span class="px-3 py-1 rounded text-[9px] font-black bg-red-50 text-red-600 border border-red-100 uppercase">
+                            <span
+                                class="px-3 py-1 rounded text-[9px] font-black bg-red-50 text-red-600 border border-red-100 uppercase">
                                 Inactivo
                             </span>
                         </td>
@@ -68,13 +69,12 @@
 
                                 <!-- Restaurar -->
                                 <form method="POST"
-                                    action="{{ url_for('modelos_bp.restore', uuid_modelo=modelo.uuid_modelo) }}"
+                                    action="{{ url_for('modelos.restore', uuid_modelo=modelo.uuid_modelo) }}"
                                     class="inline">
 
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                                    <button type="button"
-                                        onclick="confirmRestore(this, '{{ modelo.nombre_modelo }}')"
+                                    <button type="button" onclick="confirmRestore(this, '{{ modelo.nombre_modelo }}')"
                                         class="flex items-center gap-2 px-5 py-3 bg-green-50 hover:bg-green-100 text-green-600 hover:text-green-700 rounded-lg text-[10px] font-bold tracking-wider border border-green-200 transition-all">
 
                                         <i class="fas fa-undo text-[10px]"></i>
@@ -105,22 +105,22 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-function confirmRestore(button, nombre) {
-    Swal.fire({
-        title: '¿Restaurar modelo?',
-        text: `El modelo "${nombre}" volverá a estar activo.`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#16a34a',
-        cancelButtonColor: '#9ca3af',
-        confirmButtonText: 'Sí, restaurar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            button.closest('form').submit();
-        }
-    });
-}
+    function confirmRestore(button, nombre) {
+        Swal.fire({
+            title: '¿Restaurar modelo?',
+            text: `El modelo "${nombre}" volverá a estar activo.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+            cancelButtonColor: '#9ca3af',
+            confirmButtonText: 'Sí, restaurar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                button.closest('form').submit();
+            }
+        });
+    }
 </script>
 
 {% endblock %}

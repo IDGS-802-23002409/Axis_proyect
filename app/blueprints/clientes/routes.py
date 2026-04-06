@@ -67,9 +67,6 @@ def update_cliente(uuid_cliente):
 @login_required
 def delete_cliente(uuid_cliente):
     cli = Cliente.query.get_or_404(uuid_cliente)
-    if cli.ventas:
-        flash("Imposible borrar: Este cliente ya tiene un histórico de ventas asociadas.", "error")
-        return redirect(url_for('clientes.index'))
 
     db.session.delete(cli)
     db.session.commit()
