@@ -1,9 +1,9 @@
 from flask import Blueprint
 
-modelos_bp = Blueprint(
-    "modelos_bp",
+modelo_aux_bp = Blueprint(
+    "modelo_aux_bp",
     __name__,
-    url_prefix="/recetas"
+    url_prefix="/recetas_modelo"
 )
 
 from . import routes

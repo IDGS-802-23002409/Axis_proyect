@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% include "components/_cart_drawer.html" %}
 
 <div id="producto-container" class="min-h-screen bg-background relative">
     <!-- Breadcrumb -->
@@ -126,13 +125,19 @@
 
                 <!-- Actions -->
                 <div class="flex flex-col sm:flex-row gap-4 opacity-0 translate-y-8">
-                    <button id="btn-add-to-cart-product"
-                        class="flex-1 py-4 font-[var(--font-display)] text-xl tracking-[0.2em] flex items-center justify-center gap-3 transition-all bg-muted text-muted-foreground cursor-not-allowed"
-                        data-id="{{ product.id }}" data-name="{{ product.name }}" data-price="{{ product.price }}"
-                        data-image="{{ product.image }}">
-                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                        AÑADIR AL CARRITO
-                    </button>
+                    <form id="add-to-cart-form" action="{{ url_for('checkout.agregar_carrito') }}" method="POST"
+                        class="flex-1">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="uuid_producto" value="{{ product.id }}">
+                        <input type="hidden" id="form-talla" name="talla" value="">
+                        <input type="hidden" id="form-cantidad" name="cantidad" value="1">
+                        <button id="btn-add-to-cart-product" type="submit"
+                            class="w-full py-4 font-[var(--font-display)] text-xl tracking-[0.2em] flex items-center justify-center gap-3 transition-all bg-muted text-muted-foreground cursor-not-allowed"
+                            disabled>
+                            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                            AÑADIR AL CARRITO
+                        </button>
+                    </form>
                     <button class="p-4 border border-border hover:border-primary hover:text-primary transition-colors">
                         <i data-lucide="heart" class="w-5 h-5"></i>
                     </button>

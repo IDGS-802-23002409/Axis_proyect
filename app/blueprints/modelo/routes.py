@@ -1,4 +1,4 @@
-from . import modelos_bp
+from . import modelo_aux_bp
 from flask_security import login_required, roles_accepted
 from flask import render_template, redirect, url_for, flash, request
 from app.utils.database_connection import db
@@ -9,11 +9,11 @@ from sqlalchemy import or_
 
 
 # ── INDEX CON BÚSQUEDA Y CREACIÓN DE MODELOS ──────────────────────────────
-@modelos_bp.route('/', methods=['GET', 'POST'])
+@modelo_aux_bp.route('/', methods=['GET', 'POST'])
 @login_required
 @roles_accepted('admin', 'produccion')
 def index():
-    
+
     form = ModeloForm(request.form)
     # ── SOLO ACTIVOS ──
     query = ModeloRopa.query.filter_by(estatus='ACTIVO')
@@ -41,7 +41,7 @@ def index():
         db.session.add(nuevo_modelo)
         db.session.commit()
         flash(f'Modelo "{nuevo_modelo.nombre_modelo}" creado con éxito', 'success')
-        return redirect(url_for('modelos_bp.index'))
+        return redirect(url_for('modelo_aux_bp.index'))
 
     return render_template(
         'produccion/modelos/index.html',
@@ -51,7 +51,7 @@ def index():
     )
 
 
-@modelos_bp.route('/create', methods=['GET', 'POST'])
+@modelo_aux_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 @roles_accepted('admin', 'produccion')
 def create():
@@ -67,7 +67,7 @@ def create():
         db.session.add(nuevo_modelo)
         db.session.commit()
         flash(f'Modelo "{nuevo_modelo.nombre_modelo}" creado con éxito', 'success')
-        return redirect(url_for('modelos_bp.index'))
+        return redirect(url_for('modelo_aux_bp.index'))
 
     # Mostrar formulario
     return render_template(
@@ -75,7 +75,7 @@ def create():
         form=form
     )
 
-@modelos_bp.route('/edit/<string:uuid_modelo>', methods=['GET', 'POST'])
+@modelo_aux_bp.route('/edit/<string:uuid_modelo>', methods=['GET', 'POST'])
 @login_required
 @roles_accepted('admin', 'produccion')
 def edit(uuid_modelo):
@@ -89,14 +89,14 @@ def edit(uuid_modelo):
 
         db.session.commit()
         flash(f'Modelo "{modelo.nombre_modelo}" actualizado con éxito', 'success')
-        return redirect(url_for('modelos_bp.index'))
+        return redirect(url_for('modelo_aux_bp.index'))
 
     return render_template(
         'produccion/modelos/edit.html',
         form=form,
         modelo=modelo
     )
-@modelos_bp.route('/delete/<string:uuid_modelo>', methods=['POST'])
+@modelo_aux_bp.route('/delete/<string:uuid_modelo>', methods=['POST'])
 @login_required
 @roles_accepted('admin', 'produccion')
 def delete(uuid_modelo):
@@ -104,14 +104,14 @@ def delete(uuid_modelo):
 
     if modelo.estatus == 'INACTIVO':
         flash('El modelo ya está inactivo', 'warning')
-        return redirect(url_for('modelos_bp.index'))
+        return redirect(url_for('modelo_aux_bp.index'))
 
     modelo.estatus = 'INACTIVO'
     db.session.commit()
 
     flash(f'Modelo "{modelo.nombre_modelo}" desactivado correctamente', 'success')
-    return redirect(url_for('modelos_bp.index'))
-@modelos_bp.route('/trash', methods=['GET'])
+    return redirect(url_for('modelo_aux_bp.index'))
+@modelo_aux_bp.route('/trash', methods=['GET'])
 @login_required
 @roles_accepted('admin', 'produccion')
 def trash():
@@ -132,7 +132,7 @@ def trash():
         search_query=search_query
     )
 
-@modelos_bp.route('/restore/<string:uuid_modelo>', methods=['POST'])
+@modelo_aux_bp.route('/restore/<string:uuid_modelo>', methods=['POST'])
 @login_required
 @roles_accepted('admin', 'produccion')
 def restore(uuid_modelo):
@@ -142,4 +142,4 @@ def restore(uuid_modelo):
     db.session.commit()
 
     flash(f'Modelo "{modelo.nombre_modelo}" restaurado correctamente', 'success')
-    return redirect(url_for('modelos_bp.trash'))
+    return redirect(url_for('modelo_aux_bp.trash'))

@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% include "components/_cart_drawer.html" %}
 
 <div id="carrito-container" class="min-h-screen bg-background pt-24 pb-32">
     <div class="container mx-auto px-4 lg:px-8">
@@ -45,7 +44,7 @@
                     <div class="col-span-2 text-center">Cantidad</div>
                     <div class="col-span-2 text-right">Total</div>
                 </div>
-                
+
                 {% for item in cart %}
                 <div class="grid grid-cols-12 gap-4 py-6 border-b border-border items-center">
                     <div class="col-span-12 md:col-span-6 flex gap-4">
@@ -54,15 +53,18 @@
                         </div>
                         <div class="flex flex-col justify-between">
                             <div>
-                                <a href="/producto/{{ item.uuid_producto }}" class="font-medium hover:text-primary transition-colors">{{ item.nombre }}</a>
+                                <a href="/producto/{{ item.uuid_producto }}"
+                                    class="font-medium hover:text-primary transition-colors">{{ item.nombre }}</a>
                                 <div class="text-sm text-muted-foreground mt-1">
                                     <p>Talla: {{ item.talla }}</p>
                                 </div>
                             </div>
                             <form action="{{ url_for('checkout.eliminar_carrito') }}" method="POST" class="md:hidden">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="uuid_producto" value="{{ item.uuid_producto }}">
                                 <input type="hidden" name="talla" value="{{ item.talla }}">
-                                <button type="submit" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-destructive transition-colors">
+                                <button type="submit"
+                                    class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-destructive transition-colors">
                                     <i data-lucide="trash-2" class="w-3 h-3"></i> Eliminar
                                 </button>
                             </form>
@@ -70,26 +72,38 @@
                     </div>
                     <div class="hidden md:block col-span-2 text-center">${{ "%.2f"|format(item.price) }}</div>
                     <div class="col-span-6 md:col-span-2 flex justify-start md:justify-center">
-                        <form action="{{ url_for('checkout.actualizar_carrito') }}" method="POST" class="flex items-center border border-border">
+                        <form action="{{ url_for('checkout.actualizar_carrito') }}" method="POST"
+                            class="flex items-center border border-border">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="uuid_producto" value="{{ item.uuid_producto }}">
                             <input type="hidden" name="talla" value="{{ item.talla }}">
-                            <button type="submit" name="cantidad" value="{{ item.quantity - 1 }}" class="p-2 hover:bg-secondary transition-colors{% if item.quantity <= 1 %} opacity-50 cursor-not-allowed{% endif %}">{% if item.quantity > 1 %}<i data-lucide="minus" class="w-[14px] h-[14px]"></i>{% endif %}</button>
+                            <button type="submit" name="cantidad" value="{{ item.quantity - 1 }}"
+                                class="p-2 hover:bg-secondary transition-colors{% if item.quantity <= 1 %} opacity-50 cursor-not-allowed{% endif %}">{%
+                                if item.quantity > 1 %}<i data-lucide="minus" class="w-[14px] h-[14px]"></i>{% endif
+                                %}</button>
                             <span class="w-10 text-center text-sm">{{ item.quantity }}</span>
-                            <button type="submit" name="cantidad" value="{{ item.quantity + 1 }}" class="p-2 hover:bg-secondary transition-colors"><i data-lucide="plus" class="w-[14px] h-[14px]"></i></button>
+                            <button type="submit" name="cantidad" value="{{ item.quantity + 1 }}"
+                                class="p-2 hover:bg-secondary transition-colors"><i data-lucide="plus"
+                                    class="w-[14px] h-[14px]"></i></button>
                         </form>
                     </div>
                     <div class="col-span-6 md:col-span-2 text-right">
-                        <span class="font-[var(--font-display)] text-xl">${{ "%.2f"|format(item.price * item.quantity) }}</span>
-                        <form action="{{ url_for('checkout.eliminar_carrito') }}" method="POST" class="hidden md:block ml-auto mt-2">
+                        <span class="font-[var(--font-display)] text-xl">${{ "%.2f"|format(item.price * item.quantity)
+                            }}</span>
+                        <form action="{{ url_for('checkout.eliminar_carrito') }}" method="POST"
+                            class="hidden md:block ml-auto mt-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="uuid_producto" value="{{ item.uuid_producto }}">
                             <input type="hidden" name="talla" value="{{ item.talla }}">
-                            <button type="submit" class="text-sm text-muted-foreground hover:text-destructive transition-colors">Eliminar</button>
+                            <button type="submit"
+                                class="text-sm text-muted-foreground hover:text-destructive transition-colors">Eliminar</button>
                         </form>
                     </div>
                 </div>
                 {% endfor %}
 
                 <form action="{{ url_for('checkout.vaciar_carrito') }}" method="POST" class="mt-6">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit"
                         class="text-sm text-muted-foreground hover:text-destructive transition-colors flex items-center gap-2">
                         <i data-lucide="trash-2" class="w-4 h-4"></i> Vaciar carrito
@@ -108,11 +122,12 @@
                         </div>
                         <div class="flex justify-between">
                             <span class="text-muted-foreground">Envío</span>
-                            <span>{% if totals.shipping == 0 %}Gratis{% else %}${{ "%.2f"|format(totals.shipping) }}{% endif %}</span>
+                            <span>{% if totals.shipping == 0 %}Gratis{% else %}${{ "%.2f"|format(totals.shipping) }}{%
+                                endif %}</span>
                         </div>
-                        {% if totals.subtotal < 100 %}
-                        <p class="text-xs text-primary">Añade ${{ "%.2f"|format(100 - totals.subtotal) }} más para envío gratis</p>
-                        {% endif %}
+                        {% if totals.subtotal < 100 %} <p class="text-xs text-primary">Añade ${{ "%.2f"|format(100 -
+                            totals.subtotal) }} más para envío gratis</p>
+                            {% endif %}
                     </div>
                     <div class="border-t border-border pt-4 mb-6">
                         <div class="flex justify-between items-center">
@@ -129,12 +144,35 @@
                                 class="px-4 py-2 border border-l-0 border-border hover:border-primary hover:text-primary transition-colors text-sm">Aplicar</button>
                         </div>
                     </div>
+                    {% if not current_user.is_authenticated %}
+                    {# Usuario no autenticado: invitar a hacer login #}
+                    <div class="space-y-3">
+                        <a href="{{ url_for('security.login') }}"
+                            class="w-full py-4 bg-primary text-primary-foreground font-[var(--font-display)] text-xl tracking-[0.2em] hover:bg-primary/90 transition-colors flex items-center justify-center gap-3">
+                            <i data-lucide="log-in" class="w-5 h-5"></i>
+                            INICIAR SESIÓN PARA COMPRAR
+                        </a>
+                        <p class="text-xs text-center text-muted-foreground">¿No tienes cuenta? <a
+                                href="{{ url_for('security.register') }}"
+                                class="text-primary hover:underline">Regístrate gratis</a></p>
+                    </div>
+                    {% elif not current_user.cliente %}
+                    {# Autenticado pero sin perfil de cliente #}
+                    <a href="{{ url_for('checkout.completar_perfil') }}"
+                        class="w-full py-4 bg-primary text-primary-foreground font-[var(--font-display)] text-xl tracking-[0.2em] hover:bg-primary/90 transition-colors flex items-center justify-center gap-3">
+                        <i data-lucide="user-check" class="w-5 h-5"></i>
+                        COMPLETAR PERFIL
+                    </a>
+                    {% else %}
+                    {# Autenticado con perfil completo: checkout normal #}
                     <form action="{{ url_for('checkout.procesar_checkout') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit"
                             class="w-full py-4 bg-primary text-primary-foreground font-[var(--font-display)] text-xl tracking-[0.2em] hover:bg-primary/90 transition-colors">
-                            CHECKOUT
+                            CONFIRMAR PEDIDO
                         </button>
                     </form>
+                    {% endif %}
                     <div class="mt-6 flex justify-center gap-3">
                         <div class="w-10 h-6 bg-background rounded flex items-center justify-center text-xs font-bold">
                             VISA</div>

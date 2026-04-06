@@ -39,6 +39,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cartOverlay) cartOverlay.addEventListener('click', () => toggleCart(false));
     if (cartContinueBtn) cartContinueBtn.addEventListener('click', () => toggleCart(false));
 
+    // Auto-abrir carrito si el backend lo solicita
+    if (document.body.dataset.openCart === 'true') {
+        setTimeout(() => toggleCart(true), 500);
+    }
+
     // Marcar como cargado
     const cartItemsList = document.getElementById('cart-items-list');
     if (cartItemsList) cartItemsList.setAttribute('data-loaded', 'true');
@@ -741,6 +746,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let selectedSizeVal = null;
         const sizeBtns = document.querySelectorAll('.size-btn');
         const addToCartProductBtn = document.getElementById('btn-add-to-cart-product');
+        const formTalla = document.getElementById('form-talla');
         sizeBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 sizeBtns.forEach(b => {
@@ -749,8 +755,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.className = "size-btn w-12 h-12 text-sm border transition-all border-primary bg-primary text-primary-foreground";
                 selectedSizeVal = btn.dataset.size;
                 document.getElementById('selected-size-label').textContent = selectedSizeVal;
+                if (formTalla) formTalla.value = selectedSizeVal;
 
-                addToCartProductBtn.className = "flex-1 py-4 font-[var(--font-display)] text-xl tracking-[0.2em] flex items-center justify-center gap-3 transition-all bg-primary text-primary-foreground hover:bg-primary/90";
+                // Enable the submit button now that a size is selected
+                addToCartProductBtn.disabled = false;
+                addToCartProductBtn.className = "w-full py-4 font-[var(--font-display)] text-xl tracking-[0.2em] flex items-center justify-center gap-3 transition-all bg-primary text-primary-foreground hover:bg-primary/90";
             });
         });
 
@@ -758,17 +767,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const qtyMinus = document.getElementById('qty-minus');
         const qtyPlus = document.getElementById('qty-plus');
         const qtyValue = document.getElementById('qty-value');
+        const formCantidad = document.getElementById('form-cantidad');
 
         qtyMinus.addEventListener('click', () => {
             quantityVal = Math.max(1, quantityVal - 1);
             qtyValue.textContent = quantityVal;
+            if (formCantidad) formCantidad.value = quantityVal;
         });
         qtyPlus.addEventListener('click', () => {
             quantityVal++;
             qtyValue.textContent = quantityVal;
+            if (formCantidad) formCantidad.value = quantityVal;
         });
-
-        // El botón de agregar al carrito ahora es un form, no necesita JS
     }
 
     /* =========================================

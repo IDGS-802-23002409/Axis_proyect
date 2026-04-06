@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% include "components/_cart_drawer.html" %}
 
 <div id="catalogo-container" class="min-h-screen bg-background">
     <!-- Hero Section -->
@@ -169,6 +168,7 @@
                                     <i data-lucide="arrow-up-right" class="w-[14px] h-[14px]"></i>
                                 </a>
                                 <form action="{{ url_for('checkout.agregar_carrito') }}" method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="uuid_producto" value="{{ product.id }}">
                                     <input type="hidden" name="cantidad" value="1">
                                     <input type="hidden" name="talla" value="M">

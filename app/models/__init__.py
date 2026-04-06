@@ -13,6 +13,5 @@ from app.models.produccion import OrdenProduccion, EjecucionCorte, MermaPiezas  
 from app.models.ventas import VentaEncabezado, VentaDetalle  # noqa: F401
 from app.models.pedidos_proveedor import PedidoProveedorEncabezado, PedidoProveedorDetalle  # noqa: F401
 from app.models.empleados import Empleado  # noqa: F401
-from app.models.recetas import Receta, RecetaInsumo  # noqa: F401
 
 
