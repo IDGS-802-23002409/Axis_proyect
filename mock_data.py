@@ -15,6 +15,7 @@ from app.models.proveedores import Proveedor
 from app.models.categorias import Categoria
 from app.models.modelos_productos import ModeloRopa, ProductoTerminado
 from app.models.insumos import Insumo
+from app.models.explosion_materiales import ExplosionMaterialesCabecera
 from datetime import datetime, timezone
 
 def run_seed():
@@ -75,6 +76,10 @@ def run_seed():
         
         db.session.commit()
 
+        # Admin for recipes
+        admin_user = Usuario.query.filter_by(email="admin@axis.com").first()
+        admin_uuid = admin_user.uuid_usuario if admin_user else None
+
         # 3. Categorías
         if not Categoria.query.first():
             cat1 = Categoria(nombre="Camisetas", descripcion="Prendas de cuerpo superior", estatus_visible=True)
@@ -97,7 +102,13 @@ def run_seed():
 
         # 4. Proveedores e Insumos
         if not Proveedor.query.first():
-            prov1 = Proveedor(razon_social="Telastika SA", rfc="TELA010101XXX", contacto_nombre="Pedro")
+            prov1 = Proveedor(
+                razon_social="Telastika SA", 
+                rfc="TELA010101XXX", 
+                contacto_nombre="Pedro",
+                telefono="555-987-6543",
+                categoria_insumo="Textiles"
+            )
             db.session.add(prov1)
             db.session.commit()
             
@@ -122,12 +133,24 @@ def run_seed():
                 {"nombre": "T-Shirt Classic White", "desc": "Camiseta blanca minimalista", "cat": "Camisetas", "img": "tshirt-white.jpg", "precio": 350.00, "sku": "TS-WHT"}
             ]
             
+            # Crear una receta genérica para todos los productos (Explosión de Materiales)
+            receta = ExplosionMaterialesCabecera.query.first()
+            if not receta:
+                receta = ExplosionMaterialesCabecera(
+                    instrucciones_proceso="Proceso estándar de fabricación urbana.",
+                    uuid_usuario=admin_uuid or "dummy-user-id",
+                    estatus='ACTIVO'
+                )
+                db.session.add(receta)
+                db.session.commit()
+
             for md in modelos_data:
                 nuevo_mod = ModeloRopa(
                     nombre_modelo=md["nombre"], 
                     descripcion=md["desc"], 
                     uuid_categoria=cats.get(md["cat"]), 
-                    imagen_url=f"/static/images/products/{md['img']}"
+                    imagen_url=f"/static/images/products/{md['img']}",
+                    estatus='ACTIVO'
                 )
                 db.session.add(nuevo_mod)
                 db.session.flush() # Obtener su uuid
@@ -138,6 +161,7 @@ def run_seed():
                     db.session.add(ProductoTerminado(
                         sku_especifico=f"{md['sku']}-{talla}", 
                         uuid_modelo=nuevo_mod.uuid_modelo, 
+                        uuid_explosion=receta.uuid_explosion,
                         talla=talla, 
                         precio_venta=md["precio"]
                     ))

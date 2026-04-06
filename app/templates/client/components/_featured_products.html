@@ -1,23 +1,4 @@
-{% set featured_products = [
-{
-"id": "1", "name": "AXIS OVERSIZED HOODIE", "price": 89.99, "image":
-"https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&h=1000&fit=crop", "category": "hoodies", "new": true
-},
-{
-"id": "2", "name": "STREET ART TEE", "price": 45.99, "image":
-"https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=800&h=1000&fit=crop", "category": "camisetas"
-},
-{
-"id": "3", "name": "CARGO PANTS URBAN", "price": 79.99, "image":
-"https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800&h=1000&fit=crop", "category": "pantalones"
-},
-{
-"id": "4", "name": "GRAFFITI BOMBER", "price": 129.99, "image":
-"https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&h=1000&fit=crop", "category": "chaquetas", "new":
-true
-}
-] %}
-
+{% if featured_products %}
 <section id="featured-products-container" class="min-h-screen bg-background py-20">
     <div class="container mx-auto px-4 lg:px-8 h-full flex flex-col">
         <!-- Header -->
@@ -109,3 +90,4 @@ true
         </div>
     </div>
 </section>
+{% endif %}

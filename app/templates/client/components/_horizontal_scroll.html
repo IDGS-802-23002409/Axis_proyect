@@ -1,3 +1,4 @@
+{% if categorias %}
 <section id="horizontal-scroll-container" class="relative min-h-screen overflow-hidden bg-background">
     <!-- Background title -->
     <div class="section-title absolute top-1/2 left-0 -translate-y-1/2 pointer-events-none whitespace-nowrap z-0">
@@ -34,7 +35,6 @@
         </div>
 
         <!-- Category Cards from Database -->
-        {% if categorias %}
         {% for categoria in categorias %}
         <a href="/catalogo?category={{ categoria.uuid_categoria }}"
             class="category-card flex-shrink-0 w-[75vw] md:w-[40vw] lg:w-[28vw] h-[70vh] relative group cursor-pointer block">
@@ -76,62 +76,6 @@
             </div>
         </a>
         {% endfor %}
-        {% else %}
-        <!-- Fallback if no categories in DB -->
-        {% set categories = [
-        {"title": "HOODIES", "image": "/static/images/default/default-image.png",
-        "desc": "Comodidad urbana", "link": "/catalogo"},
-        {"title": "CAMISETAS", "image": "/static/images/default/default-image.png", "desc": "Arte que vistes",
-        "link": "/catalogo"},
-        {"title": "PANTALONES", "image": "/static/images/default/default-image.png", "desc": "Estilo cargo",
-        "link": "/catalogo"},
-        {"title": "CHAQUETAS", "image": "/static/images/default/default-image.png", "desc": "Bomber culture",
-        "link": "/catalogo"},
-        {"title": "ACCESORIOS", "image": "/static/images/default/default-image.png", "desc": "Completa tu look",
-        "link": "/catalogo"}
-        ] %}
-        {% for category in categories %}
-        <a href="{{ category.link }}"
-            class="category-card flex-shrink-0 w-[75vw] md:w-[40vw] lg:w-[28vw] h-[70vh] relative group cursor-pointer block">
-            <div class="absolute inset-0 overflow-hidden">
-                <img src="{{ category.image }}" alt="{{ category.title }}"
-                    class="card-image w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform" />
-                <div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
-            </div>
-
-            <!-- Card number -->
-            <div
-                class="absolute top-6 left-6 font-[var(--font-display)] text-7xl md:text-8xl text-foreground/10 group-hover:text-primary/20 transition-colors duration-500">
-                0{{ loop.index }}
-            </div>
-
-            <div class="card-content absolute bottom-0 left-0 right-0 p-8 will-change-transform">
-                <span class="text-primary text-xs tracking-[0.3em] uppercase block mb-2">
-                    Colección
-                </span>
-                <h4
-                    class="font-[var(--font-display)] text-4xl md:text-5xl lg:text-6xl tracking-[0.1em] mb-2 group-hover:text-primary transition-colors duration-300">
-                    {{ category.title }}
-                </h4>
-                <p class="text-muted-foreground text-lg">{{ category.desc }}</p>
-
-                <div class="mt-6 flex items-center gap-3 text-primary">
-                    <span class="text-sm tracking-[0.2em] uppercase">Explorar</span>
-                    <i data-lucide="arrow-right"
-                        class="w-4 h-4 translate-x-0 group-hover:translate-x-2 transition-transform duration-300"></i>
-                </div>
-            </div>
-
-            <!-- Corner accents -->
-            <div
-                class="absolute top-6 right-6 w-10 h-10 border-r-2 border-t-2 border-primary opacity-0 group-hover:opacity-100 transition-all duration-500">
-            </div>
-            <div
-                class="absolute bottom-6 left-6 w-10 h-10 border-l-2 border-b-2 border-primary opacity-0 group-hover:opacity-100 transition-all duration-500">
-            </div>
-        </a>
-        {% endfor %}
-        {% endif %}
 
         <!-- End Card -->
         <div
@@ -148,3 +92,4 @@
         </div>
     </div>
 </section>
+{% endif %}

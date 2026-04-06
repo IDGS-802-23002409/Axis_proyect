@@ -34,7 +34,10 @@ def get_serialized_categories():
 @catalog_bp.route('/')
 def index():
     categorias = Categoria.query.filter_by(estatus_visible=True).order_by(Categoria.nombre).all()
-    return render_template('index.html', categorias=categorias)
+    # Traer los últimos 4 productos como destacados
+    modelos_db = ModeloRopa.query.order_by(ModeloRopa.fecha_creacion.desc()).limit(4).all()
+    featured_products = [serialize_modelo(m) for m in modelos_db]
+    return render_template('index.html', categorias=categorias, featured_products=featured_products)
 
 @catalog_bp.route('/about')
 def about():
