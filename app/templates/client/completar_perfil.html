@@ -1,100 +1,86 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="min-h-screen bg-background flex flex-col lg:flex-row">
-    <!-- Left side: Visual/Brand Content -->
-    <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-secondary">
-        <div class="absolute inset-0">
-            <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&h=1600&fit=crop" 
-                 alt="AXIS Urban" class="object-cover w-full h-full opacity-60 grayscale hover:grayscale-0 transition-all duration-1000" />
-            <div class="absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent"></div>
-            <div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
-        </div>
+<div class="min-h-screen bg-background pt-40 pb-32">
+    <div class="container mx-auto px-6 lg:px-8">
         
-        <div class="relative z-10 flex flex-col justify-end p-20">
-            <h1 class="font-[var(--font-display)] text-8xl xl:text-9xl tracking-[0.05em] leading-none mb-8">
-                FINALIZA EL <br><span class="text-primary">REGISTRO</span>
-            </h1>
-            <p class="text-muted-foreground text-xl max-w-md tracking-wider leading-relaxed">
-                Estamos a un paso de enviar tu selección AXIS. Necesitamos tus datos para asegurar una entrega precisa.
-            </p>
-        </div>
-
-        <!-- Decorative elements -->
-        <div class="absolute top-10 left-10 w-32 h-px bg-primary/30"></div>
-        <div class="absolute top-10 left-10 w-px h-32 bg-primary/30"></div>
-    </div>
-
-    <!-- Right side: Form -->
-    <div class="flex-1 flex items-center justify-center p-6 md:p-12 lg:p-20 pt-32 lg:pt-20">
-        <div class="w-full max-w-xl">
-            <!-- Mobile title (hidden on large) -->
-            <div class="lg:hidden mb-12">
-                <h2 class="font-[var(--font-display)] text-5xl tracking-[0.1em] mb-4">DATOS DE ENVÍO</h2>
-                <div class="w-20 h-1 bg-primary"></div>
+        <div class="max-w-3xl mx-auto">
+            
+            <!-- Encabezado de la Pantalla -->
+            <div class="mb-20 text-center lg:text-left">
+                <span class="text-primary text-xs font-black uppercase tracking-[0.4em] mb-4 block">Paso Final</span>
+                <h1 class="font-[var(--font-display)] text-6xl md:text-8xl tracking-tighter leading-none mb-6 uppercase">
+                    Datos de <br><span class="text-primary">Envío</span>
+                </h1>
+                <div class="w-24 h-1 bg-primary mb-8 mx-auto lg:mx-0"></div>
+                <p class="text-muted-foreground text-lg tracking-wide max-w-xl leading-relaxed">
+                    Para finalizar tu orden AXIS, necesitamos saber a dónde enviar tus prendas y un número de contacto directo.
+                </p>
             </div>
 
-            <div class="space-y-12">
-                <div class="space-y-4">
-                    <h3 class="text-sm tracking-[0.3em] uppercase text-primary font-bold">Información requerida</h3>
-                    <p class="text-muted-foreground">Proporciona un número de contacto y la dirección exacta para tu pedido.</p>
-                </div>
-
+            <!-- Formulario Principal -->
+            <div class="bg-secondary/20 border border-border p-8 md:p-16 lg:p-20 relative overflow-hidden">
+                <!-- Decoración de fondo -->
+                <div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-bl-full pointer-events-none"></div>
+                
                 {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
-                {% for category, message in messages %}
-                <div class="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/30 text-destructive text-sm tracking-widest uppercase font-bold">
-                    <i data-lucide="alert-circle" class="w-5 h-5"></i>
-                    {{ message }}
+                <div class="mb-10 space-y-4">
+                    {% for category, message in messages %}
+                    <div class="p-4 bg-destructive/10 border border-destructive/50 text-destructive text-xs font-bold uppercase tracking-widest flex items-center gap-3">
+                        <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                        {{ message }}
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
                 {% endif %}
                 {% endwith %}
 
-                <form method="POST" class="space-y-10">
+                <form method="POST" class="space-y-16">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-                    <!-- Phone Field -->
-                    <div class="group space-y-4">
-                        <label class="block text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground group-focus-within:text-primary transition-colors">
+                    <!-- Campo: Teléfono -->
+                    <div class="space-y-6">
+                        <label class="flex items-center gap-3 text-xs uppercase tracking-[0.3em] font-black text-foreground">
+                            <i data-lucide="phone" class="w-4 h-4 text-primary"></i>
                             Teléfono de Contacto
                         </label>
-                        <div class="relative">
-                            <i data-lucide="phone" class="w-5 h-5 absolute left-0 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"></i>
-                            <input type="tel" name="telefono" required placeholder="555 123 4567"
-                                class="w-full bg-transparent border-b border-border pl-10 py-4 focus:outline-none focus:border-primary transition-all text-xl font-medium placeholder:text-muted-foreground/30">
-                        </div>
-                        <p class="text-[10px] text-muted-foreground uppercase tracking-widest">Lo usaremos para coordinar la entrega.</p>
+                        <input type="tel" name="telefono" required 
+                            placeholder="Ej. 55 1234 5678"
+                            class="w-full bg-transparent border-b-2 border-border py-4 focus:outline-none focus:border-primary transition-all text-2xl font-medium placeholder:text-muted-foreground/20">
+                        <p class="text-[10px] text-muted-foreground uppercase tracking-[0.2em]">Lo usaremos únicamente para coordinar la entrega de tu pedido.</p>
                     </div>
 
-                    <!-- Address Field -->
-                    <div class="group space-y-4">
-                        <label class="block text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground group-focus-within:text-primary transition-colors">
+                    <!-- Campo: Dirección -->
+                    <div class="space-y-6">
+                        <label class="flex items-center gap-3 text-xs uppercase tracking-[0.3em] font-black text-foreground">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-primary"></i>
                             Dirección de Envío Completa
                         </label>
-                        <div class="relative">
-                            <i data-lucide="map-pin" class="w-5 h-5 absolute left-0 top-6 text-muted-foreground group-focus-within:text-primary transition-colors"></i>
-                            <textarea name="direccion_completa" required rows="4"
-                                placeholder="Calle, Número, Colonia, C.P., Ciudad y Estado..."
-                                class="w-full bg-transparent border-b border-border pl-10 py-4 focus:outline-none focus:border-primary transition-all text-xl font-medium resize-none placeholder:text-muted-foreground/30 leading-relaxed"></textarea>
-                        </div>
+                        <textarea name="direccion_completa" required rows="3"
+                            placeholder="Calle, Número, Colonia, C.P., Ciudad y Estado..."
+                            class="w-full bg-transparent border-b-2 border-border py-4 focus:outline-none focus:border-primary transition-all text-2xl font-medium resize-none placeholder:text-muted-foreground/20 leading-tight"></textarea>
+                        <p class="text-[10px] text-muted-foreground uppercase tracking-[0.2em]">Asegúrate de incluir referencias si es necesario.</p>
                     </div>
 
-                    <div class="pt-8 flex flex-col gap-6">
+                    <!-- Botón de Acción -->
+                    <div class="pt-10">
                         <button type="submit"
-                            class="group relative w-full bg-foreground text-background py-6 font-[var(--font-display)] text-2xl tracking-[0.2em] hover:bg-primary transition-all duration-500 overflow-hidden">
+                            class="group relative w-full bg-foreground text-background py-6 md:py-8 font-[var(--font-display)] text-2xl md:text-3xl tracking-[0.2em] hover:bg-primary transition-all duration-500 overflow-hidden">
                             <span class="relative z-10 flex items-center justify-center gap-4">
-                                GUARDAR Y CONTINUAR AL PAGO
-                                <i data-lucide="arrow-right" class="w-6 h-6 transform group-hover:translate-x-2 transition-transform"></i>
+                                GUARDAR Y PAGAR
+                                <i data-lucide="arrow-right" class="w-6 h-6 transform group-hover:translate-x-3 transition-transform"></i>
                             </span>
                         </button>
                         
-                        <div class="flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="shield-check" class="w-4 h-4 text-primary"></i>
-                                Transacción Segura SSL
+                        <div class="mt-8 flex flex-col md:flex-row justify-between items-center gap-4 opacity-60">
+                            <div class="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold">
+                                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-500"></i>
+                                Pago Seguro SSL
                             </div>
-                            <span>Tus datos están protegidos</span>
+                            <div class="text-[10px] uppercase tracking-widest font-bold">
+                                Axis Streetwear © 2026
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -102,11 +88,4 @@
         </div>
     </div>
 </div>
-
-<script>
-    // Inicializar iconos de Lucide si es necesario (ya debería estar en base.html)
-    if (window.lucide) {
-        lucide.createIcons();
-    }
-</script>
 {% endblock %}
