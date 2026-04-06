@@ -132,7 +132,7 @@
 
                                 <form method="POST"
                                     action="{{ url_for('recetas_bp.delete', uuid_explosion=receta.uuid_explosion) }}"
-                                    class="inline delete-form">
+                                    class="inline-block delete-form">
 
                                     <!-- CSRF oculto -->
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

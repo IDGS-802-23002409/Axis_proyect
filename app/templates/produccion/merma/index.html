@@ -23,7 +23,7 @@
     <!-- Acceso rápido: Nueva merma -->
     <div class="p-4 bg-card border border-border rounded-lg flex items-end">
       <a href="{{ url_for('merma.registro_merma') }}"
-         class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm w-full justify-center">
+        class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm w-full justify-center">
         <i data-lucide="plus" class="w-4 h-4"></i>
         Nueva Merma
       </a>
@@ -32,7 +32,7 @@
     <!-- Acceso rápido: Retazos de tela -->
     <div class="p-4 bg-card border border-border rounded-lg flex items-end">
       <a href="{{ url_for('merma.index_retazos') }}"
-         class="flex items-center gap-2 bg-white border border-border text-black px-4 py-2 rounded-md text-sm w-full justify-center hover:bg-secondary">
+        class="flex items-center gap-2 bg-white border border-border text-black px-4 py-2 rounded-md text-sm w-full justify-center hover:bg-secondary">
         <i data-lucide="scissors" class="w-4 h-4"></i>
         Retazos de Tela
       </a>
@@ -58,11 +58,10 @@
       <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-3">
         <div>
           <label class="text-xs text-muted-foreground" for="op">Orden de Producción</label>
-          <select name="op" id="op"
-            class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm">
+          <select name="op" id="op" class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm">
             <option value="">Todas</option>
             {% for o in ordenes %}
-            <option value="{{ o.uuid_op }}" {% if filtro_op == o.uuid_op %}selected{% endif %}>
+            <option value="{{ o.uuid_op }}" {% if filtro_op==o.uuid_op %}selected{% endif %}>
               OP {{ o.uuid_op[:8] }}… · {{ o.estado }}
             </option>
             {% endfor %}
@@ -71,11 +70,10 @@
 
         <div>
           <label class="text-xs text-muted-foreground" for="insumo">Insumo</label>
-          <select name="insumo" id="insumo"
-            class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm">
+          <select name="insumo" id="insumo" class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm">
             <option value="">Todos</option>
             {% for i in insumos %}
-            <option value="{{ i.uuid_insumo }}" {% if filtro_insumo == i.uuid_insumo %}selected{% endif %}>
+            <option value="{{ i.uuid_insumo }}" {% if filtro_insumo==i.uuid_insumo %}selected{% endif %}>
               {{ i.nombre }}
             </option>
             {% endfor %}
@@ -84,20 +82,22 @@
 
         <div>
           <label class="text-xs text-muted-foreground" for="motivo">Motivo</label>
-          <select name="motivo" id="motivo"
-            class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm">
+          <select name="motivo" id="motivo" class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm">
             <option value="">Todos</option>
-            <option value="DEFECTO_PROVEEDOR" {% if filtro_motivo == 'DEFECTO_PROVEEDOR' %}selected{% endif %}>Defecto Proveedor</option>
-            <option value="DAÑO_EN_PROCESO"   {% if filtro_motivo == 'DAÑO_EN_PROCESO'   %}selected{% endif %}>Daño en Proceso</option>
-            <option value="ERROR_OPERARIO"    {% if filtro_motivo == 'ERROR_OPERARIO'    %}selected{% endif %}>Error Operario</option>
-            <option value="MUESTRA_PRUEBA"    {% if filtro_motivo == 'MUESTRA_PRUEBA'    %}selected{% endif %}>Muestra Prueba</option>
-            <option value="OTRO"              {% if filtro_motivo == 'OTRO'              %}selected{% endif %}>Otro</option>
+            <option value="DEFECTO_PROVEEDOR" {% if filtro_motivo=='DEFECTO_PROVEEDOR' %}selected{% endif %}>Defecto
+              Proveedor</option>
+            <option value="DAÑO_EN_PROCESO" {% if filtro_motivo=='DAÑO_EN_PROCESO' %}selected{% endif %}>Daño en Proceso
+            </option>
+            <option value="ERROR_OPERARIO" {% if filtro_motivo=='ERROR_OPERARIO' %}selected{% endif %}>Error Operario
+            </option>
+            <option value="MUESTRA_PRUEBA" {% if filtro_motivo=='MUESTRA_PRUEBA' %}selected{% endif %}>Muestra Prueba
+            </option>
+            <option value="OTRO" {% if filtro_motivo=='OTRO' %}selected{% endif %}>Otro</option>
           </select>
         </div>
 
         <div class="flex items-end gap-2">
-          <button type="submit"
-            class="flex-1 px-3 py-2 bg-black text-white rounded-md text-sm">Filtrar</button>
+          <button type="submit" class="flex-1 px-3 py-2 bg-black text-white rounded-md text-sm">Filtrar</button>
           <a href="{{ url_for('merma.index') }}"
             class="flex-1 px-3 py-2 border border-border rounded-md text-sm text-center">Limpiar</a>
         </div>
@@ -154,15 +154,15 @@
 
             <td class="px-4 py-3">
               {% if merma.motivo == 'DEFECTO_PROVEEDOR' %}
-                <span class="px-2 py-1 bg-red-100 text-red-800 rounded-sm text-xs">Defecto Proveedor</span>
+              <span class="px-2 py-1 bg-red-100 text-red-800 rounded-sm text-xs">Defecto Proveedor</span>
               {% elif merma.motivo == 'DAÑO_EN_PROCESO' %}
-                <span class="px-2 py-1 bg-orange-100 text-orange-800 rounded-sm text-xs">Daño en Proceso</span>
+              <span class="px-2 py-1 bg-orange-100 text-orange-800 rounded-sm text-xs">Daño en Proceso</span>
               {% elif merma.motivo == 'ERROR_OPERARIO' %}
-                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-sm text-xs">Error Operario</span>
+              <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-sm text-xs">Error Operario</span>
               {% elif merma.motivo == 'MUESTRA_PRUEBA' %}
-                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-sm text-xs">Muestra Prueba</span>
+              <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-sm text-xs">Muestra Prueba</span>
               {% else %}
-                <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-sm text-xs">Otro</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-sm text-xs">Otro</span>
               {% endif %}
             </td>
 
@@ -173,22 +173,21 @@
             <td class="px-4 py-3 text-center">
               <div class="flex items-center justify-center gap-3">
                 <a href="{{ url_for('merma.detalle_merma', uuid_merma=merma.uuid_merma) }}"
-                   class="text-primary hover:underline text-xs">Ver</a>
+                  class="text-primary hover:underline text-xs">Ver</a>
 
                 {% if merma.orden_produccion and merma.orden_produccion.estado != 'Terminado' %}
-                  <form method="POST"
-                        action="{{ url_for('merma.eliminar_merma', uuid_merma=merma.uuid_merma) }}"
-                        style="display:inline;"
-                        onsubmit="return confirm('¿Eliminar esta merma?\nSe revertirán {{ merma.diferencia | int }} piezas al stock si aplica.');">
-                    <button type="submit" class="text-rose-500 hover:underline text-xs">
-                      Eliminar
-                    </button>
-                  </form>
+                <form method="POST" action="{{ url_for('merma.eliminar_merma', uuid_merma=merma.uuid_merma) }}"
+                  style="display:inline;"
+                  onsubmit="return confirm('¿Eliminar esta merma?\nSe revertirán {{ merma.diferencia | int }} piezas al stock si aplica.');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="text-rose-500 hover:underline text-xs">
+                    Eliminar
+                  </button>
+                </form>
                 {% else %}
-                  <span class="text-xs text-muted-foreground italic"
-                        title="No se puede modificar — OP terminada">
-                    Bloqueada
-                  </span>
+                <span class="text-xs text-muted-foreground italic" title="No se puede modificar — OP terminada">
+                  Bloqueada
+                </span>
                 {% endif %}
               </div>
             </td>
@@ -203,8 +202,7 @@
     <div class="p-8 text-center">
       <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-4 text-muted-foreground"></i>
       <p class="text-muted-foreground">No hay mermas de piezas registradas</p>
-      <a href="{{ url_for('merma.registro_merma') }}"
-         class="mt-4 inline-block text-sm text-primary hover:underline">
+      <a href="{{ url_for('merma.registro_merma') }}" class="mt-4 inline-block text-sm text-primary hover:underline">
         Registrar la primera merma
       </a>
     </div>

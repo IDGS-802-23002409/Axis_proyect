@@ -17,9 +17,9 @@
       </div>
       <div class="flex gap-3">
         {% if merma.orden_produccion and merma.orden_produccion.estado != 'Terminado' %}
-        <form method="POST"
-              action="{{ url_for('merma.eliminar_merma', uuid_merma=merma.uuid_merma) }}"
-              onsubmit="return confirm('¿Eliminar esta merma? Se revertirá el descuento de stock si aplica.');">
+        <form method="POST" action="{{ url_for('merma.eliminar_merma', uuid_merma=merma.uuid_merma) }}"
+          onsubmit="return confirm('¿Eliminar esta merma? Se revertirá el descuento de stock si aplica.');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit"
             class="flex items-center gap-2 px-4 py-2 border border-rose-200 text-rose-600 rounded-md text-sm hover:bg-rose-50">
             <i data-lucide="trash" class="w-4 h-4"></i>
@@ -28,7 +28,7 @@
         </form>
         {% endif %}
         <a href="{{ url_for('merma.index') }}"
-           class="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-secondary">
+          class="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-secondary">
           <i data-lucide="arrow-left" class="w-4 h-4"></i>
           Volver
         </a>
@@ -68,10 +68,10 @@
             <label class="text-xs text-muted-foreground">Registrado por</label>
             <p class="font-semibold">
               {% if usuario_registro %}
-                {{ usuario_registro.nombre_completo }}
-                <span class="text-xs text-muted-foreground">({{ usuario_registro.email }})</span>
+              {{ usuario_registro.nombre_completo }}
+              <span class="text-xs text-muted-foreground">({{ usuario_registro.email }})</span>
               {% else %}
-                <span class="text-gray-400">No disponible</span>
+              <span class="text-gray-400">No disponible</span>
               {% endif %}
             </p>
           </div>
@@ -106,20 +106,16 @@
               {% elif diferencia < 0 %}text-green-600
               {% else %}text-gray-600{% endif %}">
               {% if diferencia > 0 %}
-                ⚠ Merma — se descontó del stock
-              {% elif diferencia < 0 %}
-                ✓ Ahorro — stock no afectado
-              {% else %}
-                Sin diferencia — stock no afectado
-              {% endif %}
-            </label>
-            <p class="text-xl font-bold
+              ⚠ Merma — se descontó del stock
+              {% elif diferencia < 0 %} ✓ Ahorro — stock no afectado {% else %} Sin diferencia — stock no afectado {%
+                endif %} </label>
+                <p class="text-xl font-bold
               {% if diferencia > 0 %}text-rose-800
               {% elif diferencia < 0 %}text-green-800
               {% else %}text-gray-800{% endif %}">
-              {{ "%+.4f"|format(diferencia) }}
-              <span class="text-sm font-normal">{{ merma.insumo.contenido_unidad_medida }}</span>
-            </p>
+                  {{ "%+.4f"|format(diferencia) }}
+                  <span class="text-sm font-normal">{{ merma.insumo.contenido_unidad_medida }}</span>
+                </p>
           </div>
         </div>
       </div>
@@ -131,15 +127,19 @@
             <label class="text-xs text-muted-foreground">Motivo</label>
             <div class="mt-2">
               {% if merma.motivo == 'DEFECTO_PROVEEDOR' %}
-                <span class="px-3 py-2 bg-red-100 text-red-800 rounded-md font-semibold text-sm">Defecto del Proveedor</span>
+              <span class="px-3 py-2 bg-red-100 text-red-800 rounded-md font-semibold text-sm">Defecto del
+                Proveedor</span>
               {% elif merma.motivo == 'DAÑO_EN_PROCESO' %}
-                <span class="px-3 py-2 bg-orange-100 text-orange-800 rounded-md font-semibold text-sm">Daño en Proceso</span>
+              <span class="px-3 py-2 bg-orange-100 text-orange-800 rounded-md font-semibold text-sm">Daño en
+                Proceso</span>
               {% elif merma.motivo == 'ERROR_OPERARIO' %}
-                <span class="px-3 py-2 bg-yellow-100 text-yellow-800 rounded-md font-semibold text-sm">Error del Operario</span>
+              <span class="px-3 py-2 bg-yellow-100 text-yellow-800 rounded-md font-semibold text-sm">Error del
+                Operario</span>
               {% elif merma.motivo == 'MUESTRA_PRUEBA' %}
-                <span class="px-3 py-2 bg-blue-100 text-blue-800 rounded-md font-semibold text-sm">Muestra de Prueba</span>
+              <span class="px-3 py-2 bg-blue-100 text-blue-800 rounded-md font-semibold text-sm">Muestra de
+                Prueba</span>
               {% else %}
-                <span class="px-3 py-2 bg-gray-100 text-gray-800 rounded-md font-semibold text-sm">Otro</span>
+              <span class="px-3 py-2 bg-gray-100 text-gray-800 rounded-md font-semibold text-sm">Otro</span>
               {% endif %}
             </div>
           </div>

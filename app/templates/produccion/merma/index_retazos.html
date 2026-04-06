@@ -57,10 +57,10 @@
             </td>
             <td class="px-4 py-3">
               {% if retazo.rollo_origen and retazo.rollo_origen.insumo %}
-                <span class="font-semibold">{{ retazo.rollo_origen.insumo.nombre }}</span>
-                <span class="text-xs text-muted-foreground block">Rollo: {{ retazo.uuid_rollo_origen[:8] }}…</span>
+              <span class="font-semibold">{{ retazo.rollo_origen.insumo.nombre }}</span>
+              <span class="text-xs text-muted-foreground block">Rollo: {{ retazo.uuid_rollo_origen[:8] }}…</span>
               {% else %}
-                <span class="text-muted-foreground">N/A</span>
+              <span class="text-muted-foreground">N/A</span>
               {% endif %}
             </td>
             <td class="px-4 py-3 text-right font-semibold">
@@ -68,11 +68,11 @@
             </td>
             <td class="px-4 py-3 text-sm">
               {% if retazo.motivo_merma %}
-                <span class="text-amber-600 font-medium wrap-break-word" title="{{ retazo.motivo_merma }}">
-                  {{ retazo.motivo_merma }}
-                </span>
+              <span class="text-amber-600 font-medium wrap-break-word" title="{{ retazo.motivo_merma }}">
+                {{ retazo.motivo_merma }}
+              </span>
               {% else %}
-                <span class="text-gray-400 italic">Sin descripción</span>
+              <span class="text-gray-400 italic">Sin descripción</span>
               {% endif %}
             </td>
             <td class="px-4 py-3 text-xs text-muted-foreground">
@@ -81,13 +81,14 @@
             <td class="px-4 py-3 text-center">
               <div class="flex items-center justify-center gap-2">
                 <a href="{{ url_for('merma.detalle_retazo', uuid_retazo=retazo.uuid_retazo) }}"
-                   class="text-primary hover:underline text-xs">Ver</a>
-                
-                {% if retazo.ejecucion_corte and retazo.ejecucion_corte.orden_produccion and retazo.ejecucion_corte.orden_produccion.estado != 'Terminado' %}
-                <form method="POST"
-                      action="{{ url_for('merma.eliminar_retazo', uuid_retazo=retazo.uuid_retazo) }}"
-                      style="display:inline;"
-                      onsubmit="return confirm('¿Eliminar este retazo? Se revertirá el descuento de metraje.');">
+                  class="text-primary hover:underline text-xs">Ver</a>
+
+                {% if retazo.ejecucion_corte and retazo.ejecucion_corte.orden_produccion and
+                retazo.ejecucion_corte.orden_produccion.estado != 'Terminado' %}
+                <form method="POST" action="{{ url_for('merma.eliminar_retazo', uuid_retazo=retazo.uuid_retazo) }}"
+                  style="display:inline;"
+                  onsubmit="return confirm('¿Eliminar este retazo? Se revertirá el descuento de metraje.');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button type="submit" class="text-rose-500 hover:underline text-xs">Eliminar</button>
                 </form>
                 {% else %}
@@ -104,7 +105,8 @@
     <div class="p-8 text-center">
       <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-4 text-muted-foreground"></i>
       <p class="text-muted-foreground">No hay retazos registrados</p>
-      <a href="{{ url_for('merma.registro_retazo') }}" class="mt-4 inline-flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
+      <a href="{{ url_for('merma.registro_retazo') }}"
+        class="mt-4 inline-flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
         <i data-lucide="plus" class="w-4 h-4"></i>
         Registrar Retazo
       </a>
@@ -114,7 +116,7 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     const links = document.querySelectorAll('[data-lucide]');
     if (window.lucide) {
       window.lucide.createIcons();

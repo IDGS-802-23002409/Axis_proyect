@@ -64,6 +64,7 @@ Gestión de Clientes y Agenda
                             <form method="POST"
                                 action="{{ url_for('clientes.delete_cliente', uuid_cliente=cli.uuid_cliente) }}"
                                 style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" onclick="return confirm('¿Seguro de desvincular este cliente?');">
                                     <i data-lucide="trash-2" class="w-4 h-4 text-red-500 hover:text-red-700"></i>
                                 </button>
