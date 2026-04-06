@@ -9,7 +9,7 @@
             <h1 class="text-2xl font-bold uppercase tracking-wide text-black">{{ title }}</h1>
         </header>
 
-        <form method="POST" class="flex flex-col gap-6">
+        <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-6">
             {{ form.hidden_tag() }}
 
             <!-- NOMBRE -->
@@ -30,7 +30,15 @@
                 {% endfor %}
             </div>
 
-            
+            <!-- IMAGEN -->
+            <div class="flex flex-col">
+                {{ form.imagen.label(class="text-sm font-bold mb-1") }}
+                {{ form.imagen(class="px-4 py-3 border border-neutral-200 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-neutral-100 file:text-neutral-700 hover:file:bg-neutral-200") }}
+                <span class="text-xs text-neutral-500 mt-1">Formatos: jpg, png, webp</span>
+                {% for error in form.imagen.errors %}
+                    <span class="text-red-500 text-xs mt-1">{{ error }}</span>
+                {% endfor %}
+            </div>
 
             <!-- BOTÓN -->
             <button type="submit"

@@ -1,141 +1,165 @@
 {% extends "produccion/layout.html" %}
+{% block title %}
+Gestión de Modelos
+{% endblock %}
+
+{% block header %}
+Gestión de Modelos
+{% endblock %}
 
 {% block container %}
-<div class="flex min-h-screen bg-white text-neutral-900 font-sans">
+<div class="px-10 pb-10 flex flex-col gap-8">
 
-    <main class="flex-1 p-8 xl:p-12">
+    <!-- STATS -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-card border border-border rounded-lg p-6">
+            <p class="text-sm text-muted-foreground">Total Modelos</p>
+            <p class="text-3xl font-bold">{{ total_modelos }}</p>
+        </div>
+    </div>
 
-        <header class="flex justify-between items-center mb-10">
-            <div>
-                <h1 class="text-xl font-bold tracking-tight uppercase text-black">Modelos de Ropa</h1>
-            </div>
+    <!-- TABLE CARD -->
+    <div class="bg-card border border-border rounded-lg overflow-hidden">
 
-            <div class="flex items-center gap-4">
-                <a href="{{ url_for('modelos_bp.create') }}"
-                    class="bg-black text-white px-8 py-3 rounded-lg text-xs font-black tracking-widest hover:bg-neutral-800 transition-all shadow-md uppercase">
-                    + Registrar Modelo
-                </a>
-                <a href="{{ url_for('modelos_bp.trash') }}"
-                    class="flex items-center gap-2 bg-neutral-200 text-black px-6 py-3 rounded-lg text-xs font-black tracking-widest hover:bg-neutral-300 transition-all uppercase">
+        <!-- Header -->
+        <div class="flex justify-between items-center p-5 border-b border-border">
+            <h3 class="font-semibold">Catálogo Matriz de Modelos</h3>
 
-                    <i class="fas fa-trash text-xs"></i>
-                    Ver eliminados
-                </a>
-            </div>
-        </header>
-
-        <div class="flex justify-between items-center mb-8 gap-4">
-
-            <!-- Buscador -->
-            <form method="GET" action="{{ url_for('modelos_bp.index') }}" class="flex items-center gap-4">
-                <div class="relative flex-1 max-w-md group">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 text-xs"></i>
-                    <input type="text" name="q" value="{{ request.args.get('q', '') }}"
-                        placeholder="Nombre del modelo..."
-                        class="w-full pl-12 pr-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs">
-                </div>
-                <button type="submit" class="px-4 py-3 bg-black text-white rounded-xl text-xs">
-                    Buscar
+            <div class="flex items-center gap-2">
+                <button onclick="window.location.href='{{ url_for('modelos.registro_modelo') }}';"
+                    class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Nuevo Modelo
                 </button>
+
+                <button id="filterToggle" type="button"
+                    class="h-9 w-9 p-2 bg-card border border-border rounded-md text-muted-foreground hover:bg-secondary"
+                    title="Mostrar/Ocultar filtros">
+                    <i data-lucide="filter" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="filterPanel" class="p-4 border-b border-border bg-surface hidden">
+            <form method="GET" class="flex gap-3 items-end">
+                <div>
+                    <label class="text-xs text-muted-foreground" for="q">Buscar por nombre</label>
+                    <input id="q" name="q" type="text" value="{{ q }}" placeholder="Nombre del modelo"
+                        class="w-full px-3 py-2 border rounded-md" />
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="h-9 px-4 text-sm bg-primary text-white rounded-md">Aplicar</button>
+                </div>
             </form>
-
         </div>
 
-        <div class="w-full overflow-x-auto">
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="text-[10px] uppercase tracking-[0.2em] text-neutral-400 border-b border-neutral-100">
-                        <th class="px-4 py-6 font-bold">Nombre</th>
-                        <th class="px-4 py-6 font-bold">Categoría</th>
-                        <th class="px-4 py-6 font-bold">Fecha Creación</th>
-                        <th class="px-4 py-6 font-bold">Fecha Actualización</th>
-                        <th class="px-4 py-6 font-bold text-right">Acciones</th>
-                    </tr>
-                </thead>
+        <!-- Table -->
+        <table class="w-full text-sm">
+            <thead class="bg-secondary text-muted-foreground uppercase text-xs">
+                <tr>
+                    <th class="text-left px-6 py-4">Imagen</th>
+                    <th class="text-left px-6 py-4">Modelo</th>
+                    <th class="text-left px-6 py-4">Categoría</th>
+                    <th class="text-left px-6 py-4">Últ. Act</th>
+                    <th class="text-right px-6 py-4">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mod in modelos %}
+                <tr class="border-b border-border hover:bg-muted transition">
+                    <!-- IMG -->
+                    <td class="px-6 py-4">
+                        {% if mod.imagen_url %}
+                        <img src="{{ mod.imagen_url }}" class="w-12 h-12 rounded-md object-cover border" alt="img">
+                        {% else %}
+                        <div class="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center">
+                            <i data-lucide="image" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <!-- Modelo -->
+                    <td class="px-6 py-4">
+                        <p class="font-medium">{{ mod.nombre_modelo }}</p>
+                        <p class="text-xs text-muted-foreground truncate max-w-[200px]" title="{{ mod.descripcion }}">{{
+                            mod.descripcion or '' }}</p>
+                    </td>
+                    <!-- Categoria -->
+                    <td class="px-6 py-4">
+                        {{ mod.categoria.nombre_categoria if mod.categoria else 'N/A' }}
+                    </td>
+                    <!-- Fecha -->
+                    <td class="px-6 py-4 text-muted-foreground">
+                        {{ mod.fecha_actualizacion.strftime('%d %b %Y') if mod.fecha_actualizacion else '—' }}
+                    </td>
+                    <!-- Acciones -->
+                    <td class="px-6 py-4 text-right flex justify-end gap-3 items-center" style="height: 80px;">
 
-                <tbody class="divide-y divide-neutral-50">
-                    {% for modelo in modelos %}
-                    {% if modelo.estatus == 'ACTIVO' %}
-                    <tr class="group hover:bg-neutral-50 transition-colors">
+                        <!-- Editar -->
+                        <a href="{{ url_for('modelos.update_modelo', uuid_modelo=mod.uuid_modelo) }}"
+                            title="Editar Modelo">
+                            <i data-lucide="pencil" class="w-4 h-4 cursor-pointer hover:text-primary"></i>
+                        </a>
 
-                        <!-- Nombre -->
-                        <td class="px-4 py-6">
-                            <div class="text-sm font-bold text-neutral-800">{{ modelo.nombre_modelo }}</div>
-                        </td>
+                        <!-- Eliminar -->
+                        <form method="POST" action="{{ url_for('modelos.delete_modelo', uuid_modelo=mod.uuid_modelo) }}"
+                            class="inline">
+                            <button type="button" onclick="openDeleteModal('{{ mod.uuid_modelo }}')"
+                                title="Eliminar Modelo">
+                                <i data-lucide="trash-2" class="w-4 h-4 text-red-500 cursor-pointer"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-                        <!-- Categoría -->
-                        <td class="px-4 py-6 text-xs text-neutral-500">
-                            {{ modelo.categoria.nombre if modelo.categoria else 'General' }}
-                        </td>
-
-                        <!-- Fecha Creación -->
-                        <td class="px-4 py-6 text-xs text-neutral-400">
-                            {{ modelo.fecha_creacion.strftime('%d/%m/%Y') if modelo.fecha_creacion else '-' }}
-                        </td>
-
-                        <!-- Fecha Actualización -->
-                        <td class="px-4 py-6 text-xs text-neutral-400">
-                            {{ modelo.fecha_actualizacion.strftime('%d/%m/%Y') if modelo.fecha_actualizacion else '-' }}
-                        </td>
-
-                        <!-- ACCIONES -->
-                        <td class="px-4 py-6 text-right">
-                            <div class="flex justify-end gap-3">
-
-                                <a href="{{ url_for('modelos_bp.edit', uuid_modelo=modelo.uuid_modelo) }}"
-                                    class="flex items-center gap-2 px-5 py-3 bg-purple-50 hover:bg-purple-100 text-purple-600 hover:text-purple-800 rounded-lg text-[10px] font-bold tracking-wider border border-purple-200 transition-all">
-                                    <i class="fas fa-pen text-[10px]"></i>
-                                    Editar
-                                </a>
-
-                                <form method="POST"
-                                    action="{{ url_for('modelos_bp.delete', uuid_modelo=modelo.uuid_modelo) }}"
-                                    class="inline form-delete">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="button" onclick="confirmDelete(this, '{{ modelo.nombre_modelo }}')"
-                                        class="flex items-center gap-2 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 rounded-lg text-[10px] font-bold tracking-wider border border-red-200 transition-all">
-                                        <i class="fas fa-trash text-[10px]"></i>
-                                        Eliminar
-                                    </button>
-                                </form>
-
-                            </div>
-                        </td>
-
-                    </tr>
-                    {% endif %}
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="px-4 py-6 text-center text-neutral-400 text-sm">
-                            No se encontraron modelos.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <!-- Modal Delete -->
+    <div id="deleteModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-96">
+            <h2 class="text-lg font-bold mb-4">Confirmar eliminación</h2>
+            <p class="text-sm text-gray-600 mb-6 font-medium text-red-600">
+                Aviso: No podrás borrar este modelo si ya tiene "Productos Terminados" (tallas) asociados.
+            </p>
+            <p class="text-sm text-gray-600 mb-6">
+                ¿Estás seguro de eliminar este modelo matriz?
+            </p>
+            <form id="deleteForm" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeDeleteModal()"
+                        class="px-4 py-2 border rounded-md text-sm">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-md text-sm">Eliminar
+                        Modelo</button>
+                </div>
+            </form>
         </div>
+    </div>
 
-    </main>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    function confirmDelete(button, nombre) {
-        const form = button.closest('form');
 
-        Swal.fire({
-            title: '¿Eliminar modelo?',
-            text: `El modelo "${nombre}" será desactivado`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#000',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                form.submit();
-            }
+<script>
+    function openDeleteModal(uuid) {
+        const modal = document.getElementById("deleteModal");
+        const form = document.getElementById("deleteForm");
+        form.action = `/modelos/eliminar/${uuid}`;
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+    }
+
+    function closeDeleteModal() {
+        const modal = document.getElementById("deleteModal");
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }
+
+    const filterToggle = document.getElementById('filterToggle');
+    const filterPanel = document.getElementById('filterPanel');
+    if (filterToggle && filterPanel) {
+        filterToggle.addEventListener('click', () => {
+            filterPanel.classList.toggle('hidden');
+            filterPanel.classList.toggle('block');
         });
     }
 </script>

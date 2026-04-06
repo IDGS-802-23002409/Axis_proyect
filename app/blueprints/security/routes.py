@@ -32,6 +32,17 @@ def post_login():
     if any(role in user_roles for role in ['admin', 'gerente', 'produccion']):
         return redirect(url_for('usuarios.index'))
     elif 'cliente' in user_roles or not user_roles:
+        # Si el cliente no tiene perfil completo, lo llevamos a completarlo
+        if not current_user.cliente:
+            flash('Antes de continuar, necesitamos algunos datos de envío.', 'info')
+            return redirect(url_for('checkout.completar_perfil'))
+        # Si tenía items en el carrito, lo llevamos al checkout directamente
+        try:
+            from app.blueprints.checkout.routes import load_cart
+            if load_cart():
+                return redirect(url_for('checkout.checkout_view'))
+        except Exception:
+            pass
         return redirect(url_for('catalog.index'))
     else:
         from flask_security.utils import logout_user

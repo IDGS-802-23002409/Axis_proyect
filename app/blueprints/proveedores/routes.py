@@ -16,7 +16,7 @@ import re
 def index():
     all_proveedores = Proveedor.query.order_by(Proveedor.fecha_creacion.desc()).all()
     form = ProveedorForm()
-    return render_template('index.html', proveedores=all_proveedores, form=form,
+    return render_template('proveedores_index.html', proveedores=all_proveedores, form=form,
                            top_producto={'nombre': 'Shadow Hoodie', 'unidades': 42, 'monto': 12500.50, 'imagen': None},
                            bottom_producto={'nombre': 'Basic Tee White', 'stock': 85, 'imagen': None})
 
@@ -63,7 +63,7 @@ def guardar(uid=None):
     # Si falla la validación, recarga los errores
     all_proveedores = Proveedor.query.order_by(Proveedor.fecha_creacion.desc()).all()
     target_modal = 'modal-update' if uid else 'modal-registro'
-    return render_template('index.html', proveedores=all_proveedores, form=form, modal_to_open=target_modal,
+    return render_template('proveedores_index.html', proveedores=all_proveedores, form=form, modal_to_open=target_modal,
                            edit_uid=uid)
 
 # --- ELIMINAR ---
@@ -95,7 +95,7 @@ def detalles(uid):
         from .forms import ProveedorForm # Asegúrate de que el nombre sea correcto
         form = ProveedorForm()
         
-        return render_template('index.html', proveedores=proveedores, form=form)
+        return render_template('proveedores_index.html', proveedores=proveedores, form=form)
 
     uuid_a_mostrar = p.usuario_creo_uuid if p.usuario_creo_uuid else "SISTEMA"
     return jsonify({

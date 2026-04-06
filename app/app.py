@@ -11,7 +11,6 @@ from app.utils.config import (
     MAIL_DEFAULT_SENDER, SECURITY_TOTP_SECRETS
 )
 from app.utils.database_connection import db
-from app.utils.config import SECRET_KEY
 import app.models  # noqa: F401 — ensures all models are registered with SQLAlchemy
 from app.models.usuarios import Usuario, Role
 import app.blueprints as bp
@@ -107,7 +106,7 @@ def create_app():
     application.config['SECURITY_UNAUTHORIZED_VIEW'] = '/login'
 
     # Forzar que Flask genere URLs con localhost:3030 (no la IP interna de Docker)
-    application.config['SERVER_NAME'] = os.getenv('SERVER_NAME', 'localhost:3030')
+    # application.config['SERVER_NAME'] = os.getenv('SERVER_NAME', 'localhost:3030')
 
     # ── Init extensions ───────────────────────────────────────
     csrf.init_app(application)
@@ -177,30 +176,57 @@ def create_app():
 
     # ── Blueprints ────────────────────────────────────────────
     application.register_blueprint(bp.usuarios_bp, url_prefix='/usuarios')
+    application.register_blueprint(bp.modelos_bp, url_prefix='/modelos')
+    application.register_blueprint(bp.empleados_bp, url_prefix='/empleados')
+    application.register_blueprint(bp.clientes_bp, url_prefix='/clientes')
     application.register_blueprint(bp.insumos_bp, url_prefix='/insumos')
     application.register_blueprint(bp.inventario_bp, url_prefix='/inventario')
     application.register_blueprint(bp.compras_bp, url_prefix='/compras')
     application.register_blueprint(bp.categorias_bp, url_prefix='/categorias')
     application.register_blueprint(bp.recetas_bp, url_prefix='/recetas')
-    application.register_blueprint(bp.modelos_bp, url_prefix='/modelos')
+    application.register_blueprint(bp.modelo_aux_bp, url_prefix='/recetas_modelo')
     application.register_blueprint(bp.productos_bp, url_prefix='/productos_terminados')
     application.register_blueprint(bp.orden_bp, url_prefix='/orden_produccion')
     application.register_blueprint(bp.security_bp, url_prefix='/security')
     application.register_blueprint(bp.catalog_bp, url_prefix='')
-    application.register_blueprint(bp.productos_bp, url_prefix='')
     application.register_blueprint(bp.checkout_bp, url_prefix='')
     application.register_blueprint(bp.costo_utilidad_bp, url_prefix='')
     application.register_blueprint(bp.merma_bp, url_prefix='/merma')
+
+    # ── CSRF Exemptions (rutas públicas del carrito) ──────────────
+    # El carrito es una función pública del ecommerce: cualquier usuario
+    # (autenticado o no) debe poder agregar/quitar productos.
+    # Solo procesar_checkout (que crea la orden) mantiene CSRF.
+    from app.blueprints.checkout.routes import (
+        agregar_carrito, actualizar_carrito, eliminar_carrito, vaciar_carrito
+    )
+    csrf.exempt(agregar_carrito)
+    csrf.exempt(actualizar_carrito)
+    csrf.exempt(eliminar_carrito)
+    csrf.exempt(vaciar_carrito)
 
     # ── Context Processor for Dynamic Layout ──────────────────
     @application.context_processor
     def inject_layout():
         if current_user.is_authenticated:
             if current_user.has_role('cliente'):
-                return {'base_layout': 'client/layout.html'}
+                return {'base_layout': 'client/base.html'}
             elif any(current_user.has_role(r) for r in ['admin', 'produccion', 'gerente']):
                 return {'base_layout': 'produccion/layout.html'}
-        return {'base_layout': 'client/layout.html'}
+        # Usuarios no autenticados y clientes públicos -> layout cliente
+        return {'base_layout': 'client/base.html'}
+
+    # ── Context Processor for Cart (JSON file) ──────────────────
+    @application.context_processor
+    def inject_cart():
+        try:
+            from app.blueprints.checkout.routes import load_cart
+            cart = load_cart()
+            total_items = sum(item.get('quantity', 0) for item in cart)
+            return {'cart_items': cart, 'cart_count': total_items}
+        except Exception:
+            pass
+        return {'cart_items': [], 'cart_count': 0}
 
     # ── Catálogo (Ruta Raíz) ──────────────────────────────────
     # Ya está manejado por client_bp con url_prefix=''
@@ -240,6 +266,38 @@ def create_app():
             return f"FIRMA INVÁLIDA (SECRET_KEY o PASSWORD_SALT diferente): {e}", 400
         except Exception as e:
             return f"OTRO ERROR: {e}", 400
+
+    # ── Global Error Handlers ─────────────────────────────────
+    from flask import render_template as rt
+
+    @application.errorhandler(400)
+    def bad_request(e):
+        return rt('client/error.html',
+                  code=400,
+                  title='Solicitud Inválida',
+                  message='Algo salió mal con tu solicitud. Puede ser un problema de sesión. Intenta recargar la página o regresar al inicio.'), 400
+
+    @application.errorhandler(403)
+    def forbidden(e):
+        return rt('client/error.html',
+                  code=403,
+                  title='Acceso Denegado',
+                  message='No tienes permiso para ver esta página.'), 403
+
+    @application.errorhandler(404)
+    def not_found(e):
+        return rt('client/error.html',
+                  code=404,
+                  title='Página No Encontrada',
+                  message='La página que buscas no existe o fue movida. Explora nuestro catálogo o regresa al inicio.'), 404
+
+    @application.errorhandler(500)
+    def internal_error(e):
+        db.session.rollback()
+        return rt('client/error.html',
+                  code=500,
+                  title='Error Interno',
+                  message='Algo salió mal en nuestro servidor. Ya estamos trabajando en ello. Por favor intenta de nuevo más tarde.'), 500
 
     return application
     #

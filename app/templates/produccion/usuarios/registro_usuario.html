@@ -1,4 +1,4 @@
-{% extends base_layout %}
+{% extends "produccion/layout.html" %}
 {% block title %}
 Gestión de Usuarios
 {% endblock %}
@@ -23,12 +23,13 @@ Gestión de Usuarios
 
     <!-- FORM -->
     <form method="post" class="flex flex-col gap-5" novalidate>
-      
+
       {{ form.hidden_tag() }}
 
       <!-- Nombre -->
       <div>
-        {{ macros.fieldUser(form.nombre_completo, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+        {{ macros.fieldUser(form.nombre_completo, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm")
+        }}
       </div>
 
       <!-- Email -->
@@ -52,13 +53,11 @@ Gestión de Usuarios
       <!-- Buttons -->
       <div class="flex justify-end gap-3 pt-4">
 
-        <a href="{{ url_for('usuarios.index') }}"
-           class="px-4 py-2 border border-border rounded-md text-sm">
+        <a href="{{ url_for('usuarios.index') }}" class="px-4 py-2 border border-border rounded-md text-sm">
           Cancelar
         </a>
 
-        <button type="submit"
-                class="px-4 py-2 bg-black text-white rounded-md text-sm">
+        <button type="submit" class="px-4 py-2 bg-black text-white rounded-md text-sm">
           Guardar Usuario
         </button>
 

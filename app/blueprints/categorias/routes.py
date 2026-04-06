@@ -1,10 +1,20 @@
+import os
+import uuid
+from werkzeug.utils import secure_filename
 from . import categorias_bp
 from flask_security import login_required, roles_required, hash_password,roles_accepted
 from app.models.categorias import Categoria
 from .forms import CategoriaForm
 from app.utils.database_connection import db
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, current_app
 from sqlalchemy import or_, func
+
+
+def get_upload_folder():
+    """Garantiza la existencia y retorna la ruta local de las fotos de categorías."""
+    upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'categorias')
+    os.makedirs(upload_folder, exist_ok=True)
+    return upload_folder
 
 
 @categorias_bp.route("/")
@@ -49,10 +59,21 @@ def create():
             flash(f'La categoría "{form.nombre.data}" ya existe.', "error")
             return render_template("produccion/categorias/create.html", form=form, title="Registrar Categoría")
 
+        # Procesar imagen
+        imagen_url = "/static/images/default/default-image.png"
+        if form.imagen.data:
+            file = form.imagen.data
+            if file.filename:
+                filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
+                filepath = os.path.join(get_upload_folder(), filename)
+                file.save(filepath)
+                imagen_url = f"/static/uploads/categorias/{filename}"
+
         # Crear nueva categoría con estatus_visible = True siempre
         nueva_categoria = Categoria(
             nombre=form.nombre.data.strip(),
             descripcion=form.descripcion.data.strip() if form.descripcion.data else None,
+            imagen_url=imagen_url,
             estatus_visible=True
         )
         db.session.add(nueva_categoria)
@@ -86,7 +107,17 @@ def edit(uuid_categoria):
         # Actualizar datos
         categoria.nombre = form.nombre.data.strip()
         categoria.descripcion = form.descripcion.data.strip() if form.descripcion.data else None
-        categoria.estatus_visible = True  # si siempre debe estar activa al editar, o cambiar a form.estatus_visible.data
+        categoria.estatus_visible = True
+
+        # Procesar imagen nueva si se proporciona
+        if form.imagen.data:
+            file = form.imagen.data
+            if file.filename:
+                filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
+                filepath = os.path.join(get_upload_folder(), filename)
+                file.save(filepath)
+                categoria.imagen_url = f"/static/uploads/categorias/{filename}"
+
         db.session.commit()
         flash("Categoría actualizada correctamente", "success")
         return redirect(url_for("categorias_bp.index"))

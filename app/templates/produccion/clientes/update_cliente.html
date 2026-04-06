@@ -1,0 +1,29 @@
+{% extends "produccion/layout.html" %}
+{% block title %}Editar Cliente{% endblock %}
+{% block header %}Editar Agenda de Cliente{% endblock %}
+{% block container %}
+{% import "produccion/usuarios/_macros.html" as macros %}
+
+<div class="px-10 py-8">
+    <div class="max-w-xl bg-card border border-border rounded-lg p-8">
+        <div class="mb-6">
+            <h2 class="text-xl font-bold">Editar Libreta y Teléfono</h2>
+        </div>
+
+        <form method="POST" class="flex flex-col gap-5">
+            {{ form.hidden_tag() }}
+
+            {% for error in form.uuid_usuario.errors %}<p class="text-red-500 text-xs">{{error}}</p>{% endfor %}
+            <div>{{ macros.fieldUser(form.uuid_usuario, "w-full border bg-input px-3 py-2 rounded-md") }}</div>
+            <div>{{ macros.fieldUser(form.telefono, "w-full border bg-input px-3 py-2 rounded-md") }}</div>
+            <div>{{ macros.fieldUser(form.direccion_completa, "w-full border bg-input px-3 py-2 rounded-md
+                min-h-[100px]", rows=3) }}</div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t mt-4 border-gray-100">
+                <a href="{{ url_for('clientes.index') }}" class="px-4 py-2 border rounded-md">Cancelar</a>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md">Actualizar Ficha</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

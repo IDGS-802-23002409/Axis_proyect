@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gsap.registerPlugin(ScrollTrigger);
 
     /* =========================================
-       CART DRAWER LOGIC
+       CART DRAWER LOGIC - SIMPLE (SIN APIs)
        ========================================= */
     const cartBtn = document.getElementById('cart-btn');
     const cartCloseBtn = document.getElementById('cart-close-btn');
@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const cartDrawer = document.getElementById('cart-drawer');
     const cartContinueBtn = document.getElementById('cart-continue-btn');
 
-    // Dummy cart state to simulate React behavior
     let isCartOpen = false;
 
     function toggleCart(state) {
@@ -23,6 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
             cartOverlay.classList.add('opacity-100');
             cartDrawer.classList.remove('translate-x-full');
             cartDrawer.classList.add('translate-x-0');
+            // Recargar la página para obtener el carrito actualizado desde el archivo JSON
+            if (!document.getElementById('cart-items-list').hasAttribute('data-loaded')) {
+                window.location.reload();
+            }
         } else {
             cartOverlay.classList.add('opacity-0', 'pointer-events-none');
             cartOverlay.classList.remove('opacity-100');
@@ -36,93 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cartOverlay) cartOverlay.addEventListener('click', () => toggleCart(false));
     if (cartContinueBtn) cartContinueBtn.addEventListener('click', () => toggleCart(false));
 
-    /* Manejo de items (Simulado por ahora para dar la misma UX) */
-    const addToCartBtns = document.querySelectorAll('.add-to-cart-btn');
+    // Auto-abrir carrito si el backend lo solicita
+    if (document.body.dataset.openCart === 'true') {
+        setTimeout(() => toggleCart(true), 500);
+    }
+
+    // Marcar como cargado
     const cartItemsList = document.getElementById('cart-items-list');
-    const cartEmptyState = document.getElementById('cart-empty-state');
-    const cartFooter = document.getElementById('cart-footer');
-    const cartBadge = document.getElementById('cart-badge');
-    const cartTotalItemsHeader = document.getElementById('cart-total-items-header');
-    const cartTotalPrice = document.getElementById('cart-total-price');
-
-    let cartItems = [];
-
-    function updateCartUI() {
-        cartBadge.textContent = cartItems.length;
-        cartTotalItemsHeader.textContent = cartItems.length;
-
-        if (cartItems.length > 0) {
-            cartBadge.classList.remove('hidden');
-            cartEmptyState.classList.add('hidden');
-            cartItemsList.classList.remove('hidden');
-            cartFooter.classList.remove('hidden');
-
-            // Calculate total
-            const total = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-            cartTotalPrice.textContent = total.toFixed(2);
-
-            // Render
-            cartItemsList.innerHTML = cartItems.map(item => `
-        <div class="flex gap-4 group">
-          <div class="relative w-24 h-24 bg-secondary overflow-hidden">
-            <img src="${item.image}" alt="${item.name}" class="object-cover w-full h-full" />
-          </div>
-          <div class="flex-1 flex flex-col justify-between">
-            <div>
-              <h3 class="font-medium text-sm">${item.name}</h3>
-              <p class="text-primary font-medium">$${item.price.toFixed(2)}</p>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-sm">Cant: ${item.quantity}</span>
-              <button class="remove-btn p-2 text-muted-foreground hover:text-destructive transition-colors" data-id="${item.id}">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      `).join('');
-            lucide.createIcons(); // refresh icons
-        } else {
-            cartBadge.classList.add('hidden');
-            cartEmptyState.classList.remove('hidden');
-            cartItemsList.classList.add('hidden');
-            cartFooter.classList.add('hidden');
-        }
-    }
-
-    // Remove logic using event delegation
-    if (cartItemsList) {
-        cartItemsList.addEventListener('click', (e) => {
-            const btn = e.target.closest('.remove-btn');
-            if (btn) {
-                const id = btn.getAttribute('data-id');
-                cartItems = cartItems.filter(item => item.id !== id);
-                updateCartUI();
-            }
-        });
-    }
-
-    addToCartBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            // Evitar propagación a enlaces
-            e.stopPropagation();
-            e.preventDefault();
-
-            const id = btn.getAttribute('data-id');
-            const name = btn.getAttribute('data-name');
-            const price = parseFloat(btn.getAttribute('data-price'));
-            const image = btn.getAttribute('data-image');
-
-            const existing = cartItems.find(item => item.id === id);
-            if (existing) {
-                existing.quantity += 1;
-            } else {
-                cartItems.push({ id, name, price, image, quantity: 1 });
-            }
-            updateCartUI();
-            toggleCart(true);
-        });
-    });
+    if (cartItemsList) cartItemsList.setAttribute('data-loaded', 'true');
 
     /* =========================================
        HEADER LOGIC
@@ -183,9 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let revealProgress = 0;
         let freezeScroll = true;
 
-        // Freeze scroll initially
-        document.body.style.overflow = 'hidden';
-        document.body.style.touchAction = 'none';
+        // document.body.style.overflow = 'hidden';
+        // document.body.style.touchAction = 'none';
 
         let frameId; let finishTimeout; let rafId;
         let x = 12, y = 22, dx = 2.3, dy = 1.6;
@@ -222,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 else { heroOverlay.style.display = 'none'; showControls(); }
             }
             rafId = requestAnimationFrame(step);
-        }, 3600);
+        }, 800);
 
         function showControls() {
             heroControls.classList.remove('opacity-0', 'pointer-events-none');
@@ -302,12 +225,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     start: "left 90%",
                     end: "left 50%",
                     scrub: 0.5,
-                    containerAnimation: scrollTween, // Necessary for horizontal scroll trigger context
+                    containerAnimation: scrollTween,
                 }
             });
         });
 
-        // Parallax Title
         gsap.to(horizScrollContainer.querySelector('.section-title'), {
             xPercent: -30,
             ease: "none",
@@ -391,7 +313,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (featuredContainer) {
         const cards = featuredContainer.querySelectorAll('.product-card');
 
-        // Animate products sequentially based on progress
         ScrollTrigger.create({
             trigger: featuredContainer,
             start: "top top",
@@ -467,7 +388,6 @@ document.addEventListener('DOMContentLoaded', () => {
             scrollTrigger: { trigger: videoContainer, start: "top top", end: "bottom top", scrub: 1 }
         });
 
-        // Controls
         let isPlaying = true;
         let isMuted = true;
 
@@ -526,7 +446,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const leftPanel = document.getElementById('split-left-panel');
         const rightPanel = document.getElementById('split-right-panel');
 
-        // I initialized them with transform: translateY(30%). Let's animate to y:0.
         gsap.to(leftPanel, {
             y: "0%", opacity: 1, duration: 1,
             scrollTrigger: { trigger: splitContainer, start: "top 70%", end: "top 20%", scrub: 1 }
@@ -694,7 +613,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         );
 
-        // Filtering
         const categoryBtns = document.querySelectorAll('.category-btn');
         const items = document.querySelectorAll('.catalog-item');
         const catalogVisibleCount = document.getElementById('catalog-visible-count');
@@ -729,7 +647,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // Trigger GSAP animation for visible items
             const visibleItems = Array.from(items).filter(item => item.style.display !== 'none');
             gsap.fromTo(visibleItems,
                 { y: 40, opacity: 0 },
@@ -770,7 +687,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         sortSelect.addEventListener('change', updateCatalog);
 
-        // Grid Toggle
         const gridNormalBtn = document.getElementById('grid-normal-btn');
         const gridLargeBtn = document.getElementById('grid-large-btn');
 
@@ -778,34 +694,12 @@ document.addEventListener('DOMContentLoaded', () => {
             productsContainer.className = "products-container grid gap-6 md:gap-8 grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
             gridNormalBtn.className = "p-2 rounded transition-colors bg-background text-primary";
             gridLargeBtn.className = "p-2 rounded transition-colors text-muted-foreground hover:text-foreground";
-            document.querySelectorAll('.catalog-item > div > div:first-child').forEach(el => {
-                el.classList.add('aspect-[3/4]');
-            });
-            document.querySelectorAll('.catalog-item-title').forEach(el => {
-                el.classList.remove('text-xl');
-                el.classList.add('text-base', 'md:text-lg');
-            });
-            document.querySelectorAll('.catalog-item-price').forEach(el => {
-                el.classList.remove('text-2xl');
-                el.classList.add('text-lg', 'md:text-xl');
-            });
         });
 
         gridLargeBtn.addEventListener('click', () => {
             productsContainer.className = "products-container grid gap-6 md:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
             gridLargeBtn.className = "p-2 rounded transition-colors bg-background text-primary";
             gridNormalBtn.className = "p-2 rounded transition-colors text-muted-foreground hover:text-foreground";
-            document.querySelectorAll('.catalog-item > div > div:first-child').forEach(el => {
-                el.classList.add('aspect-[3/4]');
-            });
-            document.querySelectorAll('.catalog-item-title').forEach(el => {
-                el.classList.remove('text-base', 'md:text-lg');
-                el.classList.add('text-xl');
-            });
-            document.querySelectorAll('.catalog-item-price').forEach(el => {
-                el.classList.remove('text-lg', 'md:text-xl');
-                el.classList.add('text-2xl');
-            });
         });
     }
 
@@ -822,7 +716,6 @@ document.addEventListener('DOMContentLoaded', () => {
             y: 0, opacity: 1, duration: 0.6, stagger: 0.1, ease: "power2.out", delay: 0.3
         });
 
-        // Gallery
         const mainImage = document.getElementById('main-product-image');
         const thumbBtns = document.querySelectorAll('.thumb-btn');
         thumbBtns.forEach(btn => {
@@ -837,7 +730,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Color
         let selectedColorVal = document.getElementById('selected-color-label').textContent;
         const colorBtns = document.querySelectorAll('.color-btn');
         colorBtns.forEach(btn => {
@@ -851,10 +743,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Size
         let selectedSizeVal = null;
         const sizeBtns = document.querySelectorAll('.size-btn');
         const addToCartProductBtn = document.getElementById('btn-add-to-cart-product');
+        const formTalla = document.getElementById('form-talla');
         sizeBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 sizeBtns.forEach(b => {
@@ -863,43 +755,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.className = "size-btn w-12 h-12 text-sm border transition-all border-primary bg-primary text-primary-foreground";
                 selectedSizeVal = btn.dataset.size;
                 document.getElementById('selected-size-label').textContent = selectedSizeVal;
+                if (formTalla) formTalla.value = selectedSizeVal;
 
-                // Enable button
-                addToCartProductBtn.className = "flex-1 py-4 font-[var(--font-display)] text-xl tracking-[0.2em] flex items-center justify-center gap-3 transition-all bg-primary text-primary-foreground hover:bg-primary/90";
+                // Enable the submit button now that a size is selected
+                addToCartProductBtn.disabled = false;
+                addToCartProductBtn.className = "w-full py-4 font-[var(--font-display)] text-xl tracking-[0.2em] flex items-center justify-center gap-3 transition-all bg-primary text-primary-foreground hover:bg-primary/90";
             });
         });
 
-        // Quantity
         let quantityVal = 1;
         const qtyMinus = document.getElementById('qty-minus');
         const qtyPlus = document.getElementById('qty-plus');
         const qtyValue = document.getElementById('qty-value');
+        const formCantidad = document.getElementById('form-cantidad');
 
         qtyMinus.addEventListener('click', () => {
             quantityVal = Math.max(1, quantityVal - 1);
             qtyValue.textContent = quantityVal;
+            if (formCantidad) formCantidad.value = quantityVal;
         });
         qtyPlus.addEventListener('click', () => {
             quantityVal++;
             qtyValue.textContent = quantityVal;
-        });
-
-        // Add to cart main
-        addToCartProductBtn.addEventListener('click', (e) => {
-            if (!selectedSizeVal) return;
-            const id = addToCartProductBtn.dataset.id;
-            const name = addToCartProductBtn.dataset.name;
-            const price = parseFloat(addToCartProductBtn.dataset.price);
-            const image = addToCartProductBtn.dataset.image;
-
-            const existing = cartItems.find(item => item.id === id);
-            if (existing) {
-                existing.quantity += quantityVal;
-            } else {
-                cartItems.push({ id, name, price, image, quantity: quantityVal });
-            }
-            updateCartUI();
-            toggleCart(true);
+            if (formCantidad) formCantidad.value = quantityVal;
         });
     }
 
@@ -911,118 +789,5 @@ document.addEventListener('DOMContentLoaded', () => {
         gsap.to('#cart-header-content, #cart-page-empty, #cart-page-content', {
             y: 0, opacity: 1, duration: 0.6, stagger: 0.1, ease: "power2.out"
         });
-
-        const pageCartItemsList = document.getElementById('cart-page-items');
-        const pageCartEmptyState = document.getElementById('cart-page-empty');
-        const pageCartContent = document.getElementById('cart-page-content');
-        const pageClearBtn = document.getElementById('cart-page-clear-btn');
-        const summarySubtotal = document.getElementById('cart-summary-subtotal');
-        const summaryShipping = document.getElementById('cart-summary-shipping');
-        const summaryTotal = document.getElementById('cart-summary-total');
-        const summaryShippingAlert = document.getElementById('cart-summary-shipping-alert');
-
-        window.updateCartPageUI = function () {
-            if (!carritoContainer) return;
-            if (cartItems.length > 0) {
-                pageCartEmptyState.classList.add('hidden');
-                pageCartContent.classList.remove('hidden');
-
-                const total = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-                summarySubtotal.textContent = `$${total.toFixed(2)}`;
-
-                let shipping = 9.99;
-                if (total >= 100) {
-                    shipping = 0;
-                    summaryShipping.textContent = 'Gratis';
-                    summaryShippingAlert.classList.add('hidden');
-                } else {
-                    summaryShipping.textContent = '$9.99';
-                    summaryShippingAlert.textContent = `Añade $${(100 - total).toFixed(2)} más para envío gratis`;
-                    summaryShippingAlert.classList.remove('hidden');
-                }
-
-                summaryTotal.textContent = `$${(total + shipping).toFixed(2)}`;
-
-                pageCartItemsList.innerHTML = cartItems.map(item => `
-                    <div class="grid grid-cols-12 gap-4 py-6 border-b border-border items-center">
-                        <div class="col-span-12 md:col-span-6 flex gap-4">
-                            <div class="relative w-24 h-28 bg-secondary flex-shrink-0">
-                                <img src="${item.image}" alt="${item.name}" class="object-cover w-full h-full" />
-                            </div>
-                            <div class="flex flex-col justify-between">
-                                <div>
-                                    <a href="/producto/${item.id}" class="font-medium hover:text-primary transition-colors">${item.name}</a>
-                                    <div class="text-sm text-muted-foreground mt-1">
-                                        <p>Talla: M</p>
-                                    </div>
-                                </div>
-                                <button class="page-remove-btn inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-destructive transition-colors md:hidden" data-id="${item.id}">
-                                    <i data-lucide="trash-2" class="w-3 h-3"></i> Eliminar
-                                </button>
-                            </div>
-                        </div>
-                        <div class="hidden md:block col-span-2 text-center">$${item.price.toFixed(2)}</div>
-                        <div class="col-span-6 md:col-span-2 flex justify-start md:justify-center">
-                            <div class="flex items-center border border-border">
-                                <button class="page-qty-minus p-2 hover:bg-secondary transition-colors" data-id="${item.id}"><i data-lucide="minus" class="w-[14px] h-[14px]"></i></button>
-                                <span class="w-10 text-center text-sm">${item.quantity}</span>
-                                <button class="page-qty-plus p-2 hover:bg-secondary transition-colors" data-id="${item.id}"><i data-lucide="plus" class="w-[14px] h-[14px]"></i></button>
-                            </div>
-                        </div>
-                        <div class="col-span-6 md:col-span-2 text-right">
-                            <span class="font-[var(--font-display)] text-xl">$${(item.price * item.quantity).toFixed(2)}</span>
-                            <button class="page-remove-btn hidden md:block ml-auto mt-2 text-sm text-muted-foreground hover:text-destructive transition-colors" data-id="${item.id}">Eliminar</button>
-                        </div>
-                    </div>
-                `).join('');
-                if (window.lucide) window.lucide.createIcons();
-            } else {
-                pageCartEmptyState.classList.remove('hidden');
-                pageCartContent.classList.add('hidden');
-            }
-        };
-
-        // Bind update to cartUI
-        const originalUpdateCartUI = updateCartUI;
-        updateCartUI = function () {
-            originalUpdateCartUI();
-            updateCartPageUI();
-        };
-
-        pageCartItemsList.addEventListener('click', (e) => {
-            const removeBtn = e.target.closest('.page-remove-btn');
-            const qtyMinusBtn = e.target.closest('.page-qty-minus');
-            const qtyPlusBtn = e.target.closest('.page-qty-plus');
-
-            if (removeBtn) {
-                const id = removeBtn.getAttribute('data-id');
-                cartItems = cartItems.filter(item => item.id !== id);
-                updateCartUI();
-            } else if (qtyMinusBtn) {
-                const id = qtyMinusBtn.getAttribute('data-id');
-                const item = cartItems.find(i => i.id === id);
-                if (item && item.quantity > 1) {
-                    item.quantity--;
-                    updateCartUI();
-                }
-            } else if (qtyPlusBtn) {
-                const id = qtyPlusBtn.getAttribute('data-id');
-                const item = cartItems.find(i => i.id === id);
-                if (item) {
-                    item.quantity++;
-                    updateCartUI();
-                }
-            }
-        });
-
-        if (pageClearBtn) {
-            pageClearBtn.addEventListener('click', () => {
-                cartItems = [];
-                updateCartUI();
-            });
-        }
-
-        // Initialize display
-        updateCartPageUI();
     }
 });

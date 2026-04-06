@@ -49,6 +49,7 @@
       <nav class="flex flex-col gap-6 flex-1">
  
         {# ── Overview ──────────────────────────────── #}
+        {% if not current_user.has_role('produccion') %}
         <div>
           <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Overview</p>
           <a href="{{ url_for('dashboard_administrativo.index') }}"
@@ -62,18 +63,25 @@
             Dashboard
           </a>
         </div>
+        {% endif %}
  
         {# ── Operations ────────────────────────────── #}
         <div>
           <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Operations</p>
           <div class="flex flex-col gap-1">
  
-            <a href="#"
+            {% if not current_user.has_role('produccion') %}
+            <a href="{{ url_for('insumos_bp.index') }}"
               class="flex items-center gap-3 px-4 h-10 rounded-md transition-colors text-sm
-                text-muted-foreground hover:bg-secondary hover:text-black">
+                {% if request.blueprint == 'insumos' %}
+                  bg-black text-white
+                {% else %}
+                  text-muted-foreground hover:bg-secondary hover:text-black
+                {% endif %}">
               <i data-lucide="package" class="w-4 h-4"></i>
               Insumos & Stocks
             </a>
+            {% endif %}
  
             <a href="{{ url_for('prendas.index') }}"
               class="flex items-center gap-3 px-4 h-10 rounded-md transition-colors text-sm
@@ -97,6 +105,7 @@
         </div>
  
         {# ── Control ───────────────────────────────── #}
+        {% if not current_user.has_role('produccion') %}
         <div>
           <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Control</p>
           <div class="flex flex-col gap-1">
@@ -121,8 +130,10 @@
  
           </div>
         </div>
+        {% endif %}
  
         {# ── Administración ────────────────────────── #}
+        {% if not current_user.has_role('produccion') %}
         <div>
           <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Administración</p>
           <div class="flex flex-col gap-1">
@@ -140,7 +151,7 @@
             </a>
             {% endif %}
  
-            {% if current_user.has_role('admin') or current_user.has_role('gerente') or current_user.has_role('produccion') %}
+            {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
             <a href="{{ url_for('proveedores.index') }}"
               class="flex items-center gap-3 px-4 h-10 rounded-md transition-colors text-sm
                 {% if request.blueprint == 'proveedores' %}
@@ -155,12 +166,22 @@
  
           </div>
         </div>
+        {% endif %}
  
       </nav>
  
       <!-- Footer del sidebar -->
-      <div class="text-[10px] uppercase tracking-widest text-muted-foreground">
-        Axis Streetwear · Live<br>Store Ops
+      <div class="mt-auto space-y-4 pt-6 border-t border-border">
+        <div class="text-[10px] uppercase tracking-widest text-muted-foreground">
+          Axis Streetwear · Live<br>Store Ops
+        </div>
+        
+        <a href="{{ url_for('security.logout') }}" 
+           class="flex items-center gap-3 px-4 h-10 rounded-md text-destructive hover:bg-red-50 transition-colors text-sm font-bold uppercase tracking-wider">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          Salir
+        </a>
+      </div>
 
       <!-- Nav -->
       <div>
@@ -168,9 +189,25 @@
           Administración
         </p>
 
-        <a href="{{ url_for('usuarios.index') }}" class="flex items-center gap-3 px-4 h-12 rounded-md bg-black text-white">
+        <a href="{{ url_for('usuarios.index') }}"
+          class="flex items-center gap-3 px-4 h-12 rounded-md text-foreground hover:bg-black hover:text-white transition">
           <i data-lucide="users" class="w-5 h-5"></i>
           Usuarios
+        </a>
+        <a href="{{ url_for('empleados.index') }}"
+          class="flex items-center gap-3 px-4 h-12 rounded-md text-foreground hover:bg-black hover:text-white transition">
+          <i data-lucide="briefcase" class="w-5 h-5"></i>
+          Empleados
+        </a>
+        <a href="{{ url_for('clientes.index') }}"
+          class="flex items-center gap-3 px-4 h-12 rounded-md text-foreground hover:bg-black hover:text-white transition">
+          <i data-lucide="contact" class="w-5 h-5"></i>
+          Clientes
+        </a>
+        <a href="{{ url_for('modelos.index') }}"
+          class="flex items-center gap-3 px-4 h-12 rounded-md text-foreground hover:bg-black hover:text-white transition">
+          <i data-lucide="shirt" class="w-5 h-5"></i>
+          Modelos
         </a>
 
         <a href="{{ url_for('costo_utilidad.index') }}" class="flex items-center gap-3 mt-2 px-4 h-12 rounded-md border border-border hover:bg-secondary transition-colors">
@@ -191,17 +228,34 @@
           <p class="text-xs text-muted-foreground uppercase tracking-wider">{% block subheader %}{% endblock %}</p>
         </div>
  
-        <div class="flex items-center gap-4">
-          <div class="flex items-center gap-3 bg-card border border-border px-3 py-1 rounded-full">
+        <div class="flex items-center gap-6">
+          {% if current_user.has_role('admin') %}
+          <a href="{{ url_for('checkout.perfil') }}" 
+             class="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors border border-border hover:bg-secondary rounded-md">
+            <i data-lucide="user-cog" class="w-4 h-4"></i>
+            Mi Perfil
+          </a>
+          {% endif %}
+          
+          <div class="flex items-center gap-3 bg-card border border-border px-4 py-1.5 rounded-full">
             <div class="text-right text-xs">
-              <p class="font-semibold">
-                {{ current_user.nombre_completo.split()[0] if current_user.is_authenticated else 'Admin' }} · AXIS
+              <p class="font-semibold text-foreground">
+                {{ current_user.nombre_completo if current_user.is_authenticated else 'Admin' }}
               </p>
-              <p class="text-muted-foreground uppercase">Store Manager</p>
+              <p class="text-muted-foreground uppercase tracking-tighter font-bold text-[10px]">
+                {% for role in current_user.roles %}{{ role.name }}{% if not loop.last %} | {% endif %}{% endfor %}
+              </p>
             </div>
-            <img class="w-9 h-9 rounded-full object-cover"
-              src="https://storage.googleapis.com/banani-avatars/avatar%2Fmale%2F25-35%2FHispanic%2F1">
+            <div class="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold">
+                {{ current_user.nombre_completo[0].upper() if current_user.is_authenticated else 'A' }}
+            </div>
           </div>
+          
+          <a href="{{ url_for('security.logout') }}" 
+             class="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest text-destructive hover:bg-red-50 rounded-md transition-colors border border-transparent hover:border-red-100">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+            Salir
+          </a>
         </div>
       </div>
  

@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% include "components/_cart_drawer.html" %}
 
 <div id="nuevo-container" class="min-h-screen bg-background">
     <!-- Hero Section -->
@@ -66,19 +65,13 @@
                             </span>
                         </div>
 
-                        <!-- Overlay -->
+                        <!-- Quick Actions -->
                         <div
-                            class="absolute inset-0 bg-background/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-4 z-30 px-4 text-center">
+                            class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4 z-10">
                             <a href="/producto/{{ product.id }}"
-                                class="w-full max-w-[200px] py-3 bg-foreground text-background font-[var(--font-display)] text-xs tracking-[0.2em] hover:bg-foreground/80 transition-colors">
+                                class="w-full max-w-[200px] py-4 bg-foreground text-background font-[var(--font-display)] text-sm tracking-[0.2em] hover:bg-primary transition-colors text-center">
                                 VER DETALLES
                             </a>
-                            <button
-                                class="add-to-cart-btn w-full max-w-[200px] py-3 bg-primary text-primary-foreground flex items-center justify-center gap-2 text-xs tracking-[0.2em] font-[var(--font-display)] hover:bg-primary/90 transition-colors"
-                                data-id="{{ product.id }}" data-name="{{ product.name }}"
-                                data-price="{{ product.price }}" data-image="{{ product.image }}">
-                                <i data-lucide="shopping-bag" class="w-4 h-4"></i> AÑADIR
-                            </button>
                         </div>
                     </div>
 
