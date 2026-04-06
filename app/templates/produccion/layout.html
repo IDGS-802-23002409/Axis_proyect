@@ -159,8 +159,17 @@
       </nav>
  
       <!-- Footer del sidebar -->
-      <div class="text-[10px] uppercase tracking-widest text-muted-foreground">
-        Axis Streetwear · Live<br>Store Ops
+      <div class="mt-auto space-y-4 pt-6 border-t border-border">
+        <div class="text-[10px] uppercase tracking-widest text-muted-foreground">
+          Axis Streetwear · Live<br>Store Ops
+        </div>
+        
+        <a href="{{ url_for('security.logout') }}" 
+           class="flex items-center gap-3 px-4 h-10 rounded-md text-destructive hover:bg-red-50 transition-colors text-sm font-bold uppercase tracking-wider">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          Salir
+        </a>
+      </div>
 
       <!-- Nav -->
       <div>
@@ -207,17 +216,34 @@
           <p class="text-xs text-muted-foreground uppercase tracking-wider">{% block subheader %}{% endblock %}</p>
         </div>
  
-        <div class="flex items-center gap-4">
-          <div class="flex items-center gap-3 bg-card border border-border px-3 py-1 rounded-full">
+        <div class="flex items-center gap-6">
+          {% if current_user.has_role('admin') %}
+          <a href="{{ url_for('checkout.perfil') }}" 
+             class="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors border border-border hover:bg-secondary rounded-md">
+            <i data-lucide="user-cog" class="w-4 h-4"></i>
+            Mi Perfil
+          </a>
+          {% endif %}
+          
+          <div class="flex items-center gap-3 bg-card border border-border px-4 py-1.5 rounded-full">
             <div class="text-right text-xs">
-              <p class="font-semibold">
-                {{ current_user.nombre_completo.split()[0] if current_user.is_authenticated else 'Admin' }} · AXIS
+              <p class="font-semibold text-foreground">
+                {{ current_user.nombre_completo if current_user.is_authenticated else 'Admin' }}
               </p>
-              <p class="text-muted-foreground uppercase">Store Manager</p>
+              <p class="text-muted-foreground uppercase tracking-tighter font-bold text-[10px]">
+                {% for role in current_user.roles %}{{ role.name }}{% if not loop.last %} | {% endif %}{% endfor %}
+              </p>
             </div>
-            <img class="w-9 h-9 rounded-full object-cover"
-              src="https://storage.googleapis.com/banani-avatars/avatar%2Fmale%2F25-35%2FHispanic%2F1">
+            <div class="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold">
+                {{ current_user.nombre_completo[0].upper() if current_user.is_authenticated else 'A' }}
+            </div>
           </div>
+          
+          <a href="{{ url_for('security.logout') }}" 
+             class="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest text-destructive hover:bg-red-50 rounded-md transition-colors border border-transparent hover:border-red-100">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+            Salir
+          </a>
         </div>
       </div>
  

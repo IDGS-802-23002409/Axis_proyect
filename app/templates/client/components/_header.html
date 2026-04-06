@@ -47,33 +47,39 @@
 
                 <!-- Login / User Menu -->
                 {% if current_user.is_authenticated %}
-                <div class="relative group">
-                    <button class="p-2 hover:text-primary transition-colors flex items-center gap-1"
+                <div class="flex items-center gap-2">
+                    <div class="relative group">
+                        <a href="{{ url_for('checkout.mi_cuenta') if current_user.has_role('cliente') else url_for('checkout.perfil') }}" 
+                        class="p-2 hover:text-primary transition-colors flex items-center gap-1"
                         aria-label="Mi cuenta">
-                        <i data-lucide="user" class="w-5 h-5"></i>
-                    </button>
-                    <div
-                        class="absolute right-0 top-full mt-1 w-52 bg-background border border-border shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                        <div class="px-4 py-3 border-b border-border">
-                            <p class="text-xs text-muted-foreground uppercase tracking-wider mb-1">Cuenta</p>
-                            <p class="text-sm font-medium truncate">{{ current_user.email }}</p>
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                        </a>
+                        <div
+                            class="absolute right-0 top-full mt-1 w-52 bg-background border border-border shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <div class="px-4 py-3 border-b border-border">
+                                <p class="text-xs text-muted-foreground uppercase tracking-wider mb-1">Cuenta</p>
+                                <p class="text-sm font-medium truncate">{{ current_user.email }}</p>
+                            </div>
+                            {% if current_user.has_role('cliente') %}
+                            <a href="{{ url_for('checkout.mi_cuenta') }}"
+                                class="flex items-center gap-2 px-4 py-3 text-sm hover:bg-secondary transition-colors">
+                                <i data-lucide="user" class="w-4 h-4"></i> Mi cuenta
+                            </a>
+                            {% elif current_user.has_role('admin') %}
+                            <a href="{{ url_for('checkout.perfil') }}"
+                                class="flex items-center gap-2 px-4 py-3 text-sm hover:bg-secondary transition-colors">
+                                <i data-lucide="user-cog" class="w-4 h-4"></i> Mi perfil
+                            </a>
+                            {% endif %}
                         </div>
-                        {% if current_user.cliente %}
-                        <a href="{{ url_for('checkout.checkout_view') }}"
-                            class="flex items-center gap-2 px-4 py-3 text-sm hover:bg-secondary transition-colors">
-                            <i data-lucide="shopping-bag" class="w-4 h-4"></i> Mis pedidos
-                        </a>
-                        {% else %}
-                        <a href="{{ url_for('checkout.completar_perfil') }}"
-                            class="flex items-center gap-2 px-4 py-3 text-sm hover:bg-secondary transition-colors">
-                            <i data-lucide="user-check" class="w-4 h-4"></i> Completar perfil
-                        </a>
-                        {% endif %}
-                        <a href="{{ url_for('security.logout') }}"
-                            class="flex items-center gap-2 px-4 py-3 text-sm hover:bg-secondary text-muted-foreground hover:text-destructive transition-colors border-t border-border">
-                            <i data-lucide="log-out" class="w-4 h-4"></i> Cerrar sesión
-                        </a>
                     </div>
+
+                    <!-- Botón de Salida Directa -->
+                    <a href="{{ url_for('security.logout') }}" 
+                       class="p-2 text-muted-foreground hover:text-destructive transition-colors" 
+                       title="Cerrar Sesión">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                    </a>
                 </div>
                 {% else %}
                 <a href="{{ url_for('security.login') }}"
@@ -110,6 +116,11 @@
                 class="mobile-link font-[var(--font-display)] text-4xl tracking-[0.3em] hover:text-primary transition-colors"
                 style="animation-delay: 300ms">NOSOTROS</a>
             {% if current_user.is_authenticated %}
+            <a href="{{ url_for('checkout.mi_cuenta') if current_user.has_role('cliente') else url_for('checkout.perfil') }}"
+                class="mobile-link font-[var(--font-display)] text-2xl tracking-[0.3em] hover:text-primary transition-colors flex items-center gap-3"
+                style="animation-delay: 350ms">
+                <i data-lucide="user" class="w-6 h-6"></i> MI CUENTA
+            </a>
             <a href="{{ url_for('security.logout') }}"
                 class="mobile-link font-[var(--font-display)] text-2xl tracking-[0.3em] text-muted-foreground hover:text-destructive transition-colors flex items-center gap-3"
                 style="animation-delay: 400ms">

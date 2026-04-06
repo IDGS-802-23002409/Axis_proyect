@@ -242,6 +242,72 @@ def pedido_exito(numero_pedido):
     return render_template('pedido_exito.html', numero_pedido=numero_pedido)
 
 
+@checkout_bp.route('/mi-cuenta', methods=['GET', 'POST'])
+@login_required
+def mi_cuenta():
+    # Solo para clientes
+    if not current_user.has_role('cliente'):
+        return redirect(url_for('checkout.perfil'))
+
+    if request.method == 'POST':
+        nombre = request.form.get('nombre')
+        email = request.form.get('email')
+        telefono = request.form.get('telefono')
+        direccion = request.form.get('direccion_completa')
+
+        if not nombre or not email:
+            flash('Nombre y Email son obligatorios', 'error')
+            return redirect(url_for('checkout.mi_cuenta'))
+
+        current_user.nombre_completo = nombre
+        current_user.email = email
+        
+        cliente = current_user.cliente
+        if not cliente:
+            cliente = Cliente(uuid_usuario=current_user.uuid_usuario)
+            db.session.add(cliente)
+        
+        cliente.telefono = telefono
+        cliente.direccion_completa = direccion
+        
+        try:
+            db.session.commit()
+            flash('Información de cuenta actualizada ✓', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al guardar: {str(e)}', 'error')
+            
+        return redirect(url_for('checkout.mi_cuenta'))
+
+    return render_template('cuenta.html')
+
+
+@checkout_bp.route('/perfil', methods=['GET', 'POST'])
+@login_required
+def perfil():
+    # Perfil simplificado para Admins en el panel de producción
+    if not current_user.has_role('admin'):
+        return redirect(url_for('checkout.mi_cuenta'))
+
+    if request.method == 'POST':
+        nombre = request.form.get('nombre')
+        email = request.form.get('email')
+
+        current_user.nombre_completo = nombre
+        current_user.email = email
+        
+        try:
+            db.session.commit()
+            flash('Perfil de administrador actualizado', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error: {str(e)}', 'error')
+            
+        return redirect(url_for('checkout.perfil'))
+
+    return render_template('perfil.html')
+
+
 @checkout_bp.route('/checkout/completar_perfil', methods=['GET', 'POST'])
 @login_required
 def completar_perfil():
