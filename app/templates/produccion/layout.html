@@ -212,7 +212,7 @@
 
       <!-- CONTENT -->
       <div class="flex-1 p-8 bg-background">
-        {% block content %}{% endblock %}
+        {% block content %}{% block container %}{% endblock %}{% endblock %}
       </div>
 
     </main>
