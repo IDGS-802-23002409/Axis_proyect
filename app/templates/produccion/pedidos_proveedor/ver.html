@@ -1,0 +1,123 @@
+{% extends "produccion/layout.html" %}
+{% block title %}Detalle de Pedido {{ pedido.folio_pedido }}{% endblock %}
+{% block header %}Detalle de Pedido{% endblock %}
+{% block subheader %}Información del Pedido a Proveedor{% endblock %}
+
+{% block container %}
+<div class="mb-6">
+    <a href="{{ url_for('pedidos_proveedor_bp.index') }}"
+        class="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a Pedidos
+    </a>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Información General -->
+    <div class="md:col-span-2 bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-border bg-muted/20">
+            <h3 class="font-bold text-foreground">Información General</h3>
+        </div>
+        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Folio Oficial</p>
+                <p class="text-base font-semibold text-foreground">{{ pedido.folio_pedido }}</p>
+            </div>
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Fecha de Pedido</p>
+                <p class="text-base text-foreground">{{ pedido.fecha_pedido.strftime('%Y-%m-%d %H:%M') }}</p>
+            </div>
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Estatus Actual</p>
+                {% if pedido.estatus == 'Pendiente' %}
+                <span
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 uppercase tracking-wider">Pendiente</span>
+                {% elif pedido.estatus == 'Aprobado' %}
+                <span
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 uppercase tracking-wider">Aprobado</span>
+                {% elif pedido.estatus == 'Completado' %}
+                <span
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 uppercase tracking-wider">Completado</span>
+                {% else %}
+                <span
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-800 uppercase tracking-wider">{{
+                    pedido.estatus }}</span>
+                {% endif %}
+            </div>
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Usuario Solicitante</p>
+                <p class="text-sm font-medium text-foreground">{{ pedido.usuario_solicita.nombre_completo }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del Proveedor -->
+    <div class="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-border bg-muted/20">
+            <h3 class="font-bold text-foreground">Proveedor</h3>
+        </div>
+        <div class="p-6 flex-1 flex flex-col justify-center">
+            <p class="text-lg font-bold text-foreground mb-1">{{ pedido.proveedor.razon_social }}</p>
+            <p class="text-sm text-muted-foreground mb-4">RFC: {{ pedido.proveedor.rfc }}</p>
+
+            <div class="space-y-2 text-sm border-t border-border pt-4">
+                <div class="flex items-start gap-2 text-muted-foreground">
+                    <i data-lucide="mail" class="w-4 h-4 mt-0.5 shrink-0 text-primary/40"></i>
+                    <span class="break-all">{{ pedido.proveedor.email_contacto }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-muted-foreground">
+                    <i data-lucide="phone" class="w-4 h-4 shrink-0 text-primary/40"></i>
+                    <span>{{ pedido.proveedor.telefono_contacto }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Insumos Solicitados -->
+<div class="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-border bg-muted/20">
+        <h3 class="font-bold text-foreground">Insumos Solicitados</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+            <thead class="text-xs text-muted-foreground tracking-wider uppercase bg-muted/5 border-b border-border">
+                <tr>
+                    <th class="px-6 py-4 font-semibold">Insumo</th>
+                    <th class="px-6 py-4 font-semibold text-center">Unidad</th>
+                    <th class="px-6 py-4 font-semibold text-right">Cant. Esperada</th>
+                    <th class="px-6 py-4 font-semibold text-right">Costo Est. Unitario</th>
+                    <th class="px-6 py-4 font-semibold text-right">Subtotal Estimado</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+                {% for d in pedido.detalles %}
+                <tr class="hover:bg-muted/10 transition-colors">
+                    <td class="px-6 py-4 font-medium text-foreground">{{ d.insumo.nombre }}</td>
+                    <td class="px-6 py-4 text-center text-muted-foreground">{{ d.insumo.unidad_medida }}</td>
+                    <td class="px-6 py-4 text-right font-semibold">{{ '{:,.2f}'.format(d.cantidad_pedida) }}</td>
+                    <td class="px-6 py-4 text-right text-muted-foreground">${{
+                        '{:,.2f}'.format(d.costo_unitario_estimado) }}</td>
+                    <td class="px-6 py-4 text-right font-bold text-foreground">${{ '{:,.2f}'.format(d.cantidad_pedida *
+                        d.costo_unitario_estimado) }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-6 py-12 text-center text-muted-foreground text-sm">
+                        No hay insumos registrados para este pedido.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="bg-muted/10 border-t border-border">
+                <tr>
+                    <td colspan="4"
+                        class="px-6 py-4 text-right font-bold text-muted-foreground uppercase text-xs tracking-wider">
+                        Total Estimado</td>
+                    <td class="px-6 py-4 text-right font-bold text-lg text-foreground">${{
+                        '{:,.2f}'.format(total_estimado) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

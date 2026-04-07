@@ -184,6 +184,7 @@ def create_app():
     application.register_blueprint(bp.compras_bp, url_prefix='/compras')
     application.register_blueprint(bp.categorias_bp, url_prefix='/categorias')
     application.register_blueprint(bp.recetas_bp, url_prefix='/recetas')
+    application.register_blueprint(bp.pedidos_proveedor_bp, url_prefix='/pedidos_proveedor')
     application.register_blueprint(bp.modelo_aux_bp, url_prefix='/recetas_modelo')
     application.register_blueprint(bp.productos_bp, url_prefix='/productos_terminados')
     application.register_blueprint(bp.orden_bp, url_prefix='/orden_produccion')

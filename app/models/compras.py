@@ -56,5 +56,10 @@ class CompraDetalle(db.Model):
     compra = db.relationship('CompraEncabezado', backref=db.backref('detalles', lazy=True))
     insumo = db.relationship('Insumo', backref=db.backref('compras_detalle', lazy=True))
 
+    __table_args__ = (
+        Index('idx_cdetalle_compra', 'uuid_compra'),
+        Index('idx_cdetalle_insumo', 'uuid_insumo'),
+    )
+
     def __repr__(self):
         return f'<CompraDetalle {self.uuid_detalle_compra}>'

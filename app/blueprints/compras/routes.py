@@ -203,6 +203,8 @@ def ver(uuid_compra):
 @login_required
 @roles_accepted('admin', 'produccion')
 def recibir(uuid_compra):
+    from app.models.pedidos_proveedor import PedidoProveedorEncabezado, PedidoProveedorDetalle
+
     compra = CompraEncabezado.query.get_or_404(uuid_compra)
 
     # SOLO PENDIENTE
@@ -220,81 +222,80 @@ def recibir(uuid_compra):
 
     if request.method == "POST":
         try:
-            # TOMAR DETALLES EDITADOS
-            insumos_ids = request.form.getlist("uuid_insumo[]")
-            cantidades = request.form.getlist("cantidad[]")
-            costos = request.form.getlist("costo[]")
+            # ── REGLA: Validación contra pedido formal ──────────────────
+            # No se acepta material que no coincida exactamente con lo solicitado.
+            if compra.uuid_pedido:
+                pedido = PedidoProveedorEncabezado.query.get(compra.uuid_pedido)
+                if pedido:
+                    # Construir mapa {uuid_insumo: cantidad_pedida} del pedido
+                    pedido_map = {
+                        d.uuid_insumo: float(d.cantidad_pedida)
+                        for d in pedido.detalles
+                    }
+                    # Verificar cada detalle de la compra contra el pedido
+                    for detalle in compra.detalles:
+                        if detalle.uuid_insumo not in pedido_map:
+                            flash(
+                                f"Rechazado: El insumo '{detalle.insumo.nombre}' no está en el pedido original. "
+                                f"No se aceptan productos extra.",
+                                "error"
+                            )
+                            return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
+                        
+                        cantidad_comprada = float(detalle.cantidad_comprada)
+                        cantidad_pedida = pedido_map[detalle.uuid_insumo]
+                        if cantidad_comprada != cantidad_pedida:
+                            flash(
+                                f"Rechazado: La cantidad de '{detalle.insumo.nombre}' no coincide con el pedido. "
+                                f"Pedido: {cantidad_pedida}, Compra: {cantidad_comprada}.",
+                                "error"
+                            )
+                            return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
 
-            if not insumos_ids:
-                flash("Agrega al menos un insumo", "error")
-                return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
+            # En la recepción no se pueden modificar insumos, cantidades ni costos.
+            # Solo se verifica y se ingresa el metraje_real para rollos.
+            metrajes_reales = request.form.getlist("metraje_real[]")
 
-            # BORRAR DETALLES EXISTENTES (y ROLLOS)
-            for detalle in compra.detalles:
-                RolloInventario.query.filter_by(uuid_detalle_compra=detalle.uuid_detalle_compra).delete()
-                db.session.delete(detalle)
-
-            db.session.flush()
-
-            # CREAR NUEVOS DETALLES
-            for i in range(len(insumos_ids)):
-                if not insumos_ids[i]:
-                    continue
-
-                try:
-                    cantidad = Decimal(cantidades[i])
-                    costo = Decimal(costos[i])
-                except (InvalidOperation, TypeError):
-                    flash("Cantidad o costo inválido", "error")
-                    return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
-
-                if cantidad <= 0 or costo < 0:
-                    flash("Cantidad o costo inválido", "error")
-                    return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
-
-                insumo = Insumo.query.get(insumos_ids[i])
-                if not insumo:
-                    flash("Insumo no encontrado", "error")
-                    return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
-
-                detalle = CompraDetalle(
-                    uuid_compra=compra.uuid_compra,
-                    uuid_insumo=insumo.uuid_insumo,
-                    cantidad_comprada=cantidad,
-                    costo_unitario_compra=costo
-                )
-                db.session.add(detalle)
-                db.session.flush()
-
-                # =========================
-                # ACTUALIZAR STOCK Y CREAR ROLLOS
-                # =========================
-                if insumo.unidad_medida == "PIEZA":
-                    cantidad_base = cantidad
-                elif insumo.unidad_medida == "ROLLO":
-                    cantidad_base = cantidad * Decimal(insumo.contenido_cantidad)
-                else:
-                    cantidad_base = cantidad
-
-                insumo.stock_total_acumulado += cantidad_base
+            # Validar tolerancia para rollos
+            for i, detalle in enumerate(compra.detalles):
+                insumo = detalle.insumo
+                cantidad = detalle.cantidad_comprada
 
                 if insumo.unidad_medida == "ROLLO":
-                    ancho_real = Decimal(insumo.ancho or 0)
+                    try:
+                        metraje_real = Decimal(metrajes_reales[i])
+                    except (InvalidOperation, TypeError, IndexError):
+                        flash("Metraje real inválido.", "error")
+                        return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
+
+                    metraje_esperado = cantidad * Decimal(insumo.contenido_cantidad)
+                    tolerancia = cantidad * Decimal('0.05')
+
+                    if abs(metraje_real - metraje_esperado) > tolerancia:
+                        flash(f"Rechazado: {insumo.nombre} no cumple la tolerancia exacta (±5cm por rollo). Esperado: {metraje_esperado}m, Recibido: {metraje_real}m.", "error")
+                        return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
+
+                    # Si es aceptado, actualizamos stock y creamos rollos
+                    metraje_por_rollo = metraje_real / cantidad
+                    insumo.stock_total_acumulado += metraje_real
+                    
                     for _ in range(int(cantidad)):
                         rollo = RolloInventario(
                             uuid_insumo=insumo.uuid_insumo,
                             uuid_detalle_compra=detalle.uuid_detalle_compra,
-                            metraje_inicial=Decimal(insumo.contenido_cantidad),
-                            metraje_continuo_actual=Decimal(insumo.contenido_cantidad),
-                            
+                            metraje_inicial=metraje_por_rollo,
+                            metraje_continuo_actual=metraje_por_rollo,
                         )
                         db.session.add(rollo)
+                else:
+                    # Insumos por pieza
+                    insumo.stock_total_acumulado += cantidad
 
             # CAMBIAR ESTATUS
             compra.estatus = "RECIBIDO"
             db.session.commit()
 
-            flash("Compra recibida correctamente y stock actualizado", "success")
+            flash("Compra validada y recibida correctamente. Inventario actualizado.", "success")
             return redirect(url_for("compras_bp.index"))
 
         except Exception as e:

@@ -116,6 +116,8 @@
           <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Administración</p>
           <div class="flex flex-col gap-1">
             {{ nav_link('proveedores.index', 'Proveedores', 'truck', 'proveedores') }}
+            {{ nav_link('pedidos_proveedor_bp.index', 'Pedidos a Proveedor', 'file-text', 'pedidos_proveedor_bp') }}
+            {{ nav_link('compras_bp.index', 'Compras / Recepción', 'package-check', 'compras_bp') }}
             {{ nav_link('empleados.index', 'Empleados', 'briefcase', 'empleados') }}
             {% if current_user.has_role('admin') %}
             {{ nav_link('usuarios.index', 'Usuarios', 'users', 'usuarios') }}

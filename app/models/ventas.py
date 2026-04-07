@@ -10,7 +10,7 @@ class VentaEncabezado(db.Model):
     numero_pedido = Column(String(25), unique=True, nullable=False)
     uuid_cliente = Column(String(36), ForeignKey('clientes.uuid_cliente'), nullable=False)
     metodo_pago = Column(String(50))
-    estatus_envio = Column(Enum('Procesando', 'Enviado', 'Entregado', 'Devuelto'), default='Procesando')
+    estatus_envio = Column(Enum('Procesando', 'Enviado', 'Entregado', 'Devuelto', 'Completado', 'Pendiente', 'Cancelado'), default='Procesando')
     fecha_venta = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -35,6 +35,11 @@ class VentaDetalle(db.Model):
 
     venta = db.relationship('VentaEncabezado', backref=db.backref('detalles', lazy=True))
     producto = db.relationship('ProductoTerminado', backref=db.backref('ventas_detalle', lazy=True))
+
+    __table_args__ = (
+        Index('idx_vdetalle_venta', 'uuid_venta'),
+        Index('idx_vdetalle_producto', 'uuid_producto'),
+    )
 
     def __repr__(self):
         return f'<VentaDetalle {self.uuid_detalle}>'

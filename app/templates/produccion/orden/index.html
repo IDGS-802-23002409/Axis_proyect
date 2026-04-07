@@ -86,17 +86,22 @@
 
                         <!-- ACCIONES -->
                         <td class="px-6 py-4 text-right">
-                            <div class="flex justify-end gap-3">
+                            <div class="flex justify-end gap-3 items-center">
 
-                                <a href=""
+                                <a href="#"
                                    class="text-blue-600 hover:underline">
                                     Ver
                                 </a>
 
-                                <a href=""
-                                   class="text-green-600 hover:underline">
-                                    Estado
-                                </a>
+                                {% if orden.estado != 'Terminado' %}
+                                <form method="POST" action="{{ url_for('orden_bp.avanzar_estado', uuid_op=orden.uuid_op) }}" class="inline">
+                                    <!-- CSRF oculto -->
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="text-green-600 hover:underline font-bold" onclick="return confirm('¿Confirmar avance de estado de la orden?')">
+                                        Avanzar Estado
+                                    </button>
+                                </form>
+                                {% endif %}
 
                             </div>
                         </td>

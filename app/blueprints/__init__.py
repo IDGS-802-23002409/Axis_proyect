@@ -12,6 +12,7 @@ from app.blueprints.categorias import categorias_bp
 from app.blueprints.compras import compras_bp
 from app.blueprints.inventario import inventario_bp
 from app.blueprints.recetas import recetas_bp
+from app.blueprints.pedidos_proveedor import pedidos_proveedor_bp
 from app.blueprints.modelo import modelo_aux_bp
 from app.blueprints.costo_utilidad import costo_utilidad_bp
 from app.blueprints.merma import merma_bp
