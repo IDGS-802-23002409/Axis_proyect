@@ -3,17 +3,38 @@ routes.py · Blueprint: ventas
 Módulo de Ventas — Solo lectura
 Muestra: qué se compró, cuándo, cuánto, precio total y quién compró.
 """
-from flask import render_template, request
-from flask_security import login_required, roles_required, roles_accepted
+from flask import render_template, request, flash, redirect, url_for
+from flask_security import login_required, roles_required, roles_accepted, current_user
 from . import ventas_bp
 from app.utils.database_connection import db
 from app.models.ventas import VentaEncabezado, VentaDetalle
 from app.models.modelos_productos import ProductoTerminado, ModeloRopa
 from app.models.clientes import Cliente
 from app.models.usuarios import Usuario
+from app.models.produccion import OrdenProduccion
 from sqlalchemy import func
 from datetime import datetime, timedelta
 
+@ventas_bp.route('/cancelar/<uuid_venta>', methods=['POST'])
+@login_required
+def cancelar_pedido(uuid_venta):
+    venta = VentaEncabezado.query.get_or_404(uuid_venta)
+    
+    # REGLA: Solo se puede cancelar si el estatus es Pendiente
+    if venta.estatus_envio != 'Pendiente':
+        flash("Solo se pueden cancelar pedidos en estado 'Pendiente'.", "error")
+        return redirect(request.referrer or url_for('ventas.index'))
+
+    # REGLA: No hay devoluciones. Si se cancela, el producto se termina de fabricar y se integra al stock.
+    # En el sistema, esto significa que la Venta se marca como Cancelada, 
+    # pero las Ordenes de Producción vinculadas DEBEN continuar hasta 'Terminado'.
+    # Al llegar a 'Terminado', el stock se incrementará pero ya no estará vinculado a una venta activa.
+    
+    venta.estatus_envio = 'Cancelado'
+    db.session.commit()
+    
+    flash(f"Pedido {venta.numero_pedido} cancelado. La producción continuará para integrar los productos al stock.", "info")
+    return redirect(request.referrer or url_for('ventas.index'))
 
 @ventas_bp.route('/')
 @login_required

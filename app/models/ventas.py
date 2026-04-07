@@ -10,7 +10,7 @@ class VentaEncabezado(db.Model):
     numero_pedido = Column(String(25), unique=True, nullable=False)
     uuid_cliente = Column(String(36), ForeignKey('clientes.uuid_cliente'), nullable=False)
     metodo_pago = Column(String(50))
-    estatus_envio = Column(Enum('Procesando', 'Enviado', 'Entregado', 'Devuelto'), default='Procesando')
+    estatus_envio = Column(Enum('Procesando', 'Enviado', 'Entregado', 'Devuelto', 'Completado', 'Pendiente', 'Cancelado'), default='Procesando')
     fecha_venta = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

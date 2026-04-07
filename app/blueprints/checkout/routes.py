@@ -62,13 +62,14 @@ def agregar_carrito():
         return redirect(request.referrer or url_for('catalog.catalog_view'))
 
     stock_disponible = producto.stock_fisico_actual or 0
-    if stock_disponible < cantidad:
-        flash(f'Solo hay {stock_disponible} unidades disponibles de {producto.modelo.nombre_modelo}', 'warning')
-        if stock_disponible <= 0:
-            return redirect(request.referrer or url_for('catalog.catalog_view'))
-        cantidad = stock_disponible
+    # Eliminamos la restricción de stock aquí, ya que la regla permite comprar sin stock
+    # con 5 días extra de entrega.
 
     cart = load_cart()
+    total_quantity = sum(item.get('quantity', 0) for item in cart)
+    if total_quantity + cantidad > 100:
+        flash('El carrito no puede tener más de 100 productos en total.', 'error')
+        return redirect(request.referrer or url_for('catalog.catalog_view'))
 
     # Buscar si ya existe este producto específico (por su uuid_producto real)
     existing_idx = None
@@ -79,11 +80,10 @@ def agregar_carrito():
 
     if existing_idx is not None:
         nueva_cantidad = cart[existing_idx]['quantity'] + cantidad
-        if nueva_cantidad > stock_disponible:
-            cart[existing_idx]['quantity'] = stock_disponible
-            flash(f'Se ajustó la cantidad al máximo disponible ({stock_disponible})', 'info')
-        else:
-            cart[existing_idx]['quantity'] = nueva_cantidad
+        if total_quantity + cantidad > 100: # Re-verificar por si acaso
+             flash('El carrito no puede tener más de 100 productos en total.', 'error')
+             return redirect(request.referrer or url_for('catalog.catalog_view'))
+        cart[existing_idx]['quantity'] = nueva_cantidad
     else:
         cart.append({
             'uuid_producto': producto.uuid_producto,
@@ -120,19 +120,18 @@ def actualizar_carrito():
         flash('Producto no encontrado', 'error')
         return redirect(url_for('checkout.checkout_view'))
 
-    stock_disponible = producto.stock_fisico_actual or 0
-    if cantidad > stock_disponible:
-        flash(f'Solo hay {stock_disponible} unidades disponibles', 'error')
-        return redirect(url_for('checkout.checkout_view'))
-
     cart = load_cart()
+    total_quantity = sum(item.get('quantity', 0) for item in cart if item.get('uuid_producto') != uuid_producto)
+    if total_quantity + cantidad > 100:
+        flash('El carrito no puede tener más de 100 productos en total.', 'error')
+        return redirect(url_for('checkout.checkout_view'))
 
     if cantidad <= 0:
         # Si cantidad es 0 o negativa, eliminar el item
-        cart = [i for i in cart if not (i.get('uuid_producto') == uuid_producto and i.get('talla') == talla)]
+        cart = [i for i in cart if not (i.get('uuid_producto') == uuid_producto)]
     else:
         for idx, item in enumerate(cart):
-            if item.get('uuid_producto') == uuid_producto and item.get('talla') == talla:
+            if item.get('uuid_producto') == uuid_producto:
                 cart[idx]['quantity'] = cantidad
                 break
 
@@ -180,53 +179,93 @@ def procesar_checkout():
         flash('Por favor completa tu perfil primero', 'error')
         return redirect(url_for('checkout.completar_perfil'))
 
+    # REGLA: Datos obligatorios (Teléfono y Dirección)
+    if not current_user.cliente.telefono or not current_user.cliente.direccion_completa:
+        flash('Por favor actualiza tu teléfono y dirección en tu perfil antes de comprar.', 'warning')
+        return redirect(url_for('checkout.mi_cuenta'))
+
     cart = load_cart()
     if not cart:
         flash('El carrito está vacío', 'error')
         return redirect(url_for('checkout.checkout_view'))
 
     try:
-        for item in cart:
-            producto = ProductoTerminado.query.get(item['uuid_producto'])
-            if not producto or not producto.active:
-                flash(f'El producto {item["nombre"]} ya no está disponible', 'error')
-                return redirect(url_for('checkout.checkout_view'))
-
-            stock_disponible = producto.stock_fisico_actual or 0
-            if stock_disponible < item['quantity']:
-                flash(f'No hay suficiente stock de {item["nombre"]}. Disponible: {stock_disponible}', 'error')
-                return redirect(url_for('checkout.checkout_view'))
-
+        from app.models.produccion import OrdenProduccion
+        from app.models.explosion_materiales import ExplosionMaterialesCabecera
+        
         numero_pedido = f"AXIS-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
-
+        
+        # Determinar si el pedido completo será Pendiente o Completado
+        # Regla: Si hay stock insuficiente en AL MENOS UN producto, el pedido queda Pendiente.
+        estatus_global = 'Completado'
+        mensajes_extra = []
+        
         venta = VentaEncabezado(
             uuid_venta=str(uuid.uuid4()),
             numero_pedido=numero_pedido,
             uuid_cliente=current_user.cliente.uuid_cliente,
             metodo_pago=request.form.get('metodo_pago', 'Transferencia'),
-            estatus_envio='Procesando'
+            estatus_envio='Procesando' # Temporal
         )
         db.session.add(venta)
         db.session.flush()
 
         for item in cart:
             producto = ProductoTerminado.query.get(item['uuid_producto'])
+            if not producto or not producto.active:
+                flash(f'El producto {item["nombre"]} ya no está disponible', 'error')
+                db.session.rollback()
+                return redirect(url_for('checkout.checkout_view'))
 
+            cantidad_pedida = int(item['quantity'])
+            stock_actual = int(producto.stock_fisico_actual or 0)
+            
             detalle = VentaDetalle(
                 uuid_detalle=str(uuid.uuid4()),
                 uuid_venta=venta.uuid_venta,
                 uuid_producto=item['uuid_producto'],
-                cantidad=item['quantity'],
+                cantidad=cantidad_pedida,
                 precio_unitario_historico=Decimal(str(item['price']))
             )
             db.session.add(detalle)
-            producto.stock_fisico_actual -= item['quantity']
+            db.session.flush()
 
+            # REGLA: Política de Inventario "Express"
+            # Si pedido > stock disponible: NO toma nada del stock. Crea OP desde cero.
+            if cantidad_pedida > stock_actual:
+                estatus_global = 'Pendiente'
+                mensajes_extra.append(f"{producto.modelo.nombre_modelo} entrará a producción (+5 días entrega).")
+                
+                # Crear Orden de Producción
+                # Validar que tenga receta
+                receta = ExplosionMaterialesCabecera.query.filter_by(uuid_explosion=producto.uuid_explosion).first()
+                if not receta:
+                     flash(f"Error: El producto {producto.modelo.nombre_modelo} no tiene una receta asignada. Contacte a soporte.", "error")
+                     db.session.rollback()
+                     return redirect(url_for('checkout.checkout_view'))
+
+                nueva_op = OrdenProduccion(
+                    uuid_op=str(uuid.uuid4()),
+                    uuid_producto=producto.uuid_producto,
+                    uuid_venta_detalle=detalle.uuid_detalle,
+                    cantidad_a_producir=cantidad_pedida,
+                    estado='Pendiente'
+                )
+                db.session.add(nueva_op)
+            
+            else:
+                # Si hay stock suficiente: Se descuenta y queda como completado (si no hay otros pendientes)
+                producto.stock_fisico_actual -= cantidad_pedida
+
+        venta.estatus_envio = estatus_global
         db.session.commit()
 
-        # Limpiar carrito de la sesión
+        # Limpiar carrito
         save_cart([])
 
+        for msg in mensajes_extra:
+            flash(msg, 'info')
+            
         flash(f'¡Pedido realizado! Número: {numero_pedido}', 'success')
         return redirect(url_for('checkout.pedido_exito', numero_pedido=numero_pedido))
 
