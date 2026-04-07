@@ -8,6 +8,7 @@ from flask_security import login_required, roles_accepted
 from decimal import Decimal
 from app.models.explosion_materiales import ExplosionMaterialesDetalle
 from app.models.inventario import RolloInventario
+from app.models.insumos import Insumo
 from app.models.produccion import OrdenProduccion, EjecucionCorte
 from app.models.ventas import VentaEncabezado,VentaDetalle
 from app.utils.database_connection import db

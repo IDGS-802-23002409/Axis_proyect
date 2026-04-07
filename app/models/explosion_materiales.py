@@ -1,6 +1,6 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import Column, String, Integer, Numeric, DateTime, Text, Enum, ForeignKey, func
+from sqlalchemy import Column, String, Integer, Numeric, DateTime, Text, Enum, ForeignKey, func, Index
 
 
 class ExplosionMaterialesCabecera(db.Model):

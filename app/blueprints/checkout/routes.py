@@ -245,33 +245,89 @@ def procesar_checkout():
                      return redirect(url_for('checkout.checkout_view'))
 
                 if cantidad_pedida < 10 and stock_actual > 0:
-                    # Pedido pequeño: tomar lo que hay en stock, producir el resto
                     faltante = cantidad_pedida - stock_actual
                     producto.stock_fisico_actual = 0
                     mensajes_extra.append(
                         f"{producto.modelo.nombre_modelo}: {stock_actual} uds. del stock + "
                         f"{faltante} uds. entrarán a producción (+5 días entrega)."
                     )
-                    nueva_op = OrdenProduccion(
-                        uuid_op=str(uuid.uuid4()),
-                        uuid_producto=producto.uuid_producto,
-                        uuid_venta_detalle=detalle.uuid_detalle,
-                        cantidad_a_producir=faltante,
-                        estado='Pendiente'
-                    )
+                    cantidad_op_base = faltante
                 else:
-                    # Pedido grande (>=10): NO tocar stock → OP completa desde cero
                     mensajes_extra.append(
                         f"{producto.modelo.nombre_modelo} entrará a producción completa (+5 días entrega)."
                     )
-                    nueva_op = OrdenProduccion(
-                        uuid_op=str(uuid.uuid4()),
-                        uuid_producto=producto.uuid_producto,
-                        uuid_venta_detalle=detalle.uuid_detalle,
-                        cantidad_a_producir=cantidad_pedida,
-                        estado='Pendiente'
-                    )
+                    cantidad_op_base = cantidad_pedida
+
+                import math
+                cantidad_op_final = math.ceil(cantidad_op_base / 10.0) * 10
+
+                nueva_op = OrdenProduccion(
+                    uuid_op=str(uuid.uuid4()),
+                    uuid_producto=producto.uuid_producto,
+                    uuid_venta_detalle=detalle.uuid_detalle,
+                    cantidad_a_producir=cantidad_op_final,
+                    estado='Pendiente'
+                )
                 db.session.add(nueva_op)
+                db.session.flush()
+
+                # Reserva de Materiales para la OP automática
+                from app.models.insumos import Insumo
+                from app.models.inventario import RolloInventario
+                from app.models.produccion import EjecucionCorte
+                
+                for det_receta in receta.detalles:
+                    consumo_unitario = Decimal(det_receta.consumo_teorico_unitario)
+                    cantidad_total_necesaria = consumo_unitario * Decimal(cantidad_op_final)
+                    insumo = Insumo.query.get(det_receta.uuid_insumo)
+                    
+                    if insumo.stock_total_acumulado < cantidad_total_necesaria:
+                        db.session.rollback()
+                        flash(f"No hay suficientes materiales en bodega (Falta {insumo.nombre}) para fabricar {producto.modelo.nombre_modelo}.", "error")
+                        return redirect(url_for('checkout.checkout_view'))
+                    
+                    insumo.stock_total_acumulado -= cantidad_total_necesaria
+
+                    if insumo.unidad_medida == "ROLLO":
+                        prendas_restantes = cantidad_op_final
+                        rollos = RolloInventario.query.filter(
+                            RolloInventario.uuid_insumo == det_receta.uuid_insumo,
+                            RolloInventario.metraje_continuo_actual > 0
+                        ).order_by(RolloInventario.fecha_creacion.asc()).all()
+
+                        for rollo in rollos:
+                            metraje_disponible = Decimal(rollo.metraje_continuo_actual)
+                            prendas_de_este_rollo = int(metraje_disponible // consumo_unitario)
+
+                            if prendas_de_este_rollo <= 0:
+                                continue
+
+                            prendas_a_usar = min(prendas_restantes, prendas_de_este_rollo)
+                            metros_a_descontar = Decimal(prendas_a_usar) * consumo_unitario
+
+                            rollo.metraje_continuo_actual -= metros_a_descontar
+
+                            if rollo.metraje_continuo_actual <= Decimal('0.0001'):
+                                rollo.metraje_continuo_actual = Decimal('0.0000')
+
+                            corte = EjecucionCorte(
+                                uuid_op=nueva_op.uuid_op,
+                                uuid_rollo_used=rollo.uuid_rollo,
+                                metros_teoricos_requeridos=metros_a_descontar,
+                                metros_sacados_bodega=metros_a_descontar,
+                                prendas_reales_logradas=prendas_a_usar,
+                                merma_real_calculada=Decimal('0.0000')
+                            )
+                            db.session.add(corte)
+
+                            prendas_restantes -= prendas_a_usar
+                            if prendas_restantes == 0:
+                                break
+
+                        if prendas_restantes > 0:
+                            db.session.rollback()
+                            flash(f"No hay suficientes rollos continuos (Falta {insumo.nombre}) para fabricar {producto.modelo.nombre_modelo}.", "error")
+                            return redirect(url_for('checkout.checkout_view'))
 
             else:
                 # Si hay stock suficiente: Se descuenta y queda como completado (si no hay otros pendientes)
