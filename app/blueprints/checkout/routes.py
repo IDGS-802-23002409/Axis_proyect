@@ -231,28 +231,48 @@ def procesar_checkout():
             db.session.flush()
 
             # REGLA: Política de Inventario "Express"
-            # Si pedido > stock disponible: NO toma nada del stock. Crea OP desde cero.
+            # Pedidos pequeños (< 10): toman del stock disponible y crean OP por el faltante.
+            # Pedidos grandes (>= 10) que superan stock: NO toman stock, crean OP completa
+            #   para preservar inventario para ventas pequeñas.
             if cantidad_pedida > stock_actual:
                 estatus_global = 'Pendiente'
-                mensajes_extra.append(f"{producto.modelo.nombre_modelo} entrará a producción (+5 días entrega).")
-                
-                # Crear Orden de Producción
-                # Validar que tenga receta
+
+                # Validar que tenga receta antes de crear OP
                 receta = ExplosionMaterialesCabecera.query.filter_by(uuid_explosion=producto.uuid_explosion).first()
                 if not receta:
                      flash(f"Error: El producto {producto.modelo.nombre_modelo} no tiene una receta asignada. Contacte a soporte.", "error")
                      db.session.rollback()
                      return redirect(url_for('checkout.checkout_view'))
 
-                nueva_op = OrdenProduccion(
-                    uuid_op=str(uuid.uuid4()),
-                    uuid_producto=producto.uuid_producto,
-                    uuid_venta_detalle=detalle.uuid_detalle,
-                    cantidad_a_producir=cantidad_pedida,
-                    estado='Pendiente'
-                )
+                if cantidad_pedida < 10 and stock_actual > 0:
+                    # Pedido pequeño: tomar lo que hay en stock, producir el resto
+                    faltante = cantidad_pedida - stock_actual
+                    producto.stock_fisico_actual = 0
+                    mensajes_extra.append(
+                        f"{producto.modelo.nombre_modelo}: {stock_actual} uds. del stock + "
+                        f"{faltante} uds. entrarán a producción (+5 días entrega)."
+                    )
+                    nueva_op = OrdenProduccion(
+                        uuid_op=str(uuid.uuid4()),
+                        uuid_producto=producto.uuid_producto,
+                        uuid_venta_detalle=detalle.uuid_detalle,
+                        cantidad_a_producir=faltante,
+                        estado='Pendiente'
+                    )
+                else:
+                    # Pedido grande (>=10): NO tocar stock → OP completa desde cero
+                    mensajes_extra.append(
+                        f"{producto.modelo.nombre_modelo} entrará a producción completa (+5 días entrega)."
+                    )
+                    nueva_op = OrdenProduccion(
+                        uuid_op=str(uuid.uuid4()),
+                        uuid_producto=producto.uuid_producto,
+                        uuid_venta_detalle=detalle.uuid_detalle,
+                        cantidad_a_producir=cantidad_pedida,
+                        estado='Pendiente'
+                    )
                 db.session.add(nueva_op)
-            
+
             else:
                 # Si hay stock suficiente: Se descuenta y queda como completado (si no hay otros pendientes)
                 producto.stock_fisico_actual -= cantidad_pedida

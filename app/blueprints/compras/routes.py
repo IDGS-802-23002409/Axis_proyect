@@ -203,6 +203,8 @@ def ver(uuid_compra):
 @login_required
 @roles_accepted('admin', 'produccion')
 def recibir(uuid_compra):
+    from app.models.pedidos_proveedor import PedidoProveedorEncabezado, PedidoProveedorDetalle
+
     compra = CompraEncabezado.query.get_or_404(uuid_compra)
 
     # SOLO PENDIENTE
@@ -220,6 +222,36 @@ def recibir(uuid_compra):
 
     if request.method == "POST":
         try:
+            # ── REGLA: Validación contra pedido formal ──────────────────
+            # No se acepta material que no coincida exactamente con lo solicitado.
+            if compra.uuid_pedido:
+                pedido = PedidoProveedorEncabezado.query.get(compra.uuid_pedido)
+                if pedido:
+                    # Construir mapa {uuid_insumo: cantidad_pedida} del pedido
+                    pedido_map = {
+                        d.uuid_insumo: float(d.cantidad_pedida)
+                        for d in pedido.detalles
+                    }
+                    # Verificar cada detalle de la compra contra el pedido
+                    for detalle in compra.detalles:
+                        if detalle.uuid_insumo not in pedido_map:
+                            flash(
+                                f"Rechazado: El insumo '{detalle.insumo.nombre}' no está en el pedido original. "
+                                f"No se aceptan productos extra.",
+                                "error"
+                            )
+                            return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
+                        
+                        cantidad_comprada = float(detalle.cantidad_comprada)
+                        cantidad_pedida = pedido_map[detalle.uuid_insumo]
+                        if cantidad_comprada != cantidad_pedida:
+                            flash(
+                                f"Rechazado: La cantidad de '{detalle.insumo.nombre}' no coincide con el pedido. "
+                                f"Pedido: {cantidad_pedida}, Compra: {cantidad_comprada}.",
+                                "error"
+                            )
+                            return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
+
             # En la recepción no se pueden modificar insumos, cantidades ni costos.
             # Solo se verifica y se ingresa el metraje_real para rollos.
             metrajes_reales = request.form.getlist("metraje_real[]")

@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, DateField, SelectField
 from wtforms import validators
 from app.models.usuarios import Usuario
+from app.utils.database_connection import db
 
 class EmpleadoForm(FlaskForm):
     uuid_usuario = SelectField('Cuenta de Usuario del Sistema', coerce=str, validators=[
