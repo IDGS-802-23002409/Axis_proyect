@@ -1,0 +1,124 @@
+from flask import render_template, redirect, url_for, flash, request
+from flask_security import login_required, roles_accepted, current_user
+from sqlalchemy.orm import joinedload
+from decimal import Decimal, InvalidOperation
+
+from . import pedidos_proveedor_bp
+from .forms import PedidoProveedorForm
+from app.utils.database_connection import db
+from app.models.pedidos_proveedor import PedidoProveedorEncabezado, PedidoProveedorDetalle
+from app.models.proveedores import Proveedor
+from app.models.insumos import Insumo
+
+@pedidos_proveedor_bp.route("/")
+@login_required
+@roles_accepted('admin', 'produccion')
+def index():
+    busqueda = request.args.get("q")
+    query = PedidoProveedorEncabezado.query.options(
+        joinedload(PedidoProveedorEncabezado.proveedor),
+        joinedload(PedidoProveedorEncabezado.usuario_solicita)
+    )
+
+    if busqueda:
+        query = query.join(PedidoProveedorEncabezado.proveedor).filter(
+            db.or_(
+                PedidoProveedorEncabezado.folio_pedido.ilike(f"%{busqueda}%"),
+                db.func.lower(Proveedor.razon_social).ilike(f"%{busqueda.lower()}%")
+            )
+        )
+
+    pedidos = query.order_by(PedidoProveedorEncabezado.fecha_pedido.desc()).all()
+    return render_template("produccion/pedidos_proveedor/index.html", pedidos=pedidos)
+
+@pedidos_proveedor_bp.route("/create", methods=["GET", "POST"])
+@login_required
+@roles_accepted('admin', 'produccion')
+def create():
+    form = PedidoProveedorForm()
+    proveedores = Proveedor.query.all()
+    form.uuid_proveedor.choices = [(p.uuid_proveedor, f"{p.razon_social} - {p.rfc}") for p in proveedores]
+
+    if request.method == "POST":
+        try:
+            insumos_ids = request.form.getlist("uuid_insumo[]")
+            cantidades = request.form.getlist("cantidad[]")
+            costos = request.form.getlist("costo[]")
+
+            if not insumos_ids:
+                flash("Agrega al menos un insumo al pedido.", "error")
+                return redirect(url_for("pedidos_proveedor_bp.create"))
+
+            # Validar folio unico
+            if PedidoProveedorEncabezado.query.filter_by(folio_pedido=form.folio_pedido.data).first():
+                flash("El folio de pedido ya existe.", "error")
+                return redirect(url_for("pedidos_proveedor_bp.create"))
+
+            nuevo_pedido = PedidoProveedorEncabezado(
+                folio_pedido=form.folio_pedido.data,
+                uuid_proveedor=form.uuid_proveedor.data,
+                uuid_usuario_solicita=current_user.uuid_usuario,
+                estatus=form.estatus.data
+            )
+            db.session.add(nuevo_pedido)
+            db.session.flush()
+
+            for i in range(len(insumos_ids)):
+                if not insumos_ids[i]:
+                    continue
+                try:
+                    cantidad = Decimal(cantidades[i])
+                    costo = Decimal(costos[i])
+                except (InvalidOperation, TypeError):
+                    flash("Cantidad o costo estimado inválidos en insumos.", "error")
+                    db.session.rollback()
+                    return redirect(url_for("pedidos_proveedor_bp.create"))
+                
+                if cantidad <= 0 or costo < 0:
+                    flash("Las cantidades deben ser mayores a 0 y costos no negativos.", "error")
+                    db.session.rollback()
+                    return redirect(url_for("pedidos_proveedor_bp.create"))
+
+                detalle = PedidoProveedorDetalle(
+                    uuid_pedido=nuevo_pedido.uuid_pedido,
+                    uuid_insumo=insumos_ids[i],
+                    cantidad_pedida=cantidad,
+                    costo_unitario_estimado=costo
+                )
+                db.session.add(detalle)
+            
+            db.session.commit()
+            flash("Pedido a proveedor registrado exitosamente.", "success")
+            return redirect(url_for("pedidos_proveedor_bp.index"))
+            
+        except Exception as e:
+            db.session.rollback()
+            print("ERROR AL CREAR PEDIDO PROVEEDOR:", e)
+            flash("Ocurrió un error al guardar el pedido a proveedor.", "error")
+            return redirect(url_for("pedidos_proveedor_bp.create"))
+
+    return render_template(
+        "produccion/pedidos_proveedor/create.html",
+        form=form,
+        insumos=Insumo.query.all()
+    )
+
+@pedidos_proveedor_bp.route("/<uuid_pedido>")
+@login_required
+@roles_accepted('admin', 'produccion')
+def ver(uuid_pedido):
+    pedido = PedidoProveedorEncabezado.query.options(
+        joinedload(PedidoProveedorEncabezado.detalles)
+        .joinedload(PedidoProveedorDetalle.insumo)
+    ).get_or_404(uuid_pedido)
+    
+    total_estimado = Decimal(0)
+    for d in pedido.detalles:
+        sub = (d.cantidad_pedida or Decimal(0)) * (d.costo_unitario_estimado or Decimal(0))
+        total_estimado += sub
+
+    return render_template(
+        "produccion/pedidos_proveedor/ver.html",
+        pedido=pedido,
+        total_estimado=total_estimado
+    )
