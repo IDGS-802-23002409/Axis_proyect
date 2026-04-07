@@ -1,6 +1,6 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import Boolean, Column, String, Integer, Numeric, DateTime, Enum, Text, ForeignKey, func, CheckConstraint
+from sqlalchemy import Boolean, Column, String, Integer, Numeric, DateTime, Enum, Text, ForeignKey, func, CheckConstraint, Index
 from sqlalchemy import Enum
 
 estatus = Column(
@@ -50,6 +50,8 @@ class ProductoTerminado(db.Model):
 
     __table_args__ = (
         CheckConstraint('stock_fisico_actual >= 0', name='check_stock_producto_positivo'),
+        Index('idx_producto_modelo', 'uuid_modelo'),
+        Index('idx_producto_explosion', 'uuid_explosion'),
     )
     
 

@@ -36,5 +36,10 @@ class VentaDetalle(db.Model):
     venta = db.relationship('VentaEncabezado', backref=db.backref('detalles', lazy=True))
     producto = db.relationship('ProductoTerminado', backref=db.backref('ventas_detalle', lazy=True))
 
+    __table_args__ = (
+        Index('idx_vdetalle_venta', 'uuid_venta'),
+        Index('idx_vdetalle_producto', 'uuid_producto'),
+    )
+
     def __repr__(self):
         return f'<VentaDetalle {self.uuid_detalle}>'

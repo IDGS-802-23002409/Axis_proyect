@@ -40,5 +40,10 @@ class ExplosionMaterialesDetalle(db.Model):
     explosion = db.relationship('ExplosionMaterialesCabecera', backref=db.backref('detalles', lazy=True))
     insumo = db.relationship('Insumo', backref=db.backref('explosion_detalles', lazy=True))
 
+    __table_args__ = (
+        Index('idx_expdet_explosion', 'uuid_explosion'),
+        Index('idx_expdet_insumo', 'uuid_insumo'),
+    )
+
     def __repr__(self):
         return f'<ExplosionMaterialesDetalle {self.uuid_detalle}>'
