@@ -68,24 +68,31 @@ def index():
     insumos = query.all()
 
     
-    # COSTO PROMEDIO POR INSUMO
+    # COSTO PROMEDIO POR INSUMO Y GLOBALES
     
     for insumo in insumos:
         insumo.costo_promedio = calcular_costo_promedio(insumo.uuid_insumo)
-
-  
-    # COSTO PROMEDIO DE LOS INSUMOS ACUMULADO
-
-    valorizado_total = sum(
-        insumo.costo_promedio * float(insumo.stock_total_acumulado or 0)
-        for insumo in insumos
-    )
+        
+    # === ESTADISTICAS GLOBALES ===
+    todos_activos = Insumo.query.filter_by(estatus='ACTIVO').all()
+    total_insumos_global = len(todos_activos)
+    
+    criticos_global = 0
+    valorizado_total = 0
+    
+    for ins in todos_activos:
+        if (ins.stock_total_acumulado or 0) < 10:
+            criticos_global += 1
+        cp = calcular_costo_promedio(ins.uuid_insumo)
+        valorizado_total += cp * float(ins.stock_total_acumulado or 0)
 
     return render_template(
         "produccion/insumos/index.html",
         insumos=insumos,
         categorias=categorias,
-        valorizado_total=valorizado_total
+        valorizado_total=valorizado_total,
+        total_insumos_global=total_insumos_global,
+        criticos_global=criticos_global
     )
 
 @insumos_bp.route("/create", methods=["GET", "POST"])
@@ -181,6 +188,8 @@ def create():
             db.session.commit()
 
             flash("Insumo registrado correctamente", "success")
+            if nuevo_insumo.stock_total_acumulado == 0:
+                flash("El insumo se ha registrado con stock 0. Recuerda que no podrás usarlo en producción hasta agregar stock.", "warning")
 
             if form.submit.data:
                 return redirect(url_for('insumos_bp.index'))

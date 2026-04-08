@@ -177,12 +177,12 @@ def avanzar_estado(uuid_op):
             
             # Si pasamos a Terminado, integramos al stock final
             if nuevo_estado == 'Terminado':
-                producto = orden.producto
-                producto.stock_fisico_actual = (producto.stock_fisico_actual or 0) + orden.cantidad_a_producir
-                flash(f"Orden terminada. {orden.cantidad_a_producir} unidades añadidas al stock de {producto.modelo.nombre_modelo}.", "success")
-                
-                # Si viene de una venta pendiente y todos los items de esa venta están listos, podríamos completarla
-                # Para simplicidad actual, asumimos que se completa por partes o manualmente.
+                if orden.uuid_venta_detalle:
+                    flash(f"Orden terminada. Las prendas están listas para surtir la venta relacionada.", "success")
+                else:
+                    producto = orden.producto
+                    producto.stock_fisico_actual = (producto.stock_fisico_actual or 0) + orden.cantidad_a_producir
+                    flash(f"Orden terminada. {orden.cantidad_a_producir} unidades añadidas al stock de {producto.modelo.nombre_modelo}.", "success")
             else:
                 flash(f"Estado de la orden actualizado a {nuevo_estado}.", "success")
                 

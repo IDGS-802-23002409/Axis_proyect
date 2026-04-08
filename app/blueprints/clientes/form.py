@@ -10,11 +10,12 @@ class ClienteForm(FlaskForm):
     ])
     
     telefono = StringField('Teléfono de Contacto', [
-        validators.Length(max=20)
+        validators.DataRequired(message="El teléfono es obligatorio"),
+        validators.Length(max=15, message="Máximo 15 caracteres permitidos")
     ])
     
     direccion_completa = TextAreaField('Domicilio de Envío/Facturación', [
-        validators.Optional()
+        validators.DataRequired(message="La dirección es obligatoria")
     ])
 
     def __init__(self, *args, obj=None, **kwargs):
@@ -51,3 +52,12 @@ class ClienteForm(FlaskForm):
         cli = Cliente.query.filter_by(uuid_usuario=field.data).first()
         if cli and (not self.obj or cli.uuid_cliente != self.obj.uuid_cliente):
             raise validators.ValidationError("Este usuario ya tiene un perfil de cliente asignado.")
+
+    def validate_telefono(self, field):
+        if field.data:
+            import re
+            dato_limpio = re.sub(r'\D', '', str(field.data))
+            if not str(field.data).replace("-", "").replace(" ", "").isdigit():
+                raise validators.ValidationError('Solo se permiten números y guiones.')
+            if len(dato_limpio) != 10:
+                raise validators.ValidationError('Deben ser exactamente 10 dígitos numéricos.')

@@ -45,14 +45,14 @@
         <div class="space-y-4">
           <div>
             <label class="text-xs text-muted-foreground">Ejecución de Corte</label>
-            <p class="font-mono font-semibold">{{ retazo.uuid_corte_origen[:8] }}…</p>
+            <p class="font-mono font-semibold">{{ retazo.uuid_corte_origen }}</p>
           </div>
 
           <div>
             <label class="text-xs text-muted-foreground">Orden de Producción</label>
             {% if retazo.ejecucion_corte and retazo.ejecucion_corte.orden_produccion %}
             <p class="font-semibold font-mono">
-              OP {{ retazo.ejecucion_corte.orden_produccion.uuid_op[:8] }}…
+              OP {{ retazo.ejecucion_corte.orden_produccion.uuid_op }}
               <span class="ml-2 text-xs px-2 py-0.5 rounded-full
                 {% if retazo.ejecucion_corte.orden_produccion.estado == 'Terminado' %}bg-gray-100 text-gray-600
                 {% elif retazo.ejecucion_corte.orden_produccion.estado == 'Pendiente' %}bg-yellow-100 text-yellow-700
@@ -67,9 +67,11 @@
 
           <div>
             <label class="text-xs text-muted-foreground">Rollo de Origen</label>
-            <p class="font-mono font-semibold">{{ retazo.uuid_rollo_origen[:8] }}…</p>
-            {% if retazo.rollo_usado and retazo.rollo_usado.insumo %}
-            <p class="text-xs text-muted-foreground">{{ retazo.rollo_usado.insumo.nombre }}</p>
+            <p class="font-mono font-semibold text-sm">{{ retazo.uuid_rollo_origen }}</p>
+            {% if retazo.rollo_origen and retazo.rollo_origen.insumo %}
+            <p class="text-sm font-semibold text-gray-800 mt-1">{{ retazo.rollo_origen.insumo.nombre }}</p>
+            <p class="text-xs text-muted-foreground">Stock actual rollo: {{
+              "%.4f"|format(retazo.rollo_origen.metraje_continuo_actual) }} m</p>
             {% endif %}
           </div>
 

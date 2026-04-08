@@ -54,10 +54,13 @@ Gestión de Clientes y Agenda
                         {{ cli.direccion_completa or '—' }}
                     </td>
                     <td class="px-6 py-4 text-muted-foreground">
-                        {{ cli.fecha_registro.strftime('%d %b %Y') if cli.fecha_registro else '—' }}
+                        {{ cli.fecha_creacion.strftime('%d %b %Y') if cli.fecha_creacion else '—' }}
                     </td>
                     <td class="px-6 py-4 text-right">
                         <div class="flex justify-end gap-3 items-center">
+                            <a href="{{ url_for('clientes.view_cliente', uuid_cliente=cli.uuid_cliente) }}">
+                                <i data-lucide="eye" class="w-4 h-4 hover:text-blue-500"></i>
+                            </a>
                             <a href="{{ url_for('clientes.update_cliente', uuid_cliente=cli.uuid_cliente) }}">
                                 <i data-lucide="pencil" class="w-4 h-4 hover:text-primary"></i>
                             </a>

@@ -279,6 +279,14 @@ def delete(uuid_explosion):
         flash("La receta ya está inactiva", "warning")
         return redirect(url_for('recetas_bp.index'))
 
+    # Validación: Verificar que no haya órdenes en curso
+    # La receta tiene productos, y los productos tienen órdenes
+    for producto in receta.productos:
+        for orden in producto.ordenes_produccion:
+            if orden.estado in ['Pendiente', 'En Corte', 'Confección']:
+                flash(f"No se puede desactivar: la receta está en uso por la orden en curso '{orden.uuid_op[:8]}' (Estado: {orden.estado}).", "error")
+                return redirect(url_for('recetas_bp.index'))
+
     # Aquí no borramos, solo desactivamos
     receta.estatus = 'INACTIVO'
     db.session.commit()

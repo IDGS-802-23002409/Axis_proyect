@@ -48,10 +48,9 @@ def index():
     page       = request.args.get('page', 1, type=int)
     per_page   = 20
 
-    # Rango de fechas por defecto: últimos 30 días
-    hoy       = datetime.now().date()
-    fecha_fin  = hoy
-    fecha_ini  = hoy - timedelta(days=30)
+    # Rango de fechas por defecto: Ninguno (Mostrar todo)
+    fecha_fin  = None
+    fecha_ini  = None
 
     if start_str:
         try:
@@ -78,12 +77,13 @@ def index():
         .join(Cliente,     VentaEncabezado.uuid_cliente == Cliente.uuid_cliente)
         .join(Usuario,     Cliente.uuid_usuario         == Usuario.uuid_usuario)
         .join(VentaDetalle, VentaEncabezado.uuid_venta  == VentaDetalle.uuid_venta)
-        .filter(
-            func.date(VentaEncabezado.fecha_venta) >= fecha_ini,
-            func.date(VentaEncabezado.fecha_venta) <= fecha_fin,
-        )
         .group_by(VentaEncabezado.uuid_venta, Usuario.nombre_completo)
     )
+    
+    if fecha_ini:
+        query = query.filter(func.date(VentaEncabezado.fecha_venta) >= fecha_ini)
+    if fecha_fin:
+        query = query.filter(func.date(VentaEncabezado.fecha_venta) <= fecha_fin)
 
     # Filtro por nombre de cliente
     if q:
@@ -101,17 +101,15 @@ def index():
     total_pages  = (total + per_page - 1) // per_page
 
     # ── KPIs del rango ────────────────────────────────────────────────────
-    kpi = db.session.query(
+    kpi_query = db.session.query(
         func.count(func.distinct(VentaEncabezado.uuid_venta)).label('num_ventas'),
         func.sum(
             VentaDetalle.cantidad * VentaDetalle.precio_unitario_historico
         ).label('ingresos'),
         func.sum(VentaDetalle.cantidad).label('unidades'),
-    ).join(VentaDetalle, VentaEncabezado.uuid_venta == VentaDetalle.uuid_venta)\
-     .filter(
-         func.date(VentaEncabezado.fecha_venta) >= fecha_ini,
-         func.date(VentaEncabezado.fecha_venta) <= fecha_fin,
-     ).first()
+    ).join(VentaDetalle, VentaEncabezado.uuid_venta == VentaDetalle.uuid_venta)
+        
+    kpi = kpi_query.first()
 
     # ── Construir lista para el template ──────────────────────────────────
     ventas = []
@@ -156,8 +154,8 @@ def index():
         kpi_unidades  = int(kpi.unidades     or 0),
         # Filtros activos
         q             = q,
-        start         = fecha_ini.strftime('%Y-%m-%d'),
-        end           = fecha_fin.strftime('%Y-%m-%d'),
+        start         = fecha_ini.strftime('%Y-%m-%d') if fecha_ini else '',
+        end           = fecha_fin.strftime('%Y-%m-%d') if fecha_fin else '',
         estatus       = estatus,
         # Paginación
         page          = page,

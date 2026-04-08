@@ -17,7 +17,7 @@
                 {{ form.nombre.label(class="text-sm font-bold mb-1") }}
                 {{ form.nombre(class="px-4 py-3 border border-neutral-200 rounded-xl text-sm") }}
                 {% for error in form.nombre.errors %}
-                    <span class="text-red-500 text-xs mt-1">{{ error }}</span>
+                <span class="text-red-500 text-xs mt-1">{{ error }}</span>
                 {% endfor %}
             </div>
 
@@ -26,7 +26,7 @@
                 {{ form.descripcion.label(class="text-sm font-bold mb-1") }}
                 {{ form.descripcion(class="px-4 py-3 border border-neutral-200 rounded-xl text-sm") }}
                 {% for error in form.descripcion.errors %}
-                    <span class="text-red-500 text-xs mt-1">{{ error }}</span>
+                <span class="text-red-500 text-xs mt-1">{{ error }}</span>
                 {% endfor %}
             </div>
 
@@ -35,21 +35,31 @@
                 {{ form.imagen.label(class="text-sm font-bold mb-1") }}
                 {% if categoria.imagen_url %}
                 <div class="mb-2">
-                    <img src="{{ categoria.imagen_url }}" alt="{{ categoria.nombre }}" class="w-32 h-32 object-cover rounded-lg border border-neutral-200">
+                    <img src="{{ categoria.imagen_url }}" alt="{{ categoria.nombre }}"
+                        class="w-32 h-32 object-cover rounded-lg border border-neutral-200">
                 </div>
                 {% endif %}
-                {{ form.imagen(class="px-4 py-3 border border-neutral-200 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-neutral-100 file:text-neutral-700 hover:file:bg-neutral-200") }}
-                <span class="text-xs text-neutral-500 mt-1">Deja vacío para mantener la imagen actual. Formatos: jpg, png, webp</span>
+                {{ form.imagen(class="px-4 py-3 border border-neutral-200 rounded-xl text-sm file:mr-4 file:py-2
+                file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-neutral-100
+                file:text-neutral-700 hover:file:bg-neutral-200") }}
+                <span class="text-xs text-neutral-500 mt-1">Deja vacío para mantener la imagen actual. Formatos: jpg,
+                    png, webp</span>
                 {% for error in form.imagen.errors %}
-                    <span class="text-red-500 text-xs mt-1">{{ error }}</span>
+                <span class="text-red-500 text-xs mt-1">{{ error }}</span>
                 {% endfor %}
             </div>
 
-            <!-- BOTÓN -->
-            <button type="submit"
-                class="bg-black text-white px-6 py-3 rounded-xl font-bold uppercase text-sm tracking-widest hover:bg-neutral-800 transition-all">
-                {{ form.submit.label.text }}
-            </button>
+            <!-- CONTROLES -->
+            <div class="flex gap-4">
+                <a href="{{ url_for('categorias_bp.index') }}"
+                    class="bg-neutral-200 text-black px-6 py-3 rounded-xl font-bold uppercase text-sm tracking-widest hover:bg-neutral-300 transition-all flex items-center">
+                    Cancelar
+                </a>
+                <button type="submit"
+                    class="bg-black text-white px-6 py-3 rounded-xl font-bold uppercase text-sm tracking-widest hover:bg-neutral-800 transition-all flex-1">
+                    {{ form.submit.label.text }}
+                </button>
+            </div>
 
         </form>
 

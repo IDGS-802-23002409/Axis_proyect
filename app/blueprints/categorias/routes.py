@@ -39,8 +39,10 @@ def index():
             )
         )
 
+    total_global = Categoria.query.count()
+    activas_global = Categoria.query.filter_by(estatus_visible=True).count()
     categorias = query.order_by(Categoria.nombre).all()
-    return render_template("produccion/categorias/index.html", categorias=categorias)
+    return render_template("produccion/categorias/index.html", categorias=categorias, total_global=total_global, activas_global=activas_global, estatus_actual=estatus)
 
 
 #  CREAR CATEGORÍA
@@ -102,7 +104,7 @@ def edit(uuid_categoria):
 
         if categoria_existente:
             flash(f'La categoría "{form.nombre.data}" ya existe.', "error")
-            return render_template("produccion/categorias/edit.html", form=form, title="Editar Categoría")
+            return render_template("produccion/categorias/edit.html", form=form, title="Editar Categoría", categoria=categoria)
 
         # Actualizar datos
         categoria.nombre = form.nombre.data.strip()
@@ -122,7 +124,7 @@ def edit(uuid_categoria):
         flash("Categoría actualizada correctamente", "success")
         return redirect(url_for("categorias_bp.index"))
 
-    return render_template("produccion/categorias/edit.html", form=form, title="Editar Categoría")
+    return render_template("produccion/categorias/edit.html", form=form, title="Editar Categoría", categoria=categoria)
 
 
 #  DESACTIVAR / ACTIVAR CATEGORÍA
