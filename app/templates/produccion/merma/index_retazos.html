@@ -4,6 +4,13 @@
 
 {% block container %}
 <div class="px-10 pb-10">
+  <div class="mb-6">
+    <a href="{{ url_for('merma.index') }}"
+      class="inline-flex items-center gap-2 text-primary hover:text-primary/90 text-sm font-semibold">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i>
+      Regresar a Merma por Pieza
+    </a>
+  </div>
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
     <div class="p-4 bg-card border border-border rounded-lg">
       <p class="text-xs text-muted-foreground">Total de Retazos</p>

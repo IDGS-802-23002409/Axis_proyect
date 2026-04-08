@@ -4,13 +4,21 @@
 
 {% block container %}
 <div class="px-10 pb-10">
+  <div class="mb-6">
+    <a href="{{ url_for('merma.index') }}"
+      class="inline-flex items-center gap-2 text-primary hover:text-primary/90 text-sm font-semibold">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i>
+      Regresar a Merma por Pieza
+    </a>
+  </div>
   <div class="max-w-3xl mx-auto bg-card border border-border rounded-lg p-8">
     <h2 class="text-xl font-bold mb-6">Nuevo Registro de Retazo</h2>
 
     <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
       <p class="text-sm text-blue-800">
         <span class="font-semibold">ℹ Nota importante:</span>
-        <br>• Si <strong>no completas</strong> el campo de descripción, es un <strong>sobrante normal</strong> del corte (no afecta merma de OP)
+        <br>• Si <strong>no completas</strong> el campo de descripción, es un <strong>sobrante normal</strong> del corte
+        (no afecta merma de OP)
         <br>• Si <strong>completas SÍ la descripción</strong>, es un <strong>defecto</strong> que aumenta merma de OP
       </p>
     </div>
@@ -28,7 +36,8 @@
       {% import "produccion/usuarios/_macros.html" as macros %}
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {{ macros.fieldUser(form.ejecucion_corte, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+        {{ macros.fieldUser(form.ejecucion_corte, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm")
+        }}
         {{ macros.fieldUser(form.rollo_origen, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
       </div>
 
@@ -37,98 +46,100 @@
       {{ macros.fieldUser(form.motivo_merma, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
 
       <div class="flex justify-end gap-3 pt-4">
-        <a href="{{ url_for('merma.index_retazos') }}" class="px-4 py-2 border border-border rounded-md text-sm hover:bg-secondary">Cancelar</a>
-        <button type="submit" class="px-4 py-2 bg-black text-white rounded-md text-sm hover:bg-gray-800">Guardar Retazo</button>
+        <a href="{{ url_for('merma.index_retazos') }}"
+          class="px-4 py-2 border border-border rounded-md text-sm hover:bg-secondary">Cancelar</a>
+        <button type="submit" class="px-4 py-2 bg-black text-white rounded-md text-sm hover:bg-gray-800">Guardar
+          Retazo</button>
       </div>
     </form>
   </div>
 </div>
 
 <script>
-// URL base para endpoints AJAX
-const BASE_URL = '/merma';
+  // URL base para endpoints AJAX
+  const BASE_URL = '/merma';
 
-// Obtener referencias a elementos
-const ejecucionCorteSelect = document.querySelector('[name="ejecucion_corte"]');
-const rolloOrigenSelect = document.querySelector('[name="rollo_origen"]');
-const insumoSection = document.getElementById('insumo-section');
-const insumoDisplay = document.getElementById('insumo-display');
+  // Obtener referencias a elementos
+  const ejecucionCorteSelect = document.querySelector('[name="ejecucion_corte"]');
+  const rolloOrigenSelect = document.querySelector('[name="rollo_origen"]');
+  const insumoSection = document.getElementById('insumo-section');
+  const insumoDisplay = document.getElementById('insumo-display');
 
-// Guardar opciones originales de rollos
-const rollosOriginales = Array.from(rolloOrigenSelect.options).map(o => ({
-  value: o.value,
-  text: o.text
-}));
+  // Guardar opciones originales de rollos
+  const rollosOriginales = Array.from(rolloOrigenSelect.options).map(o => ({
+    value: o.value,
+    text: o.text
+  }));
 
-// Cuando cambia el corte seleccionado
-ejecucionCorteSelect.addEventListener('change', async function() {
-  const uuidCorte = this.value;
-  
-  if (!uuidCorte) {
-    // Restaurar estado inicial
-    rolloOrigenSelect.innerHTML = '';
-    rollosOriginales.forEach(opt => {
-      const optEl = document.createElement('option');
-      optEl.value = opt.value;
-      optEl.text = opt.text;
-      rolloOrigenSelect.appendChild(optEl);
-    });
-    insumoSection.classList.add('hidden');
-    insumoDisplay.textContent = '—';
-    return;
-  }
-  
-  try {
-    // Obtener insumo del corte
-    const insumoResponse = await fetch(`${BASE_URL}/insumo-por-corte/${uuidCorte}`);
-    const insumoData = await insumoResponse.json();
-    
-    if (insumoData.error) {
-      console.error('Error al obtener insumo:', insumoData.error);
-      insumoSection.classList.add('hidden');
-      return;
-    }
-    
-    // Mostrar insumo esperado
-    if (insumoData.insumo) {
-      insumoDisplay.textContent = `${insumoData.insumo.nombre} (${insumoData.insumo.sku}) - Stock: ${insumoData.insumo.stock_actual.toFixed(2)}m`;
-      insumoSection.classList.remove('hidden');
-    }
-    
-    // Obtener rollos del corte
-    const rollosResponse = await fetch(`${BASE_URL}/rollos-por-corte/${uuidCorte}`);
-    const rollosData = await rollosResponse.json();
-    
-    if (rollosData.error) {
-      console.error('Error al obtener rollos:', rollosData.error);
-      return;
-    }
-    
-    // Actualizar opciones de rollos
-    rolloOrigenSelect.innerHTML = '<option value="">Selecciona un rollo</option>';
-    
-    if (rollosData.rollos.length === 0) {
-      const optEl = document.createElement('option');
-      optEl.text = '— No hay rollos disponibles para este corte —';
-      optEl.disabled = true;
-      rolloOrigenSelect.appendChild(optEl);
-    } else {
-      rollosData.rollos.forEach(rollo => {
+  // Cuando cambia el corte seleccionado
+  ejecucionCorteSelect.addEventListener('change', async function () {
+    const uuidCorte = this.value;
+
+    if (!uuidCorte) {
+      // Restaurar estado inicial
+      rolloOrigenSelect.innerHTML = '';
+      rollosOriginales.forEach(opt => {
         const optEl = document.createElement('option');
-        optEl.value = rollo.uuid_rollo;
-        optEl.text = rollo.display;
+        optEl.value = opt.value;
+        optEl.text = opt.text;
         rolloOrigenSelect.appendChild(optEl);
       });
+      insumoSection.classList.add('hidden');
+      insumoDisplay.textContent = '—';
+      return;
     }
-    
-  } catch (error) {
-    console.error('Error en filtrado de rollos:', error);
-  }
-});
 
-// Disparar evento de cambio al cargar si hay corte preseleccionado
-if (ejecucionCorteSelect.value) {
-  ejecucionCorteSelect.dispatchEvent(new Event('change'));
-}
+    try {
+      // Obtener insumo del corte
+      const insumoResponse = await fetch(`${BASE_URL}/insumo-por-corte/${uuidCorte}`);
+      const insumoData = await insumoResponse.json();
+
+      if (insumoData.error) {
+        console.error('Error al obtener insumo:', insumoData.error);
+        insumoSection.classList.add('hidden');
+        return;
+      }
+
+      // Mostrar insumo esperado
+      if (insumoData.insumo) {
+        insumoDisplay.textContent = `${insumoData.insumo.nombre} (${insumoData.insumo.sku}) - Stock: ${insumoData.insumo.stock_actual.toFixed(2)}m`;
+        insumoSection.classList.remove('hidden');
+      }
+
+      // Obtener rollos del corte
+      const rollosResponse = await fetch(`${BASE_URL}/rollos-por-corte/${uuidCorte}`);
+      const rollosData = await rollosResponse.json();
+
+      if (rollosData.error) {
+        console.error('Error al obtener rollos:', rollosData.error);
+        return;
+      }
+
+      // Actualizar opciones de rollos
+      rolloOrigenSelect.innerHTML = '<option value="">Selecciona un rollo</option>';
+
+      if (rollosData.rollos.length === 0) {
+        const optEl = document.createElement('option');
+        optEl.text = '— No hay rollos disponibles para este corte —';
+        optEl.disabled = true;
+        rolloOrigenSelect.appendChild(optEl);
+      } else {
+        rollosData.rollos.forEach(rollo => {
+          const optEl = document.createElement('option');
+          optEl.value = rollo.uuid_rollo;
+          optEl.text = rollo.display;
+          rolloOrigenSelect.appendChild(optEl);
+        });
+      }
+
+    } catch (error) {
+      console.error('Error en filtrado de rollos:', error);
+    }
+  });
+
+  // Disparar evento de cambio al cargar si hay corte preseleccionado
+  if (ejecucionCorteSelect.value) {
+    ejecucionCorteSelect.dispatchEvent(new Event('change'));
+  }
 </script>
 {% endblock %}

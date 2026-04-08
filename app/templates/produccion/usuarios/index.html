@@ -42,11 +42,11 @@ Gestión de Usuarios
             <h3 class="font-semibold">Directorio de Equipo</h3>
 
             <div class="flex items-center gap-2">
-                <button onclick="window.location.href='usuario/registro';"
+                <a href="{{ url_for('usuarios.registroUser') }}"
                     class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     Nuevo Usuario
-                </button>
+                </a>
 
                 <button id="filterToggle" type="button"
                     class="h-9 w-9 p-2 bg-card border border-border rounded-md text-muted-foreground hover:bg-secondary"

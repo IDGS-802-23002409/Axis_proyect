@@ -1,42 +1,29 @@
 {% extends "produccion/layout.html" %}
 {% block title %}
-Gestión de Clientes
+Clientes Inactivos
 {% endblock %}
 
 {% block header %}
-Gestión de Clientes y Agenda
+Clientes Desvinculados (Inactivos)
 {% endblock %}
 
 {% block container %}
 <div class="px-10 pb-10 flex flex-col gap-8">
-
-    <!-- STATS -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-card border border-border rounded-lg p-6">
-            <p class="text-sm text-muted-foreground">Total Clientes Activos</p>
-            <p class="text-3xl font-bold">{{ total_clientes }}</p>
-        </div>
+    <div class="mb-4">
+        <a href="{{ url_for('clientes.index') }}"
+            class="inline-flex items-center gap-2 text-primary hover:text-primary/90 text-sm font-semibold">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            Regresar a Catálogo Principal
+        </a>
     </div>
 
     <!-- TABLE CARD -->
     <div class="bg-card border border-border rounded-lg overflow-hidden">
         <div class="flex justify-between items-center p-5 border-b border-border">
-            <h3 class="font-semibold">Libreta de Direcciones</h3>
-            <div class="flex items-center gap-2">
-                <a href="{{ url_for('clientes.trash') }}"
-                    class="flex items-center gap-2 bg-neutral-100 text-black px-4 py-2 rounded-md text-sm hover:bg-neutral-200 transition-all border border-neutral-200"
-                    title="Ver clientes inactivos">
-                    <i data-lucide="trash-2" class="w-4 h-4 text-neutral-500"></i>
-                    Inactivos
-                </a>
-                <a href="{{ url_for('clientes.registro_cliente') }}"
-                    class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                    Añadir Cliente
-                </a>
-            </div>
+            <h3 class="font-semibold">Lista de Clientes Inactivos</h3>
         </div>
 
+        {% if clientes %}
         <!-- Table -->
         <table class="w-full text-sm">
             <thead class="bg-secondary text-muted-foreground uppercase text-xs">
@@ -64,18 +51,14 @@ Gestión de Clientes y Agenda
                     </td>
                     <td class="px-6 py-4 text-right">
                         <div class="flex justify-end gap-3 items-center">
-                            <a href="{{ url_for('clientes.ver_cliente', uuid_cliente=cli.uuid_cliente) }}">
-                                <i data-lucide="eye" class="w-4 h-4 hover:text-blue-500"></i>
-                            </a>
-                            <a href="{{ url_for('clientes.update_cliente', uuid_cliente=cli.uuid_cliente) }}">
-                                <i data-lucide="pencil" class="w-4 h-4 hover:text-primary"></i>
-                            </a>
                             <form method="POST"
-                                action="{{ url_for('clientes.delete_cliente', uuid_cliente=cli.uuid_cliente) }}"
+                                action="{{ url_for('clientes.restore', uuid_cliente=cli.uuid_cliente) }}"
                                 style="display:inline;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" onclick="return confirm('¿Seguro de desvincular este cliente?');">
-                                    <i data-lucide="trash-2" class="w-4 h-4 text-red-500 hover:text-red-700"></i>
+                                <button type="submit"
+                                    onclick="return confirm('¿Restaurar cliente actvando su perfil de usuario?');"
+                                    class="text-green-600 hover:text-green-800 text-xs font-semibold uppercase">
+                                    Restaurar
                                 </button>
                             </form>
                         </div>
@@ -84,6 +67,12 @@ Gestión de Clientes y Agenda
                 {% endfor %}
             </tbody>
         </table>
+        {% else %}
+        <div class="p-8 text-center">
+            <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-4 text-muted-foreground"></i>
+            <p class="text-muted-foreground">No hay clientes inactivos</p>
+        </div>
+        {% endif %}
     </div>
 
 </div>

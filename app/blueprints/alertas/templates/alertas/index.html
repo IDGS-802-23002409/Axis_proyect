@@ -13,17 +13,14 @@
 
         <div class="flex gap-4">
             {# Botón Actualizar — recarga la página #}
-            <button onclick="actualizarAlertas()"
-                id="btn-actualizar"
-                class="bg-[#111] border border-gray-800 text-gray-300 px-5 py-2.5 rounded-xl text-xs font-bold
+            <button onclick="actualizarAlertas()" id="btn-actualizar" class="bg-[#111] border border-gray-800 text-gray-300 px-5 py-2.5 rounded-xl text-xs font-bold
                        hover:bg-gray-800 transition-all flex items-center gap-2">
                 <i data-lucide="rotate-cw" class="w-4 h-4" id="icon-refresh"></i>
                 ACTUALIZAR
             </button>
 
             {# Botón Generar Reporte — imprime solo el contenido #}
-            <button onclick="generarReporte()"
-                class="bg-white text-black border border-gray-200 px-6 py-2.5 rounded-xl text-xs font-black
+            <button onclick="generarReporte()" class="bg-white text-black border border-gray-200 px-6 py-2.5 rounded-xl text-xs font-black
                        hover:bg-gray-100 transition-all flex items-center gap-2">
                 <i data-lucide="file-down" class="w-4 h-4"></i>
                 GENERAR REPORTE
@@ -41,7 +38,7 @@
 
 {# ══ Modal: Info de Proveedor ════════════════════════════════════════════════ #}
 <div id="modal-proveedor"
-     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
     <div class="bg-[#111] border border-gray-700 rounded-2xl shadow-2xl w-full max-w-md mx-4">
 
         {# Header #}
@@ -55,8 +52,7 @@
                     <p class="text-[10px] text-gray-500 uppercase tracking-widest">Información de contacto</p>
                 </div>
             </div>
-            <button onclick="cerrarModalProveedor()"
-                class="text-gray-600 hover:text-white transition-colors">
+            <button onclick="cerrarModalProveedor()" class="text-gray-600 hover:text-white transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
@@ -87,7 +83,8 @@
                 </div>
                 <div class="flex justify-between items-center py-2">
                     <span class="text-[10px] text-gray-500 uppercase tracking-widest">Teléfono</span>
-                    <a id="modal-prov-tel-link" href="tel:" class="text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors">
+                    <a id="modal-prov-tel-link" href="tel:"
+                        class="text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors">
                         <span id="modal-prov-tel">—</span>
                     </a>
                 </div>
@@ -96,13 +93,11 @@
 
         {# Footer con acciones #}
         <div class="px-6 py-4 border-t border-gray-800 flex gap-3">
-            <button onclick="cerrarModalProveedor()"
-                class="flex-1 px-4 py-2.5 text-xs font-bold text-gray-400 border border-gray-700
+            <button onclick="cerrarModalProveedor()" class="flex-1 px-4 py-2.5 text-xs font-bold text-gray-400 border border-gray-700
                        rounded-xl hover:bg-gray-800 transition-colors uppercase tracking-wider">
                 Cerrar
             </button>
-            <a id="modal-prov-ver-link" href="#"
-                class="flex-1 px-4 py-2.5 text-xs font-bold text-black bg-white rounded-xl
+            <a id="modal-prov-ver-link" href="#" class="flex-1 px-4 py-2.5 text-xs font-bold text-black bg-white rounded-xl
                        hover:bg-gray-200 transition-colors uppercase tracking-wider text-center">
                 Ver Ficha Completa
             </a>
@@ -112,100 +107,152 @@
 
 {# ══ CSS de impresión para el reporte ════════════════════════════════════════ #}
 <style>
-@media print {
-    /* Ocultar todo el chrome del layout */
-    aside, nav,
-    .sticky,
-    #btn-actualizar,
-    button[onclick="generarReporte()"],
-    button[onclick="actualizarAlertas()"]
-    { display: none !important; }
+    @media print {
 
-    body { background: white !important; }
-    .flex.min-h-screen { display: block !important; }
-    main { padding: 0 !important; }
-    .flex-1.p-8 { padding: 1rem !important; }
+        /* Ocultar todo el chrome del layout */
+        aside,
+        nav,
+        .sticky,
+        #btn-actualizar,
+        button[onclick="generarReporte()"],
+        button[onclick="actualizarAlertas()"] {
+            display: none !important;
+        }
 
-    /* KPIs — fondo blanco */
-    .bg-\[\#111111\] {
-        background-color: #f9fafb !important;
-        border: 1px solid #e5e7eb !important;
+        body {
+            background: white !important;
+        }
+
+        .flex.min-h-screen {
+            display: block !important;
+        }
+
+        main {
+            padding: 0 !important;
+        }
+
+        .flex-1.p-8 {
+            padding: 1rem !important;
+        }
+
+        /* KPIs — fondo blanco */
+        .bg-\[\#111111\] {
+            background-color: #f9fafb !important;
+            border: 1px solid #e5e7eb !important;
+        }
+
+        /* Cabecera del reporte */
+        #alertas-panel::before {
+            content: "AXIS Streetwear — Reporte de Alertas de Inventario";
+            display: block;
+            font-size: 10px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .text-white,
+        .text-gray-200,
+        .text-gray-300 {
+            color: #111 !important;
+        }
+
+        .text-gray-400,
+        .text-gray-500,
+        .text-gray-600 {
+            color: #6b7280 !important;
+        }
+
+        .border-gray-800,
+        .border-gray-700 {
+            border-color: #e5e7eb !important;
+        }
+
+        .bg-gray-900\/20,
+        .bg-gray-800\/20 {
+            background-color: #f3f4f6 !important;
+        }
+
+        .text-red-500 {
+            color: #dc2626 !important;
+        }
+
+        .text-amber-500 {
+            color: #d97706 !important;
+        }
     }
-
-    /* Cabecera del reporte */
-    #alertas-panel::before {
-        content: "AXIS Streetwear — Reporte de Alertas de Inventario";
-        display: block;
-        font-size: 10px;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        margin-bottom: 0.5rem;
-    }
-
-    .text-white, .text-gray-200, .text-gray-300 { color: #111 !important; }
-    .text-gray-400, .text-gray-500, .text-gray-600 { color: #6b7280 !important; }
-    .border-gray-800, .border-gray-700 { border-color: #e5e7eb !important; }
-    .bg-gray-900\/20, .bg-gray-800\/20 { background-color: #f3f4f6 !important; }
-
-    .text-red-500 { color: #dc2626 !important; }
-    .text-amber-500 { color: #d97706 !important; }
-}
 </style>
 
 {% endblock %}
 
 {% block scripts %}
 <script>
-// ── Actualizar alertas ────────────────────────────────────────────────────────
-function actualizarAlertas() {
-    const icon = document.getElementById('icon-refresh');
-    const btn  = document.getElementById('btn-actualizar');
+    // ── Actualizar alertas ────────────────────────────────────────────────────────
+    function actualizarAlertas() {
+        const icon = document.getElementById('icon-refresh');
+        const btn = document.getElementById('btn-actualizar');
 
-    // Animación de rotación
-    icon.style.transition = 'transform 0.6s ease';
-    icon.style.transform  = 'rotate(360deg)';
-    btn.disabled          = true;
+        // Animación de rotación
+        icon.style.transition = 'transform 0.6s ease';
+        icon.style.transform = 'rotate(360deg)';
+        btn.disabled = true;
 
-    setTimeout(() => {
-        icon.style.transform = 'rotate(0deg)';
-        icon.style.transition = 'none';
-        btn.disabled          = false;
-        window.location.reload();
-    }, 600);
-}
+        setTimeout(() => {
+            icon.style.transform = 'rotate(0deg)';
+            icon.style.transition = 'none';
+            btn.disabled = false;
+            window.location.reload();
+        }, 600);
+    }
 
-// ── Generar reporte PDF ───────────────────────────────────────────────────────
-function generarReporte() {
-    window.print();
-}
+    // ── Generar reporte PDF ───────────────────────────────────────────────────────
+    function generarReporte() {
+        window.print();
+    }
 
-// ── Modal de proveedor ────────────────────────────────────────────────────────
-function abrirModalProveedor(data) {
-    document.getElementById('modal-insumo-nombre').textContent = data.insumo_nombre || '—';
-    document.getElementById('modal-insumo-sku').textContent    = data.insumo_sku    || '—';
-    document.getElementById('modal-prov-nombre').textContent   = data.prov_nombre   || 'Sin proveedor asignado';
-    document.getElementById('modal-prov-rfc').textContent      = data.prov_rfc      || '—';
-    document.getElementById('modal-prov-contacto').textContent = data.prov_contacto || '—';
-    document.getElementById('modal-prov-tel').textContent      = data.prov_tel      || '—';
+    // ── Modal de proveedor ────────────────────────────────────────────────────────
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn-contactar');
+        if (btn) {
+            const data = {
+                insumo_nombre: btn.dataset.nombre,
+                insumo_sku: btn.dataset.sku,
+                prov_nombre: btn.dataset.provNombre,
+                prov_rfc: btn.dataset.provRfc,
+                prov_contacto: btn.dataset.provContacto,
+                prov_tel: btn.dataset.provTel,
+                prov_uuid: btn.dataset.provUuid
+            };
+            abrirModalProveedor(data);
+        }
+    });
 
-    const telLink = document.getElementById('modal-prov-tel-link');
-    telLink.href = data.prov_tel ? `tel:${data.prov_tel}` : '#';
+    function abrirModalProveedor(data) {
+        document.getElementById('modal-insumo-nombre').textContent = data.insumo_nombre || '—';
+        document.getElementById('modal-insumo-sku').textContent = data.insumo_sku || '—';
+        document.getElementById('modal-prov-nombre').textContent = data.prov_nombre || 'Sin proveedor asignado';
+        document.getElementById('modal-prov-rfc').textContent = data.prov_rfc || '—';
+        document.getElementById('modal-prov-contacto').textContent = data.prov_contacto || '—';
+        document.getElementById('modal-prov-tel').textContent = data.prov_tel || '—';
 
-    const verLink = document.getElementById('modal-prov-ver-link');
-    verLink.href = data.prov_uuid ? `/proveedores/${data.prov_uuid}?open=true` : '#';
+        const telLink = document.getElementById('modal-prov-tel-link');
+        telLink.href = data.prov_tel ? `tel:${data.prov_tel}` : '#';
 
-    document.getElementById('modal-proveedor').classList.remove('hidden');
-    lucide.createIcons();
-}
+        const verLink = document.getElementById('modal-prov-ver-link');
+        verLink.href = data.prov_uuid ? `/proveedores/${data.prov_uuid}?open=true` : '#';
 
-function cerrarModalProveedor() {
-    document.getElementById('modal-proveedor').classList.add('hidden');
-}
+        document.getElementById('modal-proveedor').classList.remove('hidden');
+        lucide.createIcons();
+    }
 
-// Cerrar modal al hacer click fuera
-document.getElementById('modal-proveedor').addEventListener('click', function(e) {
-    if (e.target === this) cerrarModalProveedor();
-});
+    function cerrarModalProveedor() {
+        document.getElementById('modal-proveedor').classList.add('hidden');
+    }
+
+    // Cerrar modal al hacer click fuera
+    document.getElementById('modal-proveedor').addEventListener('click', function (e) {
+        if (e.target === this) cerrarModalProveedor();
+    });
 </script>
 {% endblock %}
