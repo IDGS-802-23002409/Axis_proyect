@@ -176,8 +176,10 @@ def ver(uuid_op):
         joinedload(OrdenProduccion.venta_detalle)
     ).get_or_404(uuid_op)
     
-    # Obtener ejecuciones de corte asociadas
-    cortes = EjecucionCorte.query.filter_by(uuid_op=uuid_op).all()
+    # Obtener ejecuciones de corte asociadas con carga ansiosa de relaciones
+    cortes = EjecucionCorte.query.options(
+        joinedload(EjecucionCorte.rollo_usado).joinedload(RolloInventario.insumo)
+    ).filter_by(uuid_op=uuid_op).all()
     
     return render_template(
         'produccion/orden/ver.html',
