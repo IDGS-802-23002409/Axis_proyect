@@ -173,7 +173,7 @@ def create():
 def ver(uuid_op):
     orden = db.session.query(OrdenProduccion).options(
         joinedload(OrdenProduccion.producto).joinedload(ProductoTerminado.modelo),
-        joinedload(OrdenProduccion.ventas_detalle)
+        joinedload(OrdenProduccion.venta_detalle)
     ).get_or_404(uuid_op)
     
     # Obtener ejecuciones de corte asociadas
