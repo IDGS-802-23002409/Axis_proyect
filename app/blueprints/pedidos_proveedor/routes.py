@@ -86,7 +86,19 @@ def create():
                     return redirect(url_for("pedidos_proveedor_bp.create"))
                 
                 insumo = Insumo.query.get(insumos_ids[i])
-                if insumo and insumo.categoria and proveedor_obj:
+                if not insumo:
+                    flash("Insumo no encontrado.", "error")
+                    db.session.rollback()
+                    return redirect(url_for("pedidos_proveedor_bp.create"))
+
+                # Validar que si es pieza, la cantidad sea entera
+                if insumo.unidad_medida == 'PIEZA':
+                    if cantidad % 1 != 0:
+                        flash(f"El insumo '{insumo.nombre}' se compra por piezas. La cantidad debe ser un número entero.", "error")
+                        db.session.rollback()
+                        return redirect(url_for("pedidos_proveedor_bp.create"))
+
+                if insumo.categoria and proveedor_obj:
                     if insumo.categoria.nombre != proveedor_obj.categoria_insumo:
                         flash(f"El insumo '{insumo.nombre}' ({insumo.categoria.nombre}) no coincide con la categoría del proveedor ({proveedor_obj.categoria_insumo}).", "error")
                         db.session.rollback()
