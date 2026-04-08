@@ -26,9 +26,9 @@ def index():
 
     if busqueda:
         query = query.join(CompraEncabezado.proveedor).filter(
-            db.or_(
+            or_(
                 CompraEncabezado.folio_factura.ilike(f"%{busqueda}%"),
-                db.func.lower(Proveedor.razon_social).ilike(f"%{busqueda.lower()}%")
+                func.lower(Proveedor.razon_social).ilike(f"%{busqueda.lower()}%")
             )
         )
 

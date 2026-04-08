@@ -146,6 +146,17 @@ def deleteUser(uuid):
         flash("No se puede eliminar un administrador", "error")
         return redirect(url_for('usuarios.index'))
 
+    # Validación: No desactivar clientes con pedidos en curso
+    if any(role.name == "cliente" for role in user.roles):
+        from app.models.clientes import Cliente
+        from app.models.ventas import VentaEncabezado
+        cliente = Cliente.query.filter_by(uuid_usuario=user.uuid_usuario).first()
+        if cliente:
+            pedidos_pendientes = VentaEncabezado.query.filter_by(uuid_cliente=cliente.uuid_cliente).filter(VentaEncabezado.estatus_envio.in_(['Procesando', 'Pendiente'])).count()
+            if pedidos_pendientes > 0:
+                flash("No se puede desactivar este usuario porque es un cliente con pedidos en curso.", "error")
+                return redirect(url_for('usuarios.index'))
+
     user.active = False
     db.session.commit()
 

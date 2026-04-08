@@ -32,7 +32,24 @@ def _get_chart_data():
 @login_required
 @roles_accepted('admin', 'gerente', 'produccion')
 def index():
-    all_proveedores = Proveedor.query.order_by(Proveedor.fecha_creacion.desc()).all()
+    q = request.args.get('q', '').strip()
+    estatus = request.args.get('estatus', '').strip()
+
+    query = Proveedor.query
+
+    if q:
+        query = query.filter(
+            (Proveedor.razon_social.ilike(f"%{q}%")) |
+            (Proveedor.rfc.ilike(f"%{q}%"))
+        )
+
+    if estatus:
+        if estatus.lower() == 'activo':
+            query = query.filter(Proveedor.estatus == True)
+        elif estatus.lower() == 'inactivo':
+            query = query.filter(Proveedor.estatus == False)
+
+    all_proveedores = query.order_by(Proveedor.fecha_creacion.desc()).all()
     form = ProveedorForm()
     
     from app.models.categorias import Categoria
@@ -43,7 +60,8 @@ def index():
     return render_template('proveedores_index.html', proveedores=all_proveedores, form=form,
                            chart_labels=chart_labels, chart_data=chart_data,
                            top_producto={'nombre': 'Shadow Hoodie', 'unidades': 42, 'monto': 12500.50, 'imagen': None},
-                           bottom_producto={'nombre': 'Basic Tee White', 'stock': 85, 'imagen': None})
+                           bottom_producto={'nombre': 'Basic Tee White', 'stock': 85, 'imagen': None},
+                           q=q, estatus_filtro=estatus)
 
 # --- CREAR Y ACTUALIZAR ---
 @proveedores_bp.route('/guardar', methods=['POST'])
