@@ -1,0 +1,44 @@
+{% extends "produccion/layout.html" %}
+{% block title %}Detalles Cliente{% endblock %}
+{% block header %}Detalles Cliente{% endblock %}
+{% block subheader %}Información del Cliente y su historial de ventas{% endblock %}
+
+{% block container %}
+<div class="px-10 pb-10 flex flex-col gap-8">
+
+    <div class="mb-4">
+        <a href="{{ url_for('clientes.index') }}"
+            class="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a Clientes
+        </a>
+    </div>
+
+    <!-- TARJETA DEL CLIENTE -->
+    <div class="bg-card border border-border rounded-lg overflow-hidden p-6 shadow-sm">
+        <h3 class="font-semibold text-lg border-b pb-2 mb-4">Información Personal</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <p class="text-xs text-muted-foreground font-bold uppercase tracking-wider">Nombre Completo</p>
+                <p class="text-base">{{ cliente.usuario.nombre_completo }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-muted-foreground font-bold uppercase tracking-wider">Correo Electrónico</p>
+                <p class="text-base">{{ cliente.usuario.email }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-muted-foreground font-bold uppercase tracking-wider">Teléfono de Contacto</p>
+                <p class="text-base font-medium">{{ cliente.telefono or 'No registrado' }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-muted-foreground font-bold uppercase tracking-wider">Fecha de Creación</p>
+                <p class="text-base">{{ cliente.fecha_creacion.strftime('%d/%m/%Y') if cliente.fecha_creacion else '—'
+                    }}</p>
+            </div>
+            <div class="sm:col-span-2">
+                <p class="text-xs text-muted-foreground font-bold uppercase tracking-wider">Dirección de Domicilio</p>
+                <p class="text-base">{{ cliente.direccion_completa or 'No registrada' }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -37,10 +37,11 @@ def index():
 
     productos = productos.order_by(ProductoTerminado.fecha_actualizacion.desc()).all()
     
-    # Calcular stats ANTES de aplicar filtros de stock (para que siempre muestren el total neto)
-    total_neto = len(productos)
-    en_bajo_stock_total = len([p for p in productos if p.stock_fisico_actual <= p.stock_minimo_alerta and p.stock_fisico_actual > 0])
-    agotados_total = len([p for p in productos if p.stock_fisico_actual <= 0])
+    # Calcular stats ANTES de aplicar filtros de stock
+    todos_productos_activos = ProductoTerminado.query.filter_by(active=True).all()
+    total_neto = len(todos_productos_activos)
+    en_bajo_stock_total = len([p for p in todos_productos_activos if p.stock_fisico_actual <= p.stock_minimo_alerta and p.stock_fisico_actual > 0])
+    agotados_total = len([p for p in todos_productos_activos if p.stock_fisico_actual <= 0])
     
     # Aplicar filtros por stock solo a los productos mostrados
     if filtro == 'bajo_stock':
@@ -152,7 +153,7 @@ def editar_producto(uuid):
 
         if sku_duplicado:
             flash('El SKU ya existe en otro producto', 'error')
-            return redirect(url_for('productos.editar_producto', uuid=uuid))
+            return redirect(url_for('productos_bp.editar_producto', uuid=uuid))
 
         # Actualizar datos (SIN stock)
         producto.uuid_modelo = form.modelo.data
@@ -171,6 +172,8 @@ def editar_producto(uuid):
         return redirect(url_for('productos_bp.index'))
 
     # Cargar datos en GET (SIN stock físico)
+    if request.method == 'GET':
+        form.modelo.data = producto.uuid_modelo
     form.stock_minimo_alerta.data = producto.stock_minimo_alerta
     form.active.data = 1 if producto.active else 0
 

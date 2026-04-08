@@ -34,6 +34,11 @@ def _get_chart_data():
 def index():
     all_proveedores = Proveedor.query.order_by(Proveedor.fecha_creacion.desc()).all()
     form = ProveedorForm()
+    
+    from app.models.categorias import Categoria
+    categorias = Categoria.query.filter_by(estatus_visible=True).all()
+    form.categoria_insumo.choices = [(c.nombre, c.nombre) for c in categorias]
+    
     chart_labels, chart_data = _get_chart_data()
     return render_template('proveedores_index.html', proveedores=all_proveedores, form=form,
                            chart_labels=chart_labels, chart_data=chart_data,
@@ -47,6 +52,9 @@ def index():
 @roles_accepted('admin', 'gerente')
 def guardar(uid=None):
     form = ProveedorForm()
+    from app.models.categorias import Categoria
+    categorias = Categoria.query.filter_by(estatus_visible=True).all()
+    form.categoria_insumo.choices = [(c.nombre, c.nombre) for c in categorias]
     
     if form.validate_on_submit():
         if uid:
@@ -117,6 +125,11 @@ def detalles(uid):
         proveedores = Proveedor.query.all()
         from .forms import ProveedorForm
         form = ProveedorForm()
+        
+        from app.models.categorias import Categoria
+        categorias = Categoria.query.filter_by(estatus_visible=True).all()
+        form.categoria_insumo.choices = [(c.nombre, c.nombre) for c in categorias]
+        
         chart_labels, chart_data = _get_chart_data()
         return render_template('proveedores_index.html', proveedores=proveedores, form=form,
                                chart_labels=chart_labels, chart_data=chart_data,

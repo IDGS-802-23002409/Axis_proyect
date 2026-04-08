@@ -62,6 +62,8 @@ def create():
             )
             db.session.add(nuevo_pedido)
             db.session.flush()
+            
+            proveedor_obj = Proveedor.query.get(form.uuid_proveedor.data)
 
             for i in range(len(insumos_ids)):
                 if not insumos_ids[i]:
@@ -74,10 +76,17 @@ def create():
                     db.session.rollback()
                     return redirect(url_for("pedidos_proveedor_bp.create"))
                 
-                if cantidad <= 0 or costo < 0:
-                    flash("Las cantidades deben ser mayores a 0 y costos no negativos.", "error")
+                if cantidad <= 0 or costo <= 0:
+                    flash("Las cantidades y los costos deben ser mayores a 0.", "error")
                     db.session.rollback()
                     return redirect(url_for("pedidos_proveedor_bp.create"))
+                
+                insumo = Insumo.query.get(insumos_ids[i])
+                if insumo and insumo.categoria and proveedor_obj:
+                    if insumo.categoria.nombre != proveedor_obj.categoria_insumo:
+                        flash(f"El insumo '{insumo.nombre}' ({insumo.categoria.nombre}) no coincide con la categoría del proveedor ({proveedor_obj.categoria_insumo}).", "error")
+                        db.session.rollback()
+                        return redirect(url_for("pedidos_proveedor_bp.create"))
 
                 detalle = PedidoProveedorDetalle(
                     uuid_pedido=nuevo_pedido.uuid_pedido,
@@ -87,6 +96,26 @@ def create():
                 )
                 db.session.add(detalle)
             
+            if nuevo_pedido.estatus == 'Aprobado':
+                from app.models.compras import CompraEncabezado, CompraDetalle
+                compra = CompraEncabezado(
+                    folio_factura=nuevo_pedido.folio_pedido + "-COMPRA",
+                    uuid_proveedor=nuevo_pedido.uuid_proveedor,
+                    uuid_usuario_registro=current_user.uuid_usuario,
+                    uuid_pedido=nuevo_pedido.uuid_pedido,
+                    estatus='PENDIENTE'
+                )
+                db.session.add(compra)
+                db.session.flush()
+                for d in nuevo_pedido.detalles:
+                    cd = CompraDetalle(
+                        uuid_compra=compra.uuid_compra,
+                        uuid_insumo=d.uuid_insumo,
+                        cantidad_comprada=d.cantidad_pedida,
+                        costo_unitario_compra=d.costo_unitario_estimado
+                    )
+                    db.session.add(cd)
+
             db.session.commit()
             flash("Pedido a proveedor registrado exitosamente.", "success")
             return redirect(url_for("pedidos_proveedor_bp.index"))
@@ -122,3 +151,51 @@ def ver(uuid_pedido):
         pedido=pedido,
         total_estimado=total_estimado
     )
+
+@pedidos_proveedor_bp.route("/aprobar/<uuid_pedido>", methods=["POST"])
+@login_required
+@roles_accepted('admin', 'produccion')
+def aprobar(uuid_pedido):
+    pedido = PedidoProveedorEncabezado.query.get_or_404(uuid_pedido)
+    if pedido.estatus != 'Pendiente':
+        flash('Solo se pueden aprobar pedidos pendientes.', 'error')
+        return redirect(url_for('pedidos_proveedor_bp.ver', uuid_pedido=uuid_pedido))
+    
+    pedido.estatus = 'Aprobado'
+    
+    from app.models.compras import CompraEncabezado, CompraDetalle
+    compra = CompraEncabezado(
+        folio_factura=pedido.folio_pedido + "-COMPRA",
+        uuid_proveedor=pedido.uuid_proveedor,
+        uuid_usuario_registro=current_user.uuid_usuario,
+        uuid_pedido=pedido.uuid_pedido,
+        estatus='PENDIENTE'
+    )
+    db.session.add(compra)
+    db.session.flush()
+    for d in pedido.detalles:
+        cd = CompraDetalle(
+            uuid_compra=compra.uuid_compra,
+            uuid_insumo=d.uuid_insumo,
+            cantidad_comprada=d.cantidad_pedida,
+            costo_unitario_compra=d.costo_unitario_estimado
+        )
+        db.session.add(cd)
+    
+    db.session.commit()
+    flash('Pedido aprobado y Compra Pendiente generada automáticamente.', 'success')
+    return redirect(url_for('pedidos_proveedor_bp.index'))
+
+@pedidos_proveedor_bp.route("/rechazar/<uuid_pedido>", methods=["POST"])
+@login_required
+@roles_accepted('admin', 'produccion')
+def rechazar(uuid_pedido):
+    pedido = PedidoProveedorEncabezado.query.get_or_404(uuid_pedido)
+    if pedido.estatus != 'Pendiente':
+        flash('Solo se pueden rechazar pedidos pendientes.', 'error')
+        return redirect(url_for('pedidos_proveedor_bp.ver', uuid_pedido=uuid_pedido))
+    
+    pedido.estatus = 'Rechazado'
+    db.session.commit()
+    flash('Pedido rechazado.', 'success')
+    return redirect(url_for('pedidos_proveedor_bp.index'))

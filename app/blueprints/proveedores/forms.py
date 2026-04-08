@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, BooleanField
+from wtforms import StringField, SubmitField, BooleanField, SelectField
 from wtforms.validators import DataRequired, Length, ValidationError
 from app.models.proveedores import Proveedor
 import re
@@ -24,7 +24,7 @@ class ProveedorForm(FlaskForm):
         DataRequired(message="El teléfono es obligatorio"),
         Length(max=15, message="El campo no puede tener más de 10 dígitos numéricos") 
     ])    
-    categoria_insumo = StringField('Categoría de Insumo', validators=[Length(max=100)])
+    categoria_insumo = SelectField('Categoría de Insumo', choices=[])
     submit = SubmitField('Guardar Proveedor') 
 
     def validate_razon_social(self, field):

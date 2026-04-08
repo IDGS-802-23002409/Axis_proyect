@@ -24,14 +24,11 @@ def index():
         joinedload(CompraEncabezado.usuario_registro)
     )
 
-    #  FILTRO
     if busqueda:
         query = query.join(CompraEncabezado.proveedor).filter(
             db.or_(
                 CompraEncabezado.folio_factura.ilike(f"%{busqueda}%"),
-                #  usa el campo correcto del proveedor
-                # cambia 'nombre' por 'razon_social' si así se llama en tu modelo
-                db.func.lower(CompraEncabezado.proveedor.has().property.mapper.class_.razon_social).ilike(f"%{busqueda.lower()}%")
+                db.func.lower(Proveedor.razon_social).ilike(f"%{busqueda.lower()}%")
             )
         )
 

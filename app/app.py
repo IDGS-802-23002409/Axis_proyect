@@ -123,9 +123,6 @@ def create_app():
     from app.blueprints.alertas import alertas_bp
     application.register_blueprint(alertas_bp, url_prefix='/alertas')
 
-    from app.blueprints.prendas import prendas_bp
-    application.register_blueprint(prendas_bp, url_prefix='/prendas')
-
     from app.blueprints.ventas import ventas_bp
     application.register_blueprint(ventas_bp, url_prefix='/ventas')
 
