@@ -72,8 +72,8 @@
                     {# Acción #}
                     <td class="px-8 py-5 text-right">
                         {% if item.estado == 'AGOTADO' %}
-                        {# Redirige a la vista de Pedidos A Proveedor #}
-                        <a href="{{ url_for('pedidos_proveedor_bp.create') }}" class="inline-block bg-red-500/10 border border-red-500/30 hover:bg-red-500 text-red-400 hover:text-white
+                        {# Redirige a la vista de Pedidos A Proveedor con pre-llenado #}
+                        <a href="{{ url_for('pedidos_proveedor_bp.create', uuid_proveedor=item.proveedor_uuid) }}" class="inline-block bg-red-500/10 border border-red-500/30 hover:bg-red-500 text-red-400 hover:text-white
               px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">
                             Crear Orden
                         </a>

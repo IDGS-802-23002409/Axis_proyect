@@ -27,6 +27,12 @@ class ProveedorForm(FlaskForm):
     categoria_insumo = SelectField('Categoría de Insumo', choices=[])
     submit = SubmitField('Guardar Proveedor') 
 
+    def __init__(self, *args, **kwargs):
+        super(ProveedorForm, self).__init__(*args, **kwargs)
+        from app.models.categorias import Categoria
+        categorias = Categoria.query.filter_by(estatus_visible=True).all()
+        self.categoria_insumo.choices = [(c.nombre, c.nombre) for c in categorias]
+
     def validate_razon_social(self, field):
         uid = request.view_args.get('uid')
         check = Proveedor.query.filter_by(razon_social=field.data.upper()).first()

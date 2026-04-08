@@ -39,6 +39,10 @@ def create():
     proveedores = Proveedor.query.all()
     form.uuid_proveedor.choices = [(p.uuid_proveedor, f"{p.razon_social} - {p.rfc}") for p in proveedores]
 
+    # Pre-llenado de proveedor si viene en la URL
+    if request.method == "GET" and request.args.get('uuid_proveedor'):
+        form.uuid_proveedor.data = request.args.get('uuid_proveedor')
+
     if request.method == "POST":
         try:
             insumos_ids = request.form.getlist("uuid_insumo[]")
