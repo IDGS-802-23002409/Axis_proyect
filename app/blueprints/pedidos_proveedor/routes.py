@@ -203,3 +203,17 @@ def rechazar(uuid_pedido):
     db.session.commit()
     flash('Pedido rechazado.', 'success')
     return redirect(url_for('pedidos_proveedor_bp.index'))
+
+@pedidos_proveedor_bp.route("/completar/<uuid_pedido>", methods=["POST"])
+@login_required
+@roles_accepted('admin', 'gerente', 'produccion')
+def completar(uuid_pedido):
+    pedido = PedidoProveedorEncabezado.query.get_or_404(uuid_pedido)
+    if pedido.estatus != 'Aprobado':
+        flash('Solo se pueden completar pedidos aprobados.', 'error')
+        return redirect(url_for('pedidos_proveedor_bp.ver', uuid_pedido=uuid_pedido))
+    
+    pedido.estatus = 'Completado'
+    db.session.commit()
+    flash('Pedido marcado como completado manualmente.', 'success')
+    return redirect(url_for('pedidos_proveedor_bp.ver', uuid_pedido=uuid_pedido))
