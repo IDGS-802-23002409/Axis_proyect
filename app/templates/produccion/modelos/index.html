@@ -115,7 +115,7 @@ Gestión de Modelos
                         <!-- Eliminar -->
                         <form method="POST" action="{{ url_for('modelos.delete_modelo', uuid_modelo=mod.uuid_modelo) }}"
                             class="inline">
-                            <button type="button" onclick="openDeleteModal('{{ mod.uuid_modelo }}')" >
+                            <button type="button" onclick="openDeleteModal('{{ mod.uuid_modelo }}')"
                                 title="Eliminar Modelo">
                                 <i data-lucide="trash-2" class="w-4 h-4 text-red-500 cursor-pointer"></i>
                             </button>

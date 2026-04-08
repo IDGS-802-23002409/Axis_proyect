@@ -64,7 +64,7 @@ Gestión de Clientes y Agenda
                     </td>
                     <td class="px-6 py-4 text-right">
                         <div class="flex justify-end gap-3 items-center">
-                            <a href="{{ url_for('clientes.ver_cliente', uuid_cliente=cli.uuid_cliente) }}">
+                            <a href="{{ url_for('clientes.view_cliente', uuid_cliente=cli.uuid_cliente) }}">
                                 <i data-lucide="eye" class="w-4 h-4 hover:text-blue-500"></i>
                             </a>
                             <a href="{{ url_for('clientes.update_cliente', uuid_cliente=cli.uuid_cliente) }}">

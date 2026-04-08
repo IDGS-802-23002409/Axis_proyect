@@ -20,10 +20,10 @@
     </div>
     <div class="p-4 bg-card border border-border rounded-lg flex items-center justify-between">
       <a href="{{ url_for('productos_bp.registro_producto') }}"
-   class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
-    <i data-lucide="plus" class="w-4 h-4"></i>
-    Nuevo Producto
-</a>
+        class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        Nuevo Producto
+      </a>
     </div>
   </div>
 
@@ -126,7 +126,7 @@
                 class="text-blue-500 hover:text-blue-700">
                 <i data-lucide="edit-2" class="w-4 h-4"></i>
               </a>
-              <button type="button" onclick="openDeleteModal('{{ p.uuid_producto }}')" >
+              <button type="button" onclick="openDeleteModal('{{ p.uuid_producto }}')"
                 class="text-red-500 hover:text-red-700 {% if not p.active %}opacity-50 cursor-not-allowed{% endif %}" {%
                 if not p.active %}disabled{% endif %}>
                 <i data-lucide="trash-2" class="w-4 h-4"></i>

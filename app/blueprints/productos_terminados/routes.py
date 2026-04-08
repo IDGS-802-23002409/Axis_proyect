@@ -142,6 +142,21 @@ def editar_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
     form = ProductoTerminadoForm(obj=producto)
 
+    # Cargar explosiones para el script de previsualización
+    explosiones = ExplosionMaterialesCabecera.query.filter_by(estatus='ACTIVO').all()
+    data_explosiones = []
+    for e in explosiones:
+        detalles = []
+        for d in e.detalles:
+            detalles.append({
+                "insumo": d.insumo.nombre,
+                "consumo": float(d.consumo_teorico_unitario)
+            })
+        data_explosiones.append({
+            "id": e.uuid_explosion,
+            "detalles": detalles
+        })
+
     if form.validate_on_submit():
         nuevo_sku = form.sku_especifico.data.strip()
 
@@ -153,7 +168,12 @@ def editar_producto(uuid):
 
         if sku_duplicado:
             flash('El SKU ya existe en otro producto', 'error')
-            return redirect(url_for('productos_bp.editar_producto', uuid=uuid))
+            return render_template(
+                'produccion/productos_terminados/update_producto.html',
+                form=form,
+                producto=producto,
+                explosiones_data=data_explosiones
+            )
 
         # Actualizar datos (SIN stock)
         producto.uuid_modelo = form.modelo.data
@@ -176,13 +196,14 @@ def editar_producto(uuid):
     if request.method == 'GET':
         form.modelo.data = producto.uuid_modelo
         form.explosion.data = producto.uuid_explosion
-    form.stock_minimo_alerta.data = producto.stock_minimo_alerta
-    form.active.data = 1 if producto.active else 0
+        form.stock_minimo_alerta.data = producto.stock_minimo_alerta
+        form.active.data = 1 if producto.active else 0
 
     return render_template(
         'produccion/productos_terminados/update_producto.html',
         form=form,
-        producto=producto
+        producto=producto,
+        explosiones_data=data_explosiones
     )
 
 @productos_bp.route('/eliminar/<uuid>', methods=['POST'])
