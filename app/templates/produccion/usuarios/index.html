@@ -170,12 +170,9 @@ Gestión de Usuarios
                     {% set is_admin = user.roles | selectattr("name", "equalto", "admin") | list %}
 
                     {% if not is_admin and user.active %}
-                    <form method="POST" action="{{ url_for('usuarios.deleteUser', uuid=user.uuid_usuario) }}">
-
-                        <button type="button" onclick="openDeleteModal('{{ user.uuid_usuario }}')">
-                            <i data-lucide="trash-2" class="w-4 h-4 text-red-500 cursor-pointer"></i>
-                        </button>
-                    </form>
+                    <button type="button" onclick="openDeleteModal('{{ user.uuid_usuario }}')">
+                        <i data-lucide="trash-2" class="w-4 h-4 text-red-500 cursor-pointer"></i>
+                    </button>
                     {% else %}
                     <i class="w-4 h-4 text-gray-300 cursor-not-allowed" data-lucide="trash-2"
                         title="{% if is_admin %}Admin no puede ser eliminado{% else %}Usuario inactivo no puede ser eliminado{% endif %}"></i>
@@ -183,43 +180,34 @@ Gestión de Usuarios
 
                 </td>
 
-                <div id="deleteModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center">
-
-                    <div class="bg-white rounded-lg p-6 w-96">
-
-                        <h2 class="text-lg font-bold mb-4">Confirmar eliminación</h2>
-
-                        <p class="text-sm text-gray-600 mb-6">
-                            ¿Estás seguro de eliminar este usuario?
-                        </p>
-
-                        <form id="deleteForm" method="POST">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <div class="flex justify-end gap-3">
-
-                                <button type="button" onclick="closeDeleteModal()"
-                                    class="px-4 py-2 border rounded-md text-sm">
-                                    Cancelar
-                                </button>
-
-                                <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-md text-sm">
-                                    Eliminar
-                                </button>
-
-                            </div>
-                        </form>
-
-                    </div>
-
-                </div>
-
             </tr>
             {% endfor %}
         </tbody>
 
     </table>
 
-</div>
+    <!-- MODAL FUERA DEL LOOP -->
+    <div id="deleteModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-[100]">
+        <div class="bg-white rounded-lg p-6 w-96 shadow-xl">
+            <h2 class="text-lg font-bold mb-4">Confirmar eliminación</h2>
+            <p class="text-sm text-gray-600 mb-6 font-medium">
+                ¿Estás seguro de desactivar este usuario? No podrá acceder al sistema hasta que sea reactivado.
+            </p>
+            <form id="deleteForm" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeDeleteModal()"
+                        class="px-4 py-2 border border-border rounded-md text-sm hover:bg-secondary transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-bold hover:bg-red-700 transition-colors">
+                        Desactivar Usuario
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
 </div>
 
@@ -228,7 +216,9 @@ Gestión de Usuarios
         const modal = document.getElementById("deleteModal");
         const form = document.getElementById("deleteForm");
 
-        form.action = `/usuario/eliminar/${uuid}`;
+        // URL correcta incluyendo el prefijo del blueprint /usuarios
+        form.action = `/usuarios/usuario/eliminar/${uuid}`;
+
         modal.classList.remove("hidden");
         modal.classList.add("flex");
     }
@@ -238,6 +228,11 @@ Gestión de Usuarios
         modal.classList.add("hidden");
         modal.classList.remove("flex");
     }
+
+    // Cerrar modal al hacer clic fuera del contenido
+    document.getElementById('deleteModal').addEventListener('click', function (e) {
+        if (e.target === this) closeDeleteModal();
+    });
 </script>
 
 <script>

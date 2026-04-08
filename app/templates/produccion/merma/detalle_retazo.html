@@ -9,17 +9,19 @@
     <div class="flex justify-between items-center mb-6">
       <div>
         <h2 class="text-2xl font-bold">Retazo {{ retazo.uuid_retazo[:8] }}…</h2>
-        {% if retazo.ejecucion_corte and retazo.ejecucion_corte.orden_produccion and retazo.ejecucion_corte.orden_produccion.estado == 'Terminado' %}
+        {% if retazo.ejecucion_corte and retazo.ejecucion_corte.orden_produccion and
+        retazo.ejecucion_corte.orden_produccion.estado == 'Terminado' %}
         <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md">
           OP Terminada — solo lectura
         </span>
         {% endif %}
       </div>
       <div class="flex gap-3">
-        {% if retazo.ejecucion_corte and retazo.ejecucion_corte.orden_produccion and retazo.ejecucion_corte.orden_produccion.estado != 'Terminado' %}
-        <form method="POST"
-              action="{{ url_for('merma.eliminar_retazo', uuid_retazo=retazo.uuid_retazo) }}"
-              onsubmit="return confirm('¿Eliminar este retazo? Se revertirá el descuento de metraje.');">
+        {% if retazo.ejecucion_corte and retazo.ejecucion_corte.orden_produccion and
+        retazo.ejecucion_corte.orden_produccion.estado != 'Terminado' %}
+        <form method="POST" action="{{ url_for('merma.eliminar_retazo', uuid_retazo=retazo.uuid_retazo) }}"
+          onsubmit="return confirm('¿Eliminar este retazo? Se revertirá el descuento de metraje.');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit"
             class="flex items-center gap-2 px-4 py-2 border border-rose-200 text-rose-600 rounded-md text-sm hover:bg-rose-50">
             <i data-lucide="trash" class="w-4 h-4"></i>
@@ -28,7 +30,7 @@
         </form>
         {% endif %}
         <a href="{{ url_for('merma.index_retazos') }}"
-           class="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-secondary">
+          class="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-secondary">
           <i data-lucide="arrow-left" class="w-4 h-4"></i>
           Volver
         </a>
@@ -73,7 +75,8 @@
 
           <div>
             <label class="text-xs text-muted-foreground">Fecha de Registro</label>
-            <p class="font-semibold">{{ retazo.fecha_creacion.strftime('%d/%m/%Y %H:%M:%S') if retazo.fecha_creacion else 'N/A' }}</p>
+            <p class="font-semibold">{{ retazo.fecha_creacion.strftime('%d/%m/%Y %H:%M:%S') if retazo.fecha_creacion
+              else 'N/A' }}</p>
           </div>
         </div>
       </div>
@@ -91,11 +94,11 @@
             <label class="text-xs text-muted-foreground">Motivo (si aplica)</label>
             <div class="mt-2">
               {% if retazo.motivo_merma %}
-                <p class="text-sm bg-amber-50 p-3 rounded border border-amber-200">
-                  <strong class="text-amber-900">{{ retazo.motivo_merma }}</strong>
-                </p>
+              <p class="text-sm bg-amber-50 p-3 rounded border border-amber-200">
+                <strong class="text-amber-900">{{ retazo.motivo_merma }}</strong>
+              </p>
               {% else %}
-                <p class="text-sm text-gray-400 italic">Sin descripción (retazo normal de corte)</p>
+              <p class="text-sm text-gray-400 italic">Sin descripción (retazo normal de corte)</p>
               {% endif %}
             </div>
           </div>
@@ -107,9 +110,9 @@
             <p class="text-xs text-muted-foreground">
               Stock actual: {{ "%.4f"|format(retazo.rollo_origen.insumo.stock_total_acumulado) }}
               {% if retazo.rollo_origen.insumo.contenido_unidad_medida %}
-                {{ retazo.rollo_origen.insumo.contenido_unidad_medida }}
+              {{ retazo.rollo_origen.insumo.contenido_unidad_medida }}
               {% else %}
-                metros
+              metros
               {% endif %}
             </p>
           </div>

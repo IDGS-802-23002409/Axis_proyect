@@ -3,29 +3,85 @@
 
 <script>
     // Inicializar íconos
-    lucide.createIcons();
-
-    // ── Función Actualizar ─────────────────────────────────────────
-    function actualizarDashboard() {
-        const icon = document.getElementById('icon-refresh');
-        const btn = document.getElementById('btn-actualizar');
-        icon.style.transition = 'transform 0.6s ease';
-        icon.style.transform = 'rotate(360deg)';
-        btn.disabled = true;
-
-        setTimeout(() => {
-            window.location.reload();
-        }, 600);
+    if (window.lucide) {
+        lucide.createIcons();
     }
 
-    // ── Función Reporte PDF ────────────────────────────────────────
-    function generarReporte() {
-        window.print();
+    // --- MODALES: EVENT LISTENERS ---
+    document.addEventListener('click', function (e) {
+        // DETALLES
+        if (e.target.closest('.details-trigger')) {
+            const uid = e.target.closest('.details-trigger').dataset.uid;
+            verDetalles(uid);
+        }
+        // EDITAR
+        if (e.target.closest('.edit-trigger')) {
+            const uid = e.target.closest('.edit-trigger').dataset.uid;
+            abrirEditar(uid);
+        }
+        // ELIMINAR
+        if (e.target.closest('.delete-trigger')) {
+            const uid = e.target.closest('.delete-trigger').dataset.uid;
+            abrirEliminar(uid);
+        }
+    });
+
+    async function verDetalles(uid) {
+        try {
+            const res = await fetch(`/proveedores/${uid}?format=json`);
+            const data = await res.json();
+            if (data.uuid) {
+                document.getElementById('det-razon-social').textContent = data.razon_social;
+                document.getElementById('det-rfc').textContent = data.rfc;
+                document.getElementById('det-telefono').textContent = data.telefono || '---';
+                document.getElementById('det-categoria').textContent = data.categoria_insumo || '---';
+                document.getElementById('det-contacto').textContent = data.contacto_nombre || '---';
+                document.getElementById('det-estatus').textContent = data.estatus ? 'ACTIVO' : 'INACTIVO';
+                document.getElementById('det-fecha-creacion').textContent = data.fecha_creacion;
+                document.getElementById('det-fecha-actualizacion').textContent = data.fecha_actualizacion;
+                document.getElementById('det-usuario-creo').textContent = data.usuario_creo;
+
+                document.getElementById('modal-detalles').classList.remove('hidden');
+            }
+        } catch (err) {
+            console.error("Error al cargar detalles:", err);
+        }
     }
 
-    // ── Configuración de la Gráfica ─────────────────────────────────
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    const labels = {{ (chart_labels | default ([])) | tojson }};
+    async function abrirEditar(uid) {
+        try {
+            const res = await fetch(`/proveedores/${uid}?format=json`);
+            const data = await res.json();
+            if (data.uuid) {
+                const form = document.getElementById('form-update');
+                form.action = `/proveedores/editar/${uid}`;
+
+                document.getElementById('upd_razon_social').value = data.razon_social;
+                document.getElementById('upd_rfc').value = data.rfc;
+                document.getElementById('upd_telefono').value = data.telefono || '';
+                document.getElementById('upd_categoria').value = data.categoria_insumo || '';
+                document.getElementById('upd_contacto').value = data.contacto_nombre || '';
+                document.getElementById('upd_estatus').checked = data.estatus;
+
+                document.getElementById('modal-update').classList.remove('hidden');
+            }
+        } catch (err) {
+            console.error("Error al cargar datos para editar:", err);
+        }
+    }
+
+    function abrirEliminar(uid) {
+        const form = document.getElementById('form-delete');
+        form.action = `/proveedores/eliminar/${uid}`;
+        document.getElementById('modal-delete').classList.remove('hidden');
+    }
+
+    // ── Configuración de la Gráfica (Solo si existe el canvas) ──────
+    const chartCanvas = document.getElementById('salesChart');
+    if (chartCanvas) {
+        const ctx = chartCanvas.getContext('2d');
+        const labels = {{ (chart_labels | default ([])) | tojson
+    }};
     const dataVentas = {{ (chart_data | default ([])) | tojson }};
 
     new Chart(ctx, {
@@ -33,7 +89,7 @@
         data: {
             labels: labels,
             datasets: [{
-                label: 'Ventas ($)',
+                label: 'Registros',
                 data: dataVentas,
                 borderColor: '#111827',
                 backgroundColor: 'rgba(17, 24, 39, 0.05)',
@@ -54,6 +110,7 @@
             }
         }
     });
+    }
 </script>
 
 <style>

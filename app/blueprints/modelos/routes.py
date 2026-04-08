@@ -18,13 +18,14 @@ def get_upload_folder():
 @login_required
 def index():
     q = request.args.get('q', '').strip()
-    modelos = ModeloRopa.query
+    # Solo modelos activos en la vista principal
+    modelos = ModeloRopa.query.filter_by(estatus='ACTIVO')
     
     if q:
         modelos = modelos.filter(ModeloRopa.nombre_modelo.ilike(f"%{q}%"))
         
     modelos = modelos.all()
-    total_modelos = ModeloRopa.query.count()
+    total_modelos = ModeloRopa.query.filter_by(estatus='ACTIVO').count()
 
     return render_template(
         "produccion/modelos/index.html",
@@ -32,6 +33,14 @@ def index():
         total_modelos=total_modelos,
         q=q
     )
+
+@modelos_bp.route("/paperera")
+@modelos_bp.route("/trash")
+@login_required
+def trash():
+    """Muestra los modelos que han sido desactivados (estatus='INACTIVO')."""
+    modelos_inactivos = ModeloRopa.query.filter_by(estatus='INACTIVO').all()
+    return render_template("produccion/modelos/trash.html", modelos=modelos_inactivos)
 
 @modelos_bp.route("/registro", methods=["GET", "POST"])
 @login_required
@@ -97,15 +106,26 @@ def update_modelo(uuid_modelo):
 @modelos_bp.route("/eliminar/<uuid_modelo>", methods=["POST"])
 @login_required
 def delete_modelo(uuid_modelo):
+    """Soft delete: cambia el estatus a INACTIVO."""
     modelo = ModeloRopa.query.get_or_404(uuid_modelo)
     
-    # Validar si este modelo tiene tallas (productos_terminados) antes de eliminar
-    if modelo.productos:
-        flash("No se puede eliminar un modelo que tiene productos terminados (tallas) asociados.", "error")
-        return redirect(url_for('modelos.index'))
-
-    db.session.delete(modelo)
+    # Si quisieras permitir borrar físicamente si NO tiene dependencias:
+    # if not modelo.productos:
+    #     db.session.delete(modelo)
+    # else:
+    
+    modelo.estatus = 'INACTIVO'
     db.session.commit()
 
-    flash("Modelo eliminado correctamente", "success")
+    flash(f"Modelo '{modelo.nombre_modelo}' movido a inactivos.", "info")
     return redirect(url_for('modelos.index'))
+
+@modelos_bp.route("/restore/<uuid_modelo>", methods=["POST"])
+@login_required
+def restore(uuid_modelo):
+    """Restaura un modelo cambiando su estatus a ACTIVO."""
+    modelo = ModeloRopa.query.get_or_404(uuid_modelo)
+    modelo.estatus = 'ACTIVO'
+    db.session.commit()
+    flash(f"Modelo '{modelo.nombre_modelo}' restaurado correctamente.", "success")
+    return redirect(url_for('modelos.trash'))

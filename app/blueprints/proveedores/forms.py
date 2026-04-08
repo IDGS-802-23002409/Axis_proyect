@@ -27,7 +27,7 @@ class ProveedorForm(FlaskForm):
     categoria_insumo = StringField('Categoría de Insumo', validators=[Length(max=100)])
     submit = SubmitField('Guardar Proveedor') 
 
-def validate_razon_social(self, field):
+    def validate_razon_social(self, field):
         uid = request.view_args.get('uid')
         check = Proveedor.query.filter_by(razon_social=field.data.upper()).first()
         
@@ -35,7 +35,7 @@ def validate_razon_social(self, field):
         if check and check.uuid_proveedor != uid:
             raise ValidationError('Esta razón social ya está registrada en el sistema.')
         
-def validate_telefono(self, field):
+    def validate_telefono(self, field):
         if field.data:
             uid = request.view_args.get('uid')
             dato_limpio = re.sub(r'\D', '', str(field.data))
@@ -50,7 +50,7 @@ def validate_telefono(self, field):
             if len(dato_limpio) != 10:
                 raise ValidationError('Deben ser exactamente 10 dígitos.')
                 
-def validate_rfc(self, field):
+    def validate_rfc(self, field):
         if field.data:
             uid = request.view_args.get('uid')
             

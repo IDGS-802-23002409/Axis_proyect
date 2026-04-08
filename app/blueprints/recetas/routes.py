@@ -136,6 +136,105 @@ def create():
         insumos=insumos_list
     )
 
+# ── EDITAR RECETA ──────────────────────────────
+@recetas_bp.route('/editar/<uuid_explosion>', methods=['GET', 'POST'])
+@login_required
+@roles_accepted('admin', 'gerente', 'produccion')
+def edit(uuid_explosion):
+    receta = ExplosionMaterialesCabecera.query.get_or_404(uuid_explosion)
+    detalles = ExplosionMaterialesDetalle.query.filter_by(uuid_explosion=uuid_explosion).all()
+    insumos_list = Insumo.query.filter_by(estatus='ACTIVO').all()
+    
+    form = RecetaForm(obj=receta)
+
+    if form.validate_on_submit():
+        # --- Leer insumos desde el formulario ---
+        insumos_ids = request.form.getlist('uuid_insumo[]')
+        consumos = request.form.getlist('consumo_teorico_unitario[]')
+        anchos = request.form.getlist('ancho_referencia[]')
+
+        errores = []
+        detalles_validos = []
+
+        # Validar insumos
+        for i, insumo_id in enumerate(insumos_ids):
+            if not insumo_id: continue
+            
+            insumo_obj = Insumo.query.get(insumo_id)
+            if not insumo_obj:
+                errores.append(f'El insumo con ID {insumo_id} no existe')
+                continue
+
+            unidad = insumo_obj.unidad_medida
+
+            try:
+                consumo = float(consumos[i])
+            except (ValueError, IndexError):
+                errores.append(f'El consumo del insumo "{insumo_obj.nombre}" es inválido')
+                continue
+
+            if unidad == "PIEZA":
+                if consumo <= 0 or not consumo.is_integer():
+                    errores.append(f'El consumo del insumo "{insumo_obj.nombre}" debe ser un número entero positivo')
+                    continue
+                consumo = int(consumo)
+            else:
+                if consumo <= 0:
+                    errores.append(f'El consumo del insumo "{insumo_obj.nombre}" debe ser mayor a 0')
+                    continue
+
+            try:
+                ancho = float(anchos[i]) if (i < len(anchos) and anchos[i]) else None
+                if unidad == "ROLLO" and (ancho is None or ancho <= 0):
+                    errores.append(f'El ancho del insumo "{insumo_obj.nombre}" debe ser mayor a 0')
+                    continue
+            except (ValueError, IndexError):
+                errores.append(f'El ancho del insumo "{insumo_obj.nombre}" es inválido')
+                continue
+
+            detalles_validos.append({
+                "insumo": insumo_obj,
+                "consumo": consumo,
+                "ancho": ancho
+            })
+
+        if errores:
+            for e in errores:
+                flash(e, 'error')
+            return render_template('produccion/recetas/edit.html', form=form, receta=receta, detalles=detalles, insumos=insumos_list)
+
+        # --- Actualizar cabecera ---
+        receta.instrucciones_proceso = form.instrucciones_proceso.data.strip()
+        
+        # --- Actualizar detalles (Borrar y volver a crear para simplificar) ---
+        ExplosionMaterialesDetalle.query.filter_by(uuid_explosion=uuid_explosion).delete()
+        
+        for detalle in detalles_validos:
+            nuevo_detalle = ExplosionMaterialesDetalle(
+                uuid_explosion=receta.uuid_explosion,
+                uuid_insumo=detalle["insumo"].uuid_insumo,
+                consumo_teorico_unitario=detalle["consumo"],
+                ancho_referencia=detalle["ancho"]
+            )
+            db.session.add(nuevo_detalle)
+
+        db.session.commit()
+        flash('Receta actualizada con éxito.', 'success')
+        return redirect(url_for('recetas_bp.index'))
+
+    # Inicializar nombre_producto si es necesario (aunque no se guarde en este modelo)
+    # Si hay productos asociados, podríamos tomar el nombre de uno
+    if not form.nombre_producto.data and receta.productos:
+        form.nombre_producto.data = receta.productos[0].modelo.nombre_modelo
+
+    return render_template(
+        'produccion/recetas/edit.html',
+        form=form,
+        receta=receta,
+        detalles=detalles,
+        insumos=insumos_list
+    )
+
 # ── VIEW ──────────────────────────────
 @recetas_bp.route('/ver/<uuid_explosion>')
 @login_required

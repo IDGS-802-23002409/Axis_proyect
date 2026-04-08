@@ -1,5 +1,5 @@
 from flask import flash, redirect, render_template, request, url_for
-from flask_security import login_required
+from flask_security import login_required, roles_accepted
 from app.blueprints.empleados import empleados_bp
 from app.blueprints.empleados.form import EmpleadoForm
 from app.models.empleados import Empleado
@@ -8,6 +8,7 @@ from app.utils.database_connection import db
 
 @empleados_bp.route("/")
 @login_required
+@roles_accepted('admin', 'gerente')
 def index():
     q = request.args.get('q', '').strip()
     empleados = Empleado.query.join(Usuario)
@@ -26,6 +27,7 @@ def index():
 
 @empleados_bp.route("/registro", methods=["GET", "POST"])
 @login_required
+@roles_accepted('admin', 'gerente')
 def registro_empleado():
     form = EmpleadoForm()
     if request.method == "POST" and form.validate():
@@ -45,6 +47,7 @@ def registro_empleado():
 
 @empleados_bp.route("/editar/<uuid_empleado>", methods=["GET", "POST"])
 @login_required
+@roles_accepted('admin', 'gerente')
 def update_empleado(uuid_empleado):
     empelado = Empleado.query.get_or_404(uuid_empleado)
 
@@ -67,6 +70,7 @@ def update_empleado(uuid_empleado):
 
 @empleados_bp.route("/eliminar/<uuid_empleado>", methods=["POST"])
 @login_required
+@roles_accepted('admin', 'gerente')
 def delete_empleado(uuid_empleado):
     empelado = Empleado.query.get_or_404(uuid_empleado)
     db.session.delete(empelado)

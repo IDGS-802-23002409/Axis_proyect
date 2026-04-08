@@ -1,6 +1,6 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import Column, String, Integer, Numeric, DateTime, Text, Enum, ForeignKey, func
+from sqlalchemy import Column, String, Integer, Numeric, DateTime, Text, Enum, ForeignKey, func, Index
 
 
 class ExplosionMaterialesCabecera(db.Model):
@@ -39,6 +39,11 @@ class ExplosionMaterialesDetalle(db.Model):
 
     explosion = db.relationship('ExplosionMaterialesCabecera', backref=db.backref('detalles', lazy=True))
     insumo = db.relationship('Insumo', backref=db.backref('explosion_detalles', lazy=True))
+
+    __table_args__ = (
+        Index('idx_expdet_explosion', 'uuid_explosion'),
+        Index('idx_expdet_insumo', 'uuid_insumo'),
+    )
 
     def __repr__(self):
         return f'<ExplosionMaterialesDetalle {self.uuid_detalle}>'

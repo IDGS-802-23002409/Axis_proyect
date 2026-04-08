@@ -26,6 +26,13 @@ Gestión de Modelos
             <h3 class="font-semibold">Catálogo Matriz de Modelos</h3>
 
             <div class="flex items-center gap-2">
+                <button onclick="window.location.href='{{ url_for('modelos.trash') }}';"
+                    class="flex items-center gap-2 bg-neutral-100 text-black px-4 py-2 rounded-md text-sm hover:bg-neutral-200 transition-all border border-neutral-200"
+                    title="Ver modelos inactivos">
+                    <i data-lucide="trash-2" class="w-4 h-4 text-neutral-500"></i>
+                    Inactivos
+                </button>
+
                 <button onclick="window.location.href='{{ url_for('modelos.registro_modelo') }}';"
                     class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
                     <i data-lucide="plus" class="w-4 h-4"></i>
@@ -118,20 +125,21 @@ Gestión de Modelos
     <!-- Modal Delete -->
     <div id="deleteModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 w-96">
-            <h2 class="text-lg font-bold mb-4">Confirmar eliminación</h2>
-            <p class="text-sm text-gray-600 mb-6 font-medium text-red-600">
-                Aviso: No podrás borrar este modelo si ya tiene "Productos Terminados" (tallas) asociados.
-            </p>
+            <h2 class="text-lg font-bold mb-4">Mover a Inactivos</h2>
             <p class="text-sm text-gray-600 mb-6">
-                ¿Estás seguro de eliminar este modelo matriz?
+                El modelo dejará de ser visible en el catálogo principal, pero podrás restaurarlo desde la papelera de
+                inactivos.
+            </p>
+            <p class="text-xs font-bold text-amber-600 mb-6 uppercase tracking-tight">
+                Nota: Esto no afecta a las órdenes de producción existentes.
             </p>
             <form id="deleteForm" method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="flex justify-end gap-3">
                     <button type="button" onclick="closeDeleteModal()"
                         class="px-4 py-2 border rounded-md text-sm">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-md text-sm">Eliminar
-                        Modelo</button>
+                    <button type="submit" class="px-4 py-2 bg-black text-white rounded-md text-sm">Mover a
+                        Inactivos</button>
                 </div>
             </form>
         </div>

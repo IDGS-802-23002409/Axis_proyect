@@ -1,6 +1,6 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import CheckConstraint, Column, String, Integer, Numeric, DateTime, Enum, ForeignKey, Text, func
+from sqlalchemy import CheckConstraint, Column, String, Integer, Numeric, DateTime, Enum, ForeignKey, Text, func, Index
 
 
 class OrdenProduccion(db.Model):
@@ -15,6 +15,11 @@ class OrdenProduccion(db.Model):
     fecha_solicitud = Column(DateTime, server_default=func.now())
     producto = db.relationship('ProductoTerminado', backref=db.backref('ordenes_produccion', lazy=True))
     venta_detalle = db.relationship('VentaDetalle', backref=db.backref('orden_produccion', uselist=False))
+
+    __table_args__ = (
+        Index('idx_op_estado', 'estado'),
+        Index('idx_op_producto', 'uuid_producto'),
+    )
 
     def __repr__(self):
         return f'<OrdenProduccion {self.uuid_op}>'
