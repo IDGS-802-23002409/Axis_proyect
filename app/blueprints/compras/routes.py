@@ -15,7 +15,7 @@ from sqlalchemy.orm import joinedload
 
 @compras_bp.route("/")
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def index():
     busqueda = request.args.get("q")
 
@@ -45,7 +45,7 @@ from decimal import Decimal, InvalidOperation
 
 @compras_bp.route("/create", methods=["GET", "POST"])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def create():
     form = CompraEncabezadoForm()
 
@@ -158,7 +158,7 @@ from sqlalchemy.orm import joinedload
 
 @compras_bp.route("/<uuid_compra>")
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def ver(uuid_compra):
 
     #aCargar TODO: encabezado → detalles → insumo
@@ -198,7 +198,7 @@ def ver(uuid_compra):
 # =========================
 @compras_bp.route("/recibir/<uuid_compra>", methods=["GET", "POST"])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def recibir(uuid_compra):
     from app.models.pedidos_proveedor import PedidoProveedorEncabezado, PedidoProveedorDetalle
 
@@ -290,6 +290,13 @@ def recibir(uuid_compra):
 
             # CAMBIAR ESTATUS
             compra.estatus = "RECIBIDO"
+
+            # ── REGLA: Si la compra viene de un pedido a proveedor, marcar el pedido como COMPLETADO ──
+            if compra.uuid_pedido:
+                pedido = PedidoProveedorEncabezado.query.get(compra.uuid_pedido)
+                if pedido:
+                    pedido.estatus = "Completado"
+
             db.session.commit()
 
             flash("Compra validada y recibida correctamente. Inventario actualizado.", "success")
@@ -312,7 +319,7 @@ def recibir(uuid_compra):
 # VER
 @compras_bp.route("/ver/<string:uuid_compra>")
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def view(uuid_compra):
 
     compra = CompraEncabezado.query.get_or_404(uuid_compra)
@@ -323,7 +330,7 @@ def view(uuid_compra):
 # Cancelado
 @compras_bp.route("/cancelar/<uuid_compra>", methods=["POST"])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def cancelar(uuid_compra):
     compra = CompraEncabezado.query.get_or_404(uuid_compra)
 
@@ -350,7 +357,7 @@ def cancelar(uuid_compra):
 # compras canceladas
 @compras_bp.route("/trash")
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def trash():
 
     compras = (

@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 
 @ventas_bp.route('/cancelar/<uuid_venta>', methods=['POST'])
 @login_required
+@roles_accepted('admin', 'gerente')
 def cancelar_pedido(uuid_venta):
     venta = VentaEncabezado.query.get_or_404(uuid_venta)
     
@@ -38,7 +39,7 @@ def cancelar_pedido(uuid_venta):
 
 @ventas_bp.route('/')
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def index():
     # ── Filtros GET ───────────────────────────────────────────────────────
     q          = request.args.get('q', '').strip()          # búsqueda por cliente

@@ -114,6 +114,13 @@
 
     // --- FILTRADO DE TABLA (CLIENT-SIDE) ---
     document.addEventListener("DOMContentLoaded", function () {
+        // Auto-abrir modal si hay errores (pasado desde Flask)
+        const modalToOpen = "{{ modal_to_open }}";
+        if (modalToOpen) {
+            const m = document.getElementById(modalToOpen);
+            if (m) m.classList.remove('hidden');
+        }
+
         const searchInput = document.getElementById("input-search");
         const statusSelect = document.getElementById("select-status");
 
