@@ -19,7 +19,7 @@ def get_upload_folder():
 
 @categorias_bp.route("/")
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def index():
     busqueda = request.args.get("q")
     estatus = request.args.get("estatus")
@@ -48,7 +48,7 @@ def index():
 #  CREAR CATEGORÍA
 @categorias_bp.route("/create", methods=["GET", "POST"])
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def create():
     form = CategoriaForm()
 
@@ -89,7 +89,7 @@ def create():
 #  EDITAR CATEGORÍA
 @categorias_bp.route("/edit/<uuid_categoria>", methods=["GET", "POST"])
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def edit(uuid_categoria):
     categoria = Categoria.query.get_or_404(uuid_categoria)
     form = CategoriaForm(obj=categoria)
@@ -130,7 +130,7 @@ def edit(uuid_categoria):
 #  DESACTIVAR / ACTIVAR CATEGORÍA
 @categorias_bp.route("/delete/<uuid_categoria>", methods=["POST"])
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def delete(uuid_categoria):
     categoria = Categoria.query.get_or_404(uuid_categoria)
     categoria.estatus_visible = not categoria.estatus_visible

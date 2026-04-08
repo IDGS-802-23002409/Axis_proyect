@@ -161,6 +161,24 @@ def create():
 
     return render_template('produccion/orden/create.html', form=form)
 
+@orden_bp.route('/ver/<uuid_op>')
+@login_required
+@roles_accepted('admin', 'gerente', 'produccion')
+def ver(uuid_op):
+    orden = db.session.query(OrdenProduccion).options(
+        joinedload(OrdenProduccion.producto).joinedload(ProductoTerminado.modelo),
+        joinedload(OrdenProduccion.ventas_detalle)
+    ).get_or_404(uuid_op)
+    
+    # Obtener ejecuciones de corte asociadas
+    cortes = EjecucionCorte.query.filter_by(uuid_op=uuid_op).all()
+    
+    return render_template(
+        'produccion/orden/ver.html',
+        orden=orden,
+        cortes=cortes
+    )
+
 @orden_bp.route('/avanzar_estado/<uuid_op>', methods=['POST'])
 @login_required
 @roles_accepted('admin', 'gerente', 'produccion')

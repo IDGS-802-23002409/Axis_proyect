@@ -30,7 +30,7 @@ def _get_chart_data():
 # --- CONSULTAR (LISTADO PRINCIPAL) ---
 @proveedores_bp.route('/')
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def index():
     q = request.args.get('q', '').strip()
     estatus = request.args.get('estatus', '').strip()
@@ -126,7 +126,7 @@ def eliminar(uid):
 
 @proveedores_bp.route('/<string:uid>')
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def detalles(uid):
     p = Proveedor.query.get_or_404(uid)
     
