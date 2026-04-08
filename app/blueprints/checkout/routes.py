@@ -25,9 +25,17 @@ def save_cart(cart):
 
 
 def calculate_cart_totals(cart):
-    subtotal = 0
+    subtotal = 0.0
     for item in cart:
-        subtotal += float(item.get('price', 0)) * int(item.get('quantity', 1))
+        # Aseguramos que el precio sea numérico
+        price = 0.0
+        try:
+            price = float(item.get('price', 0))
+        except (ValueError, TypeError):
+            price = 0.0
+            
+        subtotal += price * int(item.get('quantity', 1))
+        
     shipping = 9.99 if subtotal < 100 else 0
     total = subtotal + shipping
     return {'subtotal': subtotal, 'shipping': shipping, 'total': total}
@@ -67,8 +75,13 @@ def agregar_carrito():
 
     cart = load_cart()
     total_quantity = sum(item.get('quantity', 0) for item in cart)
+    
     if total_quantity + cantidad > 100:
-        flash('El carrito no puede tener más de 100 productos en total.', 'error')
+        flash(f'No se pueden añadir {cantidad} unidades. El carrito tiene un límite máximo de 100 productos totales.', 'warning')
+        return redirect(request.referrer or url_for('catalog.catalog_view'))
+
+    if producto.precio_venta <= 0:
+        flash('Este producto no tiene un precio configurado y no puede venderse.', 'error')
         return redirect(request.referrer or url_for('catalog.catalog_view'))
 
     # Buscar si ya existe este producto específico (por su uuid_producto real)
