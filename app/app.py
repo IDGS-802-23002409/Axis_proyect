@@ -94,6 +94,7 @@ def create_app():
 
     # Redirecciones
     application.config['SECURITY_POST_LOGIN_VIEW'] = '/security/post-login'
+    application.config['SECURITY_POST_LOGOUT_VIEW'] = '/'
     application.config['SECURITY_POST_REGISTER_VIEW'] = '/confirm'
     application.config['SECURITY_POST_CONFIRM_VIEW'] = '/login'
     application.config['SECURITY_LOGIN_URL'] = '/login'
@@ -102,8 +103,8 @@ def create_app():
     application.config['SECURITY_AUTO_LOGIN_AFTER_CONFIRM'] = False
     application.config['SECURITY_CONFIRM_EMAIL_WITHIN'] = '7 days'
 
-    # No redirigir a /login automáticamente si no está autenticado (usamos nuestra lógica)
-    application.config['SECURITY_UNAUTHORIZED_VIEW'] = '/login'
+    # Redirigir a la tienda si el usuario no tiene permisos suficientes
+    application.config['SECURITY_UNAUTHORIZED_VIEW'] = '/'
 
     # Forzar que Flask genere URLs con localhost:3030 (no la IP interna de Docker)
     # application.config['SERVER_NAME'] = os.getenv('SERVER_NAME', 'localhost:3030')
@@ -226,6 +227,20 @@ def create_app():
             pass
         return {'cart_items': [], 'cart_count': 0}
 
+    # ── Prevent Cache on Protected Routes ─────────────────────
+    @application.after_request
+    def add_header(response):
+        """
+        Añade encabezados para evitar que el navegador guarde en caché
+        páginas sensibles. Si el usuario cierra sesión y presiona 'atrás',
+        no verá la información anterior.
+        """
+        if current_user.is_authenticated:
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, post-check=0, pre-check=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
+
     # ── Catálogo (Ruta Raíz) ──────────────────────────────────
     # Ya está manejado por client_bp con url_prefix=''
 
@@ -277,10 +292,9 @@ def create_app():
 
     @application.errorhandler(403)
     def forbidden(e):
-        return rt('client/error.html',
-                  code=403,
-                  title='Acceso Denegado',
-                  message='No tienes permiso para ver esta página.'), 403
+        from flask import flash
+        flash("No tienes permisos para acceder a esta sección. Hemos vuelto al catálogo.", "warning")
+        return redirect('/')
 
     @application.errorhandler(404)
     def not_found(e):

@@ -31,7 +31,7 @@ def run_seed():
         print(">> [INICIO] Iniciando inyección de datos Mock (Versión Integral)...")
 
         # 1. ROLES DE SEGURIDAD (Extendidos)
-        roles_names = ['admin', 'gerente', 'produccion', 'cliente', 'ventas', 'compras']
+        roles_names = ['admin', 'gerente', 'produccion', 'cliente']
         roles_dict = {}
         for r_name in roles_names:
             role = Role.query.filter_by(name=r_name).first()
@@ -46,10 +46,10 @@ def run_seed():
         test_users = [
             {"nombre": "Admin Axis", "email": "admin@axis.com", "pass": "admin1234", "role": "admin", "emp_num": "EMP-001", "puesto": "Director General", "depto": "Dirección"},
             {"nombre": "Modista Principal", "email": "modista@axis.com", "pass": "modista1234", "role": "produccion", "emp_num": "EMP-002", "puesto": "Jefe de Taller", "depto": "Producción"},
-            {"nombre": "Vendedor Axis", "email": "ventas@axis.com", "pass": "ventas1234", "role": "ventas", "emp_num": "EMP-003", "puesto": "Ejecutivo Comercial", "depto": "Ventas"},
-            {"nombre": "Comprador Axis", "email": "compras@axis.com", "pass": "compras1234", "role": "compras", "emp_num": "EMP-004", "puesto": "Analista de Suministros", "depto": "Compras"},
+            {"nombre": "Vendedor Axis", "email": "ventas@axis.com", "pass": "ventas1234", "role": "gerente", "emp_num": "EMP-003", "puesto": "Ejecutivo Comercial", "depto": "Ventas"},
+            {"nombre": "Comprador Axis", "email": "compras@axis.com", "pass": "compras1234", "role": "produccion", "emp_num": "EMP-004", "puesto": "Analista de Suministros", "depto": "Compras"},
             {"nombre": "Juan Cliente", "email": "juan@axis.com", "pass": "cliente1234", "role": "cliente", "tel": "555-123-4567", "dir": "Av. Reforma 123, CDMX"},
-            {"nombre": "Maria Compras", "email": "maria@axis.com", "pass": "cliente1234", "role": "cliente", "tel": "555-987-6543", "dir": "Insurgentes Sur 456, CDMX"}
+            {"nombre": "Maria Lopez", "email": "maria@axis.com", "pass": "cliente1234", "role": "cliente", "tel": "555-987-6543", "dir": "Insurgentes Sur 456, CDMX"}
         ]
 
         for u in test_users:
@@ -66,7 +66,7 @@ def run_seed():
                 db.session.add(user)
                 db.session.flush()
 
-                if u["role"] in ['admin', 'produccion', 'ventas', 'compras', 'gerente']:
+                if u["role"] in ['admin', 'produccion', 'gerente']:
                     if not Empleado.query.filter_by(uuid_usuario=user.uuid_usuario).first():
                         db.session.add(Empleado(
                             uuid_usuario=user.uuid_usuario,
