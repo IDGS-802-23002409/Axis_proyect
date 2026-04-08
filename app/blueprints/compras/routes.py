@@ -226,7 +226,7 @@ def recibir(uuid_compra):
                 if pedido:
                     # Construir mapa {uuid_insumo: cantidad_pedida} del pedido
                     pedido_map = {
-                        d.uuid_insumo: float(d.cantidad_pedida)
+                        d.uuid_insumo: d.cantidad_pedida # Ya es Decimal
                         for d in pedido.detalles
                     }
                     # Verificar cada detalle de la compra contra el pedido
@@ -239,7 +239,7 @@ def recibir(uuid_compra):
                             )
                             return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
                         
-                        cantidad_comprada = float(detalle.cantidad_comprada)
+                        cantidad_comprada = detalle.cantidad_comprada # Ya es Decimal
                         cantidad_pedida = pedido_map[detalle.uuid_insumo]
                         if cantidad_comprada != cantidad_pedida:
                             flash(
@@ -266,7 +266,7 @@ def recibir(uuid_compra):
                         return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
 
                     metraje_esperado = cantidad * Decimal(insumo.contenido_cantidad)
-                    tolerancia = cantidad * Decimal('0.05')
+                    tolerancia = cantidad * Decimal('0.05') # 5cm por rollo
 
                     if abs(metraje_real - metraje_esperado) > tolerancia:
                         flash(f"Rechazado: {insumo.nombre} no cumple la tolerancia exacta (±5cm por rollo). Esperado: {metraje_esperado}m, Recibido: {metraje_real}m.", "error")
@@ -287,6 +287,15 @@ def recibir(uuid_compra):
                 else:
                     # Insumos por pieza
                     insumo.stock_total_acumulado += cantidad
+
+                # Actualizar cantidad recibida en el pedido original si existe
+                if compra.uuid_pedido:
+                    detalles_pedido = PedidoProveedorDetalle.query.filter_by(
+                        uuid_pedido=compra.uuid_pedido,
+                        uuid_insumo=detalle.uuid_insumo
+                    ).all()
+                    for dp in detalles_pedido:
+                        dp.cantidad_recibida = (dp.cantidad_recibida or Decimal(0)) + detalle.cantidad_comprada
 
             # CAMBIAR ESTATUS
             compra.estatus = "RECIBIDO"

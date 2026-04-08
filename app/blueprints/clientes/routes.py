@@ -84,3 +84,21 @@ def delete_cliente(uuid_cliente):
 def view_cliente(uuid_cliente):
     cli = Cliente.query.get_or_404(uuid_cliente)
     return render_template("produccion/clientes/ver.html", cliente=cli)
+
+@clientes_bp.route("/inactivos")
+@login_required
+@roles_accepted('admin', 'gerente')
+def trash():
+    clientes = Cliente.query.join(Usuario).filter(Usuario.active == False).all()
+    return render_template("produccion/clientes/trash.html", clientes=clientes)
+
+@clientes_bp.route("/restore/<uuid_cliente>", methods=["POST"])
+@login_required
+@roles_accepted('admin', 'gerente')
+def restore(uuid_cliente):
+    cli = Cliente.query.get_or_404(uuid_cliente)
+    cli.usuario.active = True
+    db.session.commit()
+    flash("Perfil de cliente reactivado", "success")
+    return redirect(url_for('clientes.trash'))
+

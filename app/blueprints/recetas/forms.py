@@ -3,11 +3,7 @@ from wtforms import StringField, TextAreaField, SubmitField
 from wtforms.validators import DataRequired, Length
 
 class RecetaForm(FlaskForm):
-    nombre_producto = StringField(
-        "Nombre de la prenda",
-        validators=[DataRequired(message="Ingresa el nombre del producto")]
-    )
-
+    # Removed nombre_producto as it's not present in DB
     instrucciones_proceso = TextAreaField(
         "Instrucciones de la Receta",
         validators=[

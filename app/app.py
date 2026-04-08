@@ -173,6 +173,11 @@ def create_app():
             logger.info(f'[REGISTER] Rol "cliente" asignado a: {user.email}')
 
     # ── Blueprints ────────────────────────────────────────────
+    # El catálogo debe ir de los primeros con prefix='' para evitar shadowing
+    application.register_blueprint(bp.catalog_bp, url_prefix='')
+    application.register_blueprint(bp.checkout_bp, url_prefix='')
+    application.register_blueprint(bp.costo_utilidad_bp, url_prefix='')
+
     application.register_blueprint(bp.usuarios_bp, url_prefix='/usuarios')
     application.register_blueprint(bp.modelos_bp, url_prefix='/modelos')
     application.register_blueprint(bp.empleados_bp, url_prefix='/empleados')
@@ -187,9 +192,6 @@ def create_app():
     application.register_blueprint(bp.productos_bp, url_prefix='/productos_terminados')
     application.register_blueprint(bp.orden_bp, url_prefix='/orden_produccion')
     application.register_blueprint(bp.security_bp, url_prefix='/security')
-    application.register_blueprint(bp.catalog_bp, url_prefix='')
-    application.register_blueprint(bp.checkout_bp, url_prefix='')
-    application.register_blueprint(bp.costo_utilidad_bp, url_prefix='')
     application.register_blueprint(bp.merma_bp, url_prefix='/merma')
 
     # ── CSRF Exemptions (rutas públicas del carrito) ──────────────

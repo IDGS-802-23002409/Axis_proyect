@@ -157,6 +157,7 @@ def editar_producto(uuid):
 
         # Actualizar datos (SIN stock)
         producto.uuid_modelo = form.modelo.data
+        producto.uuid_explosion = form.explosion.data
         producto.sku_especifico = nuevo_sku
         producto.talla = form.talla.data
         producto.precio_venta = form.precio_venta.data
@@ -174,6 +175,7 @@ def editar_producto(uuid):
     # Cargar datos en GET (SIN stock físico)
     if request.method == 'GET':
         form.modelo.data = producto.uuid_modelo
+        form.explosion.data = producto.uuid_explosion
     form.stock_minimo_alerta.data = producto.stock_minimo_alerta
     form.active.data = 1 if producto.active else 0
 
@@ -188,6 +190,10 @@ def editar_producto(uuid):
 @roles_accepted('admin', 'produccion')
 def eliminar_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
+    
+    if producto.stock_fisico_actual > 0:
+        flash('No se puede desactivar un producto con stock físico mayor a 0', 'error')
+        return redirect(url_for('productos_bp.index'))
 
     producto.active = False
     db.session.commit()

@@ -1,0 +1,55 @@
+{% extends "produccion/layout.html" %}
+{% block title %}
+Detalle de Modelo
+{% endblock %}
+
+{% block header %}
+Detalle de Modelo
+{% endblock %}
+
+{% block container %}
+<div class="px-10 pb-10 flex flex-col gap-8">
+    <div class="mb-4">
+        <a href="{{ url_for('modelos.index') }}"
+            class="inline-flex items-center gap-2 text-primary hover:text-primary/90 text-sm font-semibold">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            Regresar al Catálogo
+        </a>
+    </div>
+
+    <div class="bg-card border border-border rounded-lg p-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="col-span-1">
+                {% if modelo.imagen_url %}
+                <img src="{{ modelo.imagen_url }}" class="w-full h-auto rounded-lg object-cover border" alt="img">
+                {% else %}
+                <div class="w-full aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
+                    <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-span-2 flex flex-col gap-4">
+                <h2 class="text-2xl font-bold uppercase">{{ modelo.nombre_modelo }}</h2>
+                <div class="flex gap-4 mb-4">
+                    <span class="px-3 py-1 bg-secondary text-secondary-foreground text-xs font-semibold rounded-full">{{
+                        modelo.categoria.nombre if modelo.categoria else 'N/A' }}</span>
+                    <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full uppercase">{{
+                        modelo.estatus }}</span>
+                </div>
+
+                <h3 class="text-sm font-bold text-muted-foreground uppercase tracking-widest">Descripción</h3>
+                <p class="text-sm leading-relaxed">{{ modelo.descripcion or 'Sin descripción' }}</p>
+
+                <h3 class="text-sm font-bold text-muted-foreground uppercase tracking-widest mt-4">Detalles</h3>
+                <ul class="text-sm space-y-2">
+                    <li><strong>ID:</strong> <span class="font-mono text-xs">{{ modelo.uuid_modelo }}</span></li>
+                    <li><strong>Creado:</strong> {{ modelo.fecha_creacion.strftime('%d/%m/%Y %H:%M') if
+                        modelo.fecha_creacion else 'N/A' }}</li>
+                    <li><strong>Última actualización:</strong> {{ modelo.fecha_actualizacion.strftime('%d/%m/%Y %H:%M')
+                        if modelo.fecha_actualizacion else 'N/A' }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

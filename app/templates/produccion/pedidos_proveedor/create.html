@@ -66,8 +66,10 @@
                                 class="w-full px-2 py-1.5 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20"
                                 required>
                                 <option value="" disabled selected>-- Seleccione Insumo --</option>
+                                {% set initial_insumo = request.args.get('uuid_insumo') %}
                                 {% for insp in insumos %}
-                                <option value="{{ insp.uuid_insumo }}">{{ insp.nombre }} ({{ insp.unidad_medida }})
+                                <option value="{{ insp.uuid_insumo }}" {% if insp.uuid_insumo==initial_insumo
+                                    %}selected{% endif %}>{{ insp.nombre }} ({{ insp.unidad_medida }})
                                 </option>
                                 {% endfor %}
                             </select>

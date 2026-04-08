@@ -39,6 +39,54 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cartOverlay) cartOverlay.addEventListener('click', () => toggleCart(false));
     if (cartContinueBtn) cartContinueBtn.addEventListener('click', () => toggleCart(false));
 
+    /* =========================================
+       TOAST / ALERTS LOGIC
+       ========================================= */
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('flash-container') || createFlashContainer();
+        const toast = document.createElement('div');
+        toast.className = `flash-msg flex items-start gap-3 px-4 py-3 border shadow-xl text-sm backdrop-blur-md transition-all duration-300 translate-x-full opacity-0`;
+
+        let bgColor, borderColor, icon, iconColor;
+        if (type === 'error') {
+            bgColor = 'bg-destructive/10'; borderColor = 'border-destructive/50'; icon = 'alert-circle'; iconColor = 'text-destructive';
+        } else if (type === 'success') {
+            bgColor = 'bg-emerald-500/10'; borderColor = 'border-emerald-500/50'; icon = 'check-circle'; iconColor = 'text-emerald-400';
+        } else if (type === 'warning') {
+            bgColor = 'bg-amber-500/10'; borderColor = 'border-amber-500/50'; icon = 'alert-triangle'; iconColor = 'text-amber-400';
+        } else {
+            bgColor = 'bg-secondary'; borderColor = 'border-border'; icon = 'info'; iconColor = 'text-primary';
+        }
+
+        toast.classList.add(bgColor, borderColor);
+        toast.innerHTML = `
+            <i data-lucide="${icon}" class="w-4 h-4 mt-0.5 shrink-0 ${iconColor}"></i>
+            <span>${message}</span>
+        `;
+
+        container.appendChild(toast);
+        lucide.createIcons();
+
+        // Animate in
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-x-full', 'opacity-0');
+        });
+
+        // Auto remove
+        setTimeout(() => {
+            toast.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+
+    function createFlashContainer() {
+        const c = document.createElement('div');
+        c.id = 'flash-container';
+        c.className = 'fixed top-20 right-4 z-[200] space-y-2 max-w-sm w-full';
+        document.body.appendChild(c);
+        return c;
+    }
+
     // Auto-abrir carrito si el backend lo solicita
     if (document.body.dataset.openCart === 'true') {
         setTimeout(() => toggleCart(true), 500);
@@ -774,11 +822,28 @@ document.addEventListener('DOMContentLoaded', () => {
             qtyValue.textContent = quantityVal;
             if (formCantidad) formCantidad.value = quantityVal;
         });
+
         qtyPlus.addEventListener('click', () => {
+            const currentTotal = parseInt(document.getElementById('cart-total-items-header')?.textContent || '0');
+            if (currentTotal + quantityVal + 1 > 100) {
+                showToast('Límite de 100 productos alcanzado.', 'warning');
+                return;
+            }
             quantityVal++;
             qtyValue.textContent = quantityVal;
             if (formCantidad) formCantidad.value = quantityVal;
         });
+
+        const addToCartForm = document.getElementById('add-to-cart-form');
+        if (addToCartForm) {
+            addToCartForm.addEventListener('submit', (e) => {
+                const currentTotal = parseInt(document.getElementById('cart-total-items-header')?.textContent || '0');
+                if (currentTotal + quantityVal > 100) {
+                    e.preventDefault();
+                    showToast('No puedes agregar más de 100 productos al carrito.', 'error');
+                }
+            });
+        }
     }
 
     /* =========================================

@@ -29,14 +29,20 @@ def post_login():
     """Redirige al layout correcto según el rol del usuario."""
     user_roles = [role.name for role in current_user.roles]
 
-    if any(role in user_roles for role in ['admin', 'gerente', 'produccion']):
-        return redirect(url_for('usuarios.index'))
+    # Admin y Gerente van al dashboard principal
+    if any(role in user_roles for role in ['admin', 'gerente']):
+        return redirect(url_for('dashboard_administrativo.index'))
+    
+    # Personal de Producción va a su módulo principal
+    elif 'produccion' in user_roles:
+        return redirect(url_for('orden_bp.index'))
+    
+    # Clientes van al catálogo o a completar su perfil
     elif 'cliente' in user_roles or not user_roles:
-        # Si el cliente no tiene perfil completo, lo llevamos a completarlo
         if not current_user.cliente:
             flash('Antes de continuar, necesitamos algunos datos de envío.', 'info')
             return redirect(url_for('checkout.completar_perfil'))
-        # Si tenía items en el carrito, lo llevamos al checkout directamente
+        
         try:
             from app.blueprints.checkout.routes import load_cart
             if load_cart():
@@ -44,6 +50,7 @@ def post_login():
         except Exception:
             pass
         return redirect(url_for('catalog.index'))
+    
     else:
         from flask_security.utils import logout_user
         logout_user()
