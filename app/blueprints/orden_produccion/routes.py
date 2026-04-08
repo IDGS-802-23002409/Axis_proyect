@@ -5,6 +5,7 @@ from app.models.modelos_productos import ProductoTerminado, ModeloRopa
 
 from app.utils.database_connection import db
 from flask_security import login_required, roles_accepted
+from sqlalchemy.orm import joinedload
 from decimal import Decimal
 from app.models.explosion_materiales import ExplosionMaterialesDetalle
 from app.models.inventario import RolloInventario
@@ -65,21 +66,26 @@ def create():
         uuid_venta = form.uuid_venta_detalle.data or None
 
         #  Determinar cantidad
+        cantidad = int(form.cantidad_a_producir.data)
+        
         if uuid_venta:
             venta = VentaDetalle.query.get(uuid_venta)
             if not venta:
                 flash("La venta seleccionada no existe", "danger")
                 return redirect(url_for('orden_bp.index'))
-            cantidad = int(venta.cantidad)
             tipo = 'PEDIDO'
+            
+            # Validate that produced quantity is at least the sale quantity
+            if cantidad < venta.cantidad:
+                flash(f"La cantidad a producir ({cantidad}) no cubre la venta ({venta.cantidad}).", "danger")
+                return render_template('produccion/orden/create.html', form=form)
         else:
-            cantidad = int(form.cantidad_a_producir.data)
             tipo = 'STOCK'
 
         # REGLA: Las recetas se manejan por lotes (1 lote = 10 unidades).
         if cantidad % 10 != 0:
             flash(f"La cantidad a producir debe ser en lotes de 10 (ej: 10, 20, 30...). Cantidad ingresada: {cantidad}", "warning")
-            return redirect(url_for('orden_bp.index'))
+            return render_template('produccion/orden/create.html', form=form)
 
         try:
             # Crear orden en estado PENDIENTE

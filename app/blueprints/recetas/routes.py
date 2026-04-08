@@ -222,11 +222,6 @@ def edit(uuid_explosion):
         flash('Receta actualizada con éxito.', 'success')
         return redirect(url_for('recetas_bp.index'))
 
-    # Inicializar nombre_producto si es necesario (aunque no se guarde en este modelo)
-    # Si hay productos asociados, podríamos tomar el nombre de uno
-    if not form.nombre_producto.data and receta.productos:
-        form.nombre_producto.data = receta.productos[0].modelo.nombre_modelo
-
     return render_template(
         'produccion/recetas/edit.html',
         form=form,
