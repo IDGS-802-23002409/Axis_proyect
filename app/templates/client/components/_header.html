@@ -32,11 +32,13 @@
                     <span
                         class="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary transition-all duration-300 group-hover:w-full"></span>
                 </a>
+                <!--
                 <a href="/about" class="text-sm tracking-[0.2em] hover:text-primary transition-colors relative group">
                     NOSOTROS
                     <span
                         class="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary transition-all duration-300 group-hover:w-full"></span>
                 </a>
+                -->
             </nav>
 
             <!-- Actions -->
@@ -112,9 +114,11 @@
             <a href="/nuevo"
                 class="mobile-link font-[var(--font-display)] text-4xl tracking-[0.3em] hover:text-primary transition-colors"
                 style="animation-delay: 200ms">NUEVO</a>
+            <!--
             <a href="/about"
                 class="mobile-link font-[var(--font-display)] text-4xl tracking-[0.3em] hover:text-primary transition-colors"
                 style="animation-delay: 300ms">NOSOTROS</a>
+            -->
             {% if current_user.is_authenticated %}
             <a href="{{ url_for('checkout.mi_cuenta') if current_user.has_role('cliente') else url_for('checkout.perfil') }}"
                 class="mobile-link font-[var(--font-display)] text-2xl tracking-[0.3em] hover:text-primary transition-colors flex items-center gap-3"

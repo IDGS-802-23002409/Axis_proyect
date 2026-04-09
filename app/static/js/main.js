@@ -578,7 +578,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 onEnter: () => {
                     const duration = 2000;
                     const start = Date.now();
-                    const targets = { clients: 50, designs: 500, countries: 25, years: 8 };
+                    const targets = { clients: 0, designs: 25, countries: 1, years: 1 };
 
                     const animate = () => {
                         const elapsed = Date.now() - start;
