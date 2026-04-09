@@ -26,18 +26,18 @@ Gestión de Modelos
             <h3 class="font-semibold">Catálogo Matriz de Modelos</h3>
 
             <div class="flex items-center gap-2">
-                <button onclick="window.location.href='{{ url_for('modelos.trash') }}';"
+                <a href="{{ url_for('modelos.trash') }}"
                     class="flex items-center gap-2 bg-neutral-100 text-black px-4 py-2 rounded-md text-sm hover:bg-neutral-200 transition-all border border-neutral-200"
                     title="Ver modelos inactivos">
                     <i data-lucide="trash-2" class="w-4 h-4 text-neutral-500"></i>
                     Inactivos
-                </button>
+                </a>
 
-                <button onclick="window.location.href='{{ url_for('modelos.registro_modelo') }}';"
+                <a href="{{ url_for('modelos.registro_modelo') }}"
                     class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     Nuevo Modelo
-                </button>
+                </a>
 
                 <button id="filterToggle" type="button"
                     class="h-9 w-9 p-2 bg-card border border-border rounded-md text-muted-foreground hover:bg-secondary"
@@ -92,7 +92,7 @@ Gestión de Modelos
                     </td>
                     <!-- Categoria -->
                     <td class="px-6 py-4">
-                        {{ mod.categoria.nombre_categoria if mod.categoria else 'N/A' }}
+                        {{ mod.categoria.nombre if mod.categoria else 'N/A' }}
                     </td>
                     <!-- Fecha -->
                     <td class="px-6 py-4 text-muted-foreground">
@@ -100,6 +100,11 @@ Gestión de Modelos
                     </td>
                     <!-- Acciones -->
                     <td class="px-6 py-4 text-right flex justify-end gap-3 items-center" style="height: 80px;">
+
+                        <!-- Ver Detalle -->
+                        <a href="{{ url_for('modelos.ver_modelo', uuid_modelo=mod.uuid_modelo) }}" title="Ver Detalle">
+                            <i data-lucide="eye" class="w-4 h-4 cursor-pointer hover:text-primary"></i>
+                        </a>
 
                         <!-- Editar -->
                         <a href="{{ url_for('modelos.update_modelo', uuid_modelo=mod.uuid_modelo) }}"

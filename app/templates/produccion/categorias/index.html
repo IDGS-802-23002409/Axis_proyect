@@ -12,6 +12,14 @@
             </div>
 
             <div class="flex items-center gap-4">
+                <a href="{{ url_for('categorias_bp.index', estatus='inactivas' if (not estatus_actual or estatus_actual == 'activas') else 'activas') }}"
+                    class="bg-neutral-200 text-black px-6 py-3 rounded-lg text-xs font-black tracking-widest hover:bg-neutral-300 transition-all uppercase">
+                    {% if not estatus_actual or estatus_actual.lower() == 'activas' %}
+                    Ver inactivas
+                    {% else %}
+                    Ver activas
+                    {% endif %}
+                </a>
 
                 <a href="{{ url_for('categorias_bp.create') }}"
                     class="bg-black text-white px-8 py-3 rounded-lg text-xs font-black tracking-widest hover:bg-neutral-800 transition-all shadow-md uppercase">
@@ -32,8 +40,8 @@
                     </span>
                     <i class="fas fa-tags text-neutral-300"></i>
                 </div>
-                <div class="text-4xl font-bold mb-1 text-black">{{ categorias|length }}</div>
-                <div class="text-[10px] text-neutral-400 font-medium">Registradas</div>
+                <div class="text-4xl font-bold mb-1 text-black">{{ total_global }}</div>
+                <div class="text-[10px] text-neutral-400 font-medium">Registradas en total</div>
             </div>
 
             <!-- ACTIVAS -->
@@ -44,8 +52,7 @@
                     </span>
                     <i class="fas fa-eye text-green-300"></i>
                 </div>
-                {% set activas = categorias | selectattr('estatus_visible', 'equalto', True) | list %}
-                <div class="text-4xl font-bold mb-1 text-black">{{ activas|length }}</div>
+                <div class="text-4xl font-bold mb-1 text-black">{{ activas_global }}</div>
                 <div class="text-[10px] text-neutral-400 uppercase">Visibles en sistema</div>
             </div>
 
@@ -78,6 +85,7 @@
 
                 <thead>
                     <tr class="text-[10px] uppercase tracking-[0.2em] text-neutral-400 border-b border-neutral-100">
+                        <th class="px-4 py-6 font-bold w-16">Imagen</th>
                         <th class="px-4 py-6 font-bold">Nombre</th>
                         <th class="px-4 py-6 font-bold">Descripción</th>
                         <th class="px-4 py-6 font-bold text-center">Estado</th>
@@ -89,6 +97,19 @@
 
                     {% for categoria in categorias %}
                     <tr class="group hover:bg-neutral-50 transition-colors">
+
+                        <!-- IMAGEN -->
+                        <td class="px-4 py-6">
+                            {% if categoria.imagen_url %}
+                            <img src="{{ categoria.imagen_url }}" alt="{{ categoria.nombre }}"
+                                class="w-12 h-12 object-cover rounded-lg border border-neutral-200">
+                            {% else %}
+                            <div
+                                class="w-12 h-12 bg-neutral-100 rounded-lg border border-neutral-200 flex flex-col justify-center items-center text-neutral-400 text-xs text-center p-1">
+                                Sin foto
+                            </div>
+                            {% endif %}
+                        </td>
 
                         <!-- NOMBRE -->
                         <td class="px-4 py-6">
@@ -133,11 +154,19 @@
                                     <!-- CSRF oculto -->
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
+                                    {% if categoria.estatus_visible %}
                                     <button
                                         class="flex items-center gap-2 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-500 rounded-lg text-[10px] font-bold border border-red-200 transition-all">
                                         <i class="fas fa-trash text-[10px]"></i>
                                         Desactivar
                                     </button>
+                                    {% else %}
+                                    <button
+                                        class="flex items-center gap-2 px-5 py-3 bg-green-50 hover:bg-green-100 text-green-600 rounded-lg text-[10px] font-bold border border-green-200 transition-all">
+                                        <i class="fas fa-check text-[10px]"></i>
+                                        Activar
+                                    </button>
+                                    {% endif %}
                                 </form>
 
                             </div>
@@ -157,6 +186,6 @@
 
 <script>
     function confirmDelete(nombre) {
-        return confirm(`¿Estás seguro de desactivar la categoría "${nombre}"?`);
+        return confirm(`¿Estás seguro de cambiar el estado de la categoría "${nombre}"?`);
     }
 </script>

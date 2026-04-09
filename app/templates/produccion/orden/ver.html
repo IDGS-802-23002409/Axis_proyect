@@ -1,0 +1,134 @@
+{% extends "produccion/layout.html" %}
+
+{% block container %}
+<div class="flex min-h-screen bg-white text-neutral-900 font-sans">
+    <main class="flex-1 p-8 xl:p-12">
+        <div class="mb-10">
+            <a href="{{ url_for('orden_bp.index') }}"
+                class="bg-neutral-200 text-black px-6 py-3 rounded-lg text-xs font-black tracking-widest hover:bg-neutral-300 transition-all uppercase">
+                ← Volver
+            </a>
+        </div>
+
+        <!-- HEADER -->
+        <header class="flex justify-between items-center mb-10 border-b pb-6">
+            <div>
+                <h1 class="text-xl font-bold tracking-tight uppercase">
+                    Detalle de Orden de Producción
+                </h1>
+                <p class="text-sm text-neutral-500 font-mono">
+                    ID: {{ orden.uuid_op }}
+                </p>
+            </div>
+            <div class="text-right">
+                <span class="px-4 py-2 text-sm font-bold uppercase rounded-full 
+                    {% if orden.estado == 'Pendiente' %} bg-yellow-100 text-yellow-700 
+                    {% elif orden.estado == 'En Corte' %} bg-blue-100 text-blue-700 
+                    {% elif orden.estado == 'Confección' %} bg-purple-100 text-purple-700 
+                    {% elif orden.estado == 'Terminado' %} bg-green-100 text-green-700 
+                    {% endif %}">
+                    {{ orden.estado }}
+                </span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- INFO GENERAL -->
+            <div class="lg:col-span-2 space-y-8">
+                <section class="bg-white border rounded-2xl p-8 shadow-sm">
+                    <h2 class="text-xs font-black uppercase tracking-[0.2em] text-neutral-400 mb-6">Información del
+                        Producto</h2>
+                    <div class="grid grid-cols-2 gap-8">
+                        <div>
+                            <p class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Modelo</p>
+                            <p class="text-lg font-bold">{{ orden.producto.modelo.nombre_modelo }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">SKU</p>
+                            <p class="text-lg font-mono">{{ orden.producto.sku_especifico }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Talla</p>
+                            <p class="text-lg font-bold">{{ orden.producto.talla }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Cantidad
+                                Solicitada</p>
+                            <p class="text-lg font-bold">{{ orden.cantidad_a_producir }} unidades</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="bg-white border rounded-2xl p-8 shadow-sm">
+                    <h2 class="text-xs font-black uppercase tracking-[0.2em] text-neutral-400 mb-6">Ejecución y Reserva
+                        de Materiales</h2>
+                    {% if cortes %}
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-neutral-50 text-neutral-500 uppercase text-[10px] font-black">
+                                <tr>
+                                    <th class="px-4 py-3">Rollo ID</th>
+                                    <th class="px-4 py-3">Insumo</th>
+                                    <th class="px-4 py-3 text-right">Metros Requeridos</th>
+                                    <th class="px-4 py-3 text-right">Prendas Logradas</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                {% for corte in cortes %}
+                                <tr>
+                                    <td class="px-4 py-4 font-mono text-xs">{{ corte.uuid_rollo_used[:8] }}...</td>
+                                    <td class="px-4 py-4">{{ corte.rollo_usado.insumo.nombre }}</td>
+                                    <td class="px-4 py-4 text-right">{{ corte.metros_teoricos_requeridos }} m</td>
+                                    <td class="px-4 py-4 text-right font-bold">{{ corte.prendas_reales_logradas }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-neutral-500 italic">No hay registros de corte o reserva detallada para esta orden.
+                    </p>
+                    {% endif %}
+                </section>
+            </div>
+
+            <!-- SIDEBAR INFO -->
+            <div class="space-y-8">
+                <section class="bg-neutral-900 text-white border rounded-2xl p-8 shadow-sm">
+                    <h2 class="text-xs font-black uppercase tracking-[0.2em] text-neutral-500 mb-6">Detalles de la
+                        Solicitud</h2>
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">Fecha de
+                                Solicitud</p>
+                            <p class="text-sm">{{ orden.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">Origen</p>
+                            {% if orden.uuid_venta_detalle %}
+                            <p class="text-sm">Pedido de Venta: <span class="font-mono text-xs">#{{
+                                    orden.uuid_venta_detalle[:8] }}</span></p>
+                            {% else %}
+                            <p class="text-sm">Producción para Stock</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </section>
+
+                {% if orden.estado != 'Terminado' %}
+                <section class="bg-white border rounded-2xl p-8 shadow-sm">
+                    <form method="POST" action="{{ url_for('orden_bp.avanzar_estado', uuid_op=orden.uuid_op) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit"
+                            class="w-full bg-black text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-neutral-800 transition-all shadow-md active:scale-95"
+                            onclick="return confirm('¿Confirmar avance de estado?')">
+                            Avanzar Siguiente Estado →
+                        </button>
+                    </form>
+                </section>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

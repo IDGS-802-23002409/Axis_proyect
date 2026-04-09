@@ -16,8 +16,8 @@ def index():
     if q:
         clientes = clientes.filter(Usuario.nombre_completo.ilike(f"%{q}%"))
         
-    clientes = clientes.all()
-    total_clientes = Cliente.query.count()
+    clientes = clientes.filter(Usuario.active == True).all()
+    total_clientes = len(clientes)
 
     return render_template(
         "produccion/clientes/index.html",
@@ -68,7 +68,37 @@ def update_cliente(uuid_cliente):
 def delete_cliente(uuid_cliente):
     cli = Cliente.query.get_or_404(uuid_cliente)
 
-    db.session.delete(cli)
+    from app.models.ventas import VentaEncabezado
+    pedidos_pendientes = VentaEncabezado.query.filter_by(uuid_cliente=cli.uuid_cliente).filter(VentaEncabezado.estatus_envio.in_(['Procesando', 'Pendiente'])).count()
+    if pedidos_pendientes > 0:
+         flash("No se puede desactivar el perfil del cliente porque tiene pedidos en curso.", "error")
+         return redirect(url_for('clientes.index'))
+
+    cli.usuario.active = False
     db.session.commit()
-    flash("Perfil de cliente eliminado", "success")
+    flash("Perfil de cliente desactivado", "success")
     return redirect(url_for('clientes.index'))
+
+@clientes_bp.route("/ver/<uuid_cliente>")
+@login_required
+def view_cliente(uuid_cliente):
+    cli = Cliente.query.get_or_404(uuid_cliente)
+    return render_template("produccion/clientes/ver.html", cliente=cli)
+
+@clientes_bp.route("/inactivos")
+@login_required
+@roles_accepted('admin', 'gerente')
+def trash():
+    clientes = Cliente.query.join(Usuario).filter(Usuario.active == False).all()
+    return render_template("produccion/clientes/trash.html", clientes=clientes)
+
+@clientes_bp.route("/restore/<uuid_cliente>", methods=["POST"])
+@login_required
+@roles_accepted('admin', 'gerente')
+def restore(uuid_cliente):
+    cli = Cliente.query.get_or_404(uuid_cliente)
+    cli.usuario.active = True
+    db.session.commit()
+    flash("Perfil de cliente reactivado", "success")
+    return redirect(url_for('clientes.trash'))
+

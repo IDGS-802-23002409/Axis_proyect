@@ -37,10 +37,11 @@ def index():
 
     productos = productos.order_by(ProductoTerminado.fecha_actualizacion.desc()).all()
     
-    # Calcular stats ANTES de aplicar filtros de stock (para que siempre muestren el total neto)
-    total_neto = len(productos)
-    en_bajo_stock_total = len([p for p in productos if p.stock_fisico_actual <= p.stock_minimo_alerta and p.stock_fisico_actual > 0])
-    agotados_total = len([p for p in productos if p.stock_fisico_actual <= 0])
+    # Calcular stats ANTES de aplicar filtros de stock
+    todos_productos_activos = ProductoTerminado.query.filter_by(active=True).all()
+    total_neto = len(todos_productos_activos)
+    en_bajo_stock_total = len([p for p in todos_productos_activos if p.stock_fisico_actual <= p.stock_minimo_alerta and p.stock_fisico_actual > 0])
+    agotados_total = len([p for p in todos_productos_activos if p.stock_fisico_actual <= 0])
     
     # Aplicar filtros por stock solo a los productos mostrados
     if filtro == 'bajo_stock':
@@ -141,6 +142,21 @@ def editar_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
     form = ProductoTerminadoForm(obj=producto)
 
+    # Cargar explosiones para el script de previsualización
+    explosiones = ExplosionMaterialesCabecera.query.filter_by(estatus='ACTIVO').all()
+    data_explosiones = []
+    for e in explosiones:
+        detalles = []
+        for d in e.detalles:
+            detalles.append({
+                "insumo": d.insumo.nombre,
+                "consumo": float(d.consumo_teorico_unitario)
+            })
+        data_explosiones.append({
+            "id": e.uuid_explosion,
+            "detalles": detalles
+        })
+
     if form.validate_on_submit():
         nuevo_sku = form.sku_especifico.data.strip()
 
@@ -152,10 +168,33 @@ def editar_producto(uuid):
 
         if sku_duplicado:
             flash('El SKU ya existe en otro producto', 'error')
-            return redirect(url_for('productos.editar_producto', uuid=uuid))
+            return render_template(
+                'produccion/productos_terminados/update_producto.html',
+                form=form,
+                producto=producto,
+                explosiones_data=data_explosiones
+            )
+
+        # NUEVO: Validar si se intenta cambiar la receta y hay órdenes activas
+        if form.explosion.data != producto.uuid_explosion:
+            from app.models.produccion import OrdenProduccion
+            ordenes_activas = OrdenProduccion.query.filter(
+                OrdenProduccion.uuid_producto == producto.uuid_producto,
+                OrdenProduccion.estado != 'Terminado'
+            ).first()
+            
+            if ordenes_activas:
+                flash('No se puede cambiar la receta porque existen órdenes de producción activas para este producto.', 'error')
+                return render_template(
+                    'produccion/productos_terminados/update_producto.html',
+                    form=form,
+                    producto=producto,
+                    explosiones_data=data_explosiones
+                )
 
         # Actualizar datos (SIN stock)
         producto.uuid_modelo = form.modelo.data
+        producto.uuid_explosion = form.explosion.data
         producto.sku_especifico = nuevo_sku
         producto.talla = form.talla.data
         producto.precio_venta = form.precio_venta.data
@@ -171,13 +210,17 @@ def editar_producto(uuid):
         return redirect(url_for('productos_bp.index'))
 
     # Cargar datos en GET (SIN stock físico)
-    form.stock_minimo_alerta.data = producto.stock_minimo_alerta
-    form.active.data = 1 if producto.active else 0
+    if request.method == 'GET':
+        form.modelo.data = producto.uuid_modelo
+        form.explosion.data = producto.uuid_explosion
+        form.stock_minimo_alerta.data = producto.stock_minimo_alerta
+        form.active.data = 1 if producto.active else 0
 
     return render_template(
         'produccion/productos_terminados/update_producto.html',
         form=form,
-        producto=producto
+        producto=producto,
+        explosiones_data=data_explosiones
     )
 
 @productos_bp.route('/eliminar/<uuid>', methods=['POST'])
@@ -185,6 +228,10 @@ def editar_producto(uuid):
 @roles_accepted('admin', 'produccion')
 def eliminar_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
+    
+    if producto.stock_fisico_actual > 0:
+        flash('No se puede desactivar un producto con stock físico mayor a 0', 'error')
+        return redirect(url_for('productos_bp.index'))
 
     producto.active = False
     db.session.commit()

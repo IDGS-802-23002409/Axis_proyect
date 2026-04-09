@@ -10,13 +10,7 @@
             <div>
                 <h1 class="text-xl font-bold tracking-tight uppercase text-black">Compras</h1>
             </div>
-
-            <div class="flex items-center gap-4">
-                <a href="{{ url_for('compras_bp.create') }}"
-                    class="bg-black text-white px-8 py-3 rounded-lg text-xs font-black tracking-widest hover:bg-neutral-800 transition-all shadow-md uppercase">
-                    + Registrar Compra
-                </a>
-            </div>
+            <!-- Botón de registrar eliminado para enforcing de Pedidos a Proveedor -->
         </header>
 
         <!-- CARDS -->
@@ -130,27 +124,24 @@
 
                                 <!-- BOTON RECIBIR SOLO SI ESTA PENDIENTE -->
                                 {% if compra.estatus == 'PENDIENTE' %}
-                                class="flex items-center gap-2 px-5 py-3 bg-purple-50 hover:bg-purple-100
-                                text-purple-600 hover:text-purple-800 rounded-lg text-[10px] font-bold tracking-wider
-                                border border-purple-200 transition-all">
-                                <i class="fas fa-clipboard-check text-[10px]"></i>
-                                Recibir
+                                <a href="{{ url_for('compras_bp.recibir', uuid_compra=compra.uuid_compra) }}"
+                                    class="flex items-center gap-2 px-5 py-3 bg-purple-50 hover:bg-purple-100 text-purple-600 hover:text-purple-800 rounded-lg text-[10px] font-bold tracking-wider border border-purple-200 transition-all">
+                                    <i class="fas fa-clipboard-check text-[10px]"></i>
+                                    Recibir
                                 </a>
                                 {% endif %}
 
                                 {% if compra.estatus == 'PENDIENTE' %}
-                                <form id="form-cancelar-{{ compra.uuid_compra }}" method="POST"
+                                <form method="POST"
                                     action="{{ url_for('compras_bp.cancelar', uuid_compra=compra.uuid_compra) }}"
-                                    class="inline">
+                                    class="inline"
+                                    onsubmit="return confirm('¿Seguro que deseas cancelar esta compra?');">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-                                    <button type="button"
-                                        onclick="confirmarCancelacion('{{ compra.uuid_compra }}', '{{ compra.folio_factura }}')"
+                                    <button type="submit"
                                         class="flex items-center gap-2 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 rounded-lg text-[10px] font-bold tracking-wider border border-red-200 transition-all">
                                         <i class="fas fa-trash text-[10px]"></i>
                                         Cancelar
                                     </button>
-
                                 </form>
                                 {% endif %}
 
@@ -173,23 +164,5 @@
 
     </main>
 </div>
-<script>
-    function confirmarCancelacion(uuid, folio) {
-        Swal.fire({
-            title: '¿Cancelar compra?',
-            text: "Folio: " + (folio || 'Sin folio'),
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc2626',
-            cancelButtonColor: '#9ca3af',
-            confirmButtonText: 'Sí, cancelar',
-            cancelButtonText: 'No',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('form-cancelar-' + uuid).submit();
-            }
-        });
-    }
-</script>
+
 {% endblock %}

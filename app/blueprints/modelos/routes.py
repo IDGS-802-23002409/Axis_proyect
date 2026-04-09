@@ -48,6 +48,11 @@ def registro_modelo():
     form = ModeloForm()
     
     if request.method == "POST" and form.validate():
+        existe = ModeloRopa.query.filter_by(nombre_modelo=form.nombre_modelo.data).first()
+        if existe:
+            flash("Ya existe un modelo con ese nombre", "error")
+            return redirect(url_for('modelos.registro_modelo'))
+
         imagen_url = "/static/images/default/default-image.png"
         
         # Procesamiento de la imagen
@@ -81,6 +86,11 @@ def update_modelo(uuid_modelo):
     if request.method == "POST":
         form = ModeloForm(request.form, obj=modelo)
         if form.validate():
+            existe = ModeloRopa.query.filter(ModeloRopa.nombre_modelo==form.nombre_modelo.data, ModeloRopa.uuid_modelo!=uuid_modelo).first()
+            if existe:
+                flash("Ya existe otro modelo con ese nombre", "error")
+                return redirect(url_for('modelos.update_modelo', uuid_modelo=uuid_modelo))
+
             modelo.nombre_modelo = form.nombre_modelo.data
             modelo.descripcion = form.descripcion.data
             modelo.uuid_categoria = form.uuid_categoria.data
@@ -129,3 +139,9 @@ def restore(uuid_modelo):
     db.session.commit()
     flash(f"Modelo '{modelo.nombre_modelo}' restaurado correctamente.", "success")
     return redirect(url_for('modelos.trash'))
+
+@modelos_bp.route("/ver/<uuid_modelo>")
+@login_required
+def ver_modelo(uuid_modelo):
+    modelo = ModeloRopa.query.get_or_404(uuid_modelo)
+    return render_template("produccion/modelos/ver.html", modelo=modelo)

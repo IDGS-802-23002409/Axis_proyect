@@ -32,7 +32,7 @@ python-dotenv==1.2.2
 qrcode==8.2
 setuptools==82.0.1
 six==1.17.0
-SQLAlchemy==2.0.48
+SQLAlchemy==2.0.37
 typing_extensions==4.15.0
 Werkzeug==3.1.6
 WTForms==3.1.2

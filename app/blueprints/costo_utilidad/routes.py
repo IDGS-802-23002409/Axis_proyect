@@ -149,9 +149,10 @@ def _obtener_merma_promedio_pieza(uuid_producto, uuid_insumo):
     return total_diferencia / total_teorico
 
 def _obtener_explosion_y_detalles(producto):
-    cabecera = ExplosionMaterialesCabecera.query.filter_by(
-        uuid_producto=producto.uuid_producto
-    ).first()
+    if not producto.uuid_explosion:
+        return None, []
+    
+    cabecera = ExplosionMaterialesCabecera.query.get(producto.uuid_explosion)
 
     if not cabecera:
         return None, []

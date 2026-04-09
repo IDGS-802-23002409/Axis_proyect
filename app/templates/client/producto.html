@@ -130,12 +130,17 @@
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="uuid_producto" value="{{ product.id }}">
                         <input type="hidden" id="form-talla" name="talla" value="">
-                        <input type="hidden" id="form-cantidad" name="cantidad" value="1">
+                        <input type="hidden" id="form-cantidad" name="cantidad" value="1" min="1" max="100">
                         <button id="btn-add-to-cart-product" type="submit"
-                            class="w-full py-4 font-[var(--font-display)] text-xl tracking-[0.2em] flex items-center justify-center gap-3 transition-all bg-muted text-muted-foreground cursor-not-allowed"
+                            class="w-full py-4 font-[var(--font-display)] text-xl tracking-[0.2em] flex items-center justify-center gap-3 transition-all bg-muted text-muted-foreground cursor-not-allowed group relative"
                             disabled>
                             <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                            AÑADIR AL CARRITO
+                            <span class="group-disabled:opacity-50">AÑADIR AL CARRITO</span>
+                            <!-- Tooltip when disabled -->
+                            <span
+                                class="absolute -top-10 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-[10px] px-2 py-1 border border-border opacity-0 group-hover:group-disabled:opacity-100 transition-opacity whitespace-nowrap">
+                                SELECCIONA UNA TALLA PARA CONTINUAR
+                            </span>
                         </button>
                     </form>
                     <button class="p-4 border border-border hover:border-primary hover:text-primary transition-colors">

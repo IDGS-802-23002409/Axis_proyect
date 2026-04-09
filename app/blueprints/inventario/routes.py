@@ -19,7 +19,7 @@ def index():
 
     #  MERMA TOTAL
     merma_total = db.session.query(
-        func.coalesce(func.sum(RetazoInventario.metraje), 0)
+        func.coalesce(func.sum(EjecucionCorte.merma_real_calculada), 0)
     ).scalar()
     #  TOTAL DE METROS DE TODOS LOS ROLLOS
     total_metros_global = db.session.query(
@@ -209,5 +209,6 @@ def ver_insumo(uuid):
         resumen=resumen,
         rollos=detalle_rollos,
         ejecuciones=ejecuciones,
-        uso_piezas=uso_piezas
+        uso_piezas=uso_piezas,
+        retazos=retazos
     )

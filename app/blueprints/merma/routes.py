@@ -327,7 +327,11 @@ def index_retazos():
         .order_by(RetazoInventario.fecha_creacion.desc())
         .all()
     )
-    return render_template('produccion/merma/index_retazos.html', retazos=retazos)
+    
+    metraje_total = sum(float(r.metraje) for r in retazos)
+    defectos_count = sum(1 for r in retazos if r.motivo_merma and r.motivo_merma.strip())
+    
+    return render_template('produccion/merma/index_retazos.html', retazos=retazos, metraje_total=metraje_total, defectos_count=defectos_count)
 
 
 @merma_bp.route('/retazos/registro', methods=['GET', 'POST'])

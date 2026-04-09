@@ -5,6 +5,7 @@ from app.models.modelos_productos import ProductoTerminado, ModeloRopa
 
 from app.utils.database_connection import db
 from flask_security import login_required, roles_accepted
+from sqlalchemy.orm import joinedload
 from decimal import Decimal
 from app.models.explosion_materiales import ExplosionMaterialesDetalle
 from app.models.inventario import RolloInventario
@@ -65,21 +66,26 @@ def create():
         uuid_venta = form.uuid_venta_detalle.data or None
 
         #  Determinar cantidad
+        cantidad = int(form.cantidad_a_producir.data)
+        
         if uuid_venta:
             venta = VentaDetalle.query.get(uuid_venta)
             if not venta:
                 flash("La venta seleccionada no existe", "danger")
                 return redirect(url_for('orden_bp.index'))
-            cantidad = int(venta.cantidad)
             tipo = 'PEDIDO'
+            
+            # Validate that produced quantity is at least the sale quantity
+            if cantidad < venta.cantidad:
+                flash(f"La cantidad a producir ({cantidad}) no cubre la venta ({venta.cantidad}).", "danger")
+                return render_template('produccion/orden/create.html', form=form)
         else:
-            cantidad = int(form.cantidad_a_producir.data)
             tipo = 'STOCK'
 
         # REGLA: Las recetas se manejan por lotes (1 lote = 10 unidades).
         if cantidad % 10 != 0:
             flash(f"La cantidad a producir debe ser en lotes de 10 (ej: 10, 20, 30...). Cantidad ingresada: {cantidad}", "warning")
-            return redirect(url_for('orden_bp.index'))
+            return render_template('produccion/orden/create.html', form=form)
 
         try:
             # Crear orden en estado PENDIENTE
@@ -161,6 +167,26 @@ def create():
 
     return render_template('produccion/orden/create.html', form=form)
 
+@orden_bp.route('/ver/<uuid_op>')
+@login_required
+@roles_accepted('admin', 'gerente', 'produccion')
+def ver(uuid_op):
+    orden = db.session.query(OrdenProduccion).options(
+        joinedload(OrdenProduccion.producto).joinedload(ProductoTerminado.modelo),
+        joinedload(OrdenProduccion.venta_detalle)
+    ).get_or_404(uuid_op)
+    
+    # Obtener ejecuciones de corte asociadas con carga ansiosa de relaciones
+    cortes = EjecucionCorte.query.options(
+        joinedload(EjecucionCorte.rollo_usado).joinedload(RolloInventario.insumo)
+    ).filter_by(uuid_op=uuid_op).all()
+    
+    return render_template(
+        'produccion/orden/ver.html',
+        orden=orden,
+        cortes=cortes
+    )
+
 @orden_bp.route('/avanzar_estado/<uuid_op>', methods=['POST'])
 @login_required
 @roles_accepted('admin', 'gerente', 'produccion')
@@ -177,12 +203,12 @@ def avanzar_estado(uuid_op):
             
             # Si pasamos a Terminado, integramos al stock final
             if nuevo_estado == 'Terminado':
-                producto = orden.producto
-                producto.stock_fisico_actual = (producto.stock_fisico_actual or 0) + orden.cantidad_a_producir
-                flash(f"Orden terminada. {orden.cantidad_a_producir} unidades añadidas al stock de {producto.modelo.nombre_modelo}.", "success")
-                
-                # Si viene de una venta pendiente y todos los items de esa venta están listos, podríamos completarla
-                # Para simplicidad actual, asumimos que se completa por partes o manualmente.
+                if orden.uuid_venta_detalle:
+                    flash(f"Orden terminada. Las prendas están listas para surtir la venta relacionada.", "success")
+                else:
+                    producto = orden.producto
+                    producto.stock_fisico_actual = (producto.stock_fisico_actual or 0) + orden.cantidad_a_producir
+                    flash(f"Orden terminada. {orden.cantidad_a_producir} unidades añadidas al stock de {producto.modelo.nombre_modelo}.", "success")
             else:
                 flash(f"Estado de la orden actualizado a {nuevo_estado}.", "success")
                 

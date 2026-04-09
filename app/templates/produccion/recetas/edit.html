@@ -5,8 +5,8 @@
     <main class="flex-1 p-8 xl:p-12">
         <div class="mb-10">
             <a href="{{ url_for('recetas_bp.index') }}"
-               class="bg-neutral-200 text-black px-6 py-3 rounded-lg text-xs font-black tracking-widest hover:bg-neutral-300 transition-all uppercase">
-               ← Volver
+                class="bg-neutral-200 text-black px-6 py-3 rounded-lg text-xs font-black tracking-widest hover:bg-neutral-300 transition-all uppercase">
+                ← Volver
             </a>
         </div>
 
@@ -23,20 +23,14 @@
 
                 {{ form.hidden_tag() }}
 
-                <!-- NOMBRE DEL PRODUCTO E INSTRUCCIONES -->
                 <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div>
-                        <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
-                            Nombre del producto (Referencia)
-                        </label>
-                        {{ form.nombre_producto(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm", placeholder="Ej: Camisa Azul") }}
-                    </div>
-
-                    <div>
+                    <div class="col-span-full">
                         <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
                             Instrucciones del proceso *
                         </label>
-                        {{ form.instrucciones_proceso(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm", placeholder="Describe cómo se debe procesar esta prenda", rows="4") }}
+                        {{ form.instrucciones_proceso(class="w-full mt-2 px-4 py-3 bg-neutral-50 border
+                        border-neutral-200 rounded-xl text-sm", placeholder="Describe cómo se debe procesar esta
+                        prenda", rows="4") }}
                     </div>
                 </section>
 
@@ -48,100 +42,103 @@
 
                     <div id="insumos-container" class="space-y-4">
                         {% if detalles %}
-                            {% for detalle in detalles %}
-                            <div class="detalle-item grid md:grid-cols-6 gap-4 p-5 border border-neutral-200 rounded-xl bg-neutral-50">
-                                <!-- INSUMO -->
-                                <div class="md:col-span-2">
-                                    <label class="text-[10px] text-neutral-400 font-bold uppercase">Insumo</label>
-                                    <select name="uuid_insumo[]" required onchange="mostrarInfo(this)"
-                                            class="w-full mt-2 px-3 py-3 bg-white border border-neutral-200 rounded-lg text-sm">
-                                        <option value="">Selecciona...</option>
-                                        {% for insumo in insumos %}
-                                        <option value="{{ insumo.uuid_insumo }}"
-                                                data-unidad="{{ insumo.unidad_medida }}"
-                                                data-cantidad="{{ insumo.contenido_cantidad }}"
-                                                data-unidaduso="{{ insumo.contenido_unidad_medida }}"
-                                                data-ancho="{{ insumo.ancho or 0 }}"
-                                                {% if detalle.uuid_insumo == insumo.uuid_insumo %}selected{% endif %}>
-                                            {{ insumo.nombre }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                    <div class="info-insumo text-xs text-neutral-400 mt-1">
-                                        <!-- Se llenará vía JS al cargar o cambiar -->
-                                    </div>
-                                </div>
-
-                                <!-- CANTIDAD POR PRENDA -->
-                                <div class="md:col-span-2">
-                                    <label class="text-[10px] text-neutral-400 font-bold uppercase">Cantidad por prenda</label>
-                                    <input type="number" name="consumo_teorico_unitario[]" required min="0.01" step="0.01"
-                                           value="{{ detalle.consumo_teorico_unitario }}"
-                                           placeholder="Cantidad" class="w-full mt-2 px-3 py-3 border border-neutral-200 rounded-lg text-center text-sm"
-                                           oninput="validarCantidad(this)">
-                                </div>
-
-                                <!-- ANCHO (SOLO ROLLOS) -->
-                                <div class="md:col-span-1">
-                                    <label class="text-[10px] text-neutral-400 font-bold uppercase">Ancho (m)</label>
-                                    <input type="number" name="ancho_referencia[]" step="0.01"
-                                           value="{{ detalle.ancho_referencia or '' }}"
-                                           placeholder="Solo ROLLO" class="w-full mt-2 px-3 py-3 border border-neutral-200 rounded-lg text-center text-sm">
-                                </div>
-
-                                <!-- ELIMINAR -->
-                                <div class="md:col-span-1 flex items-end justify-end">
-                                    <button type="button" onclick="eliminarFila(this)"
-                                            class="text-red-500 hover:text-red-700 text-sm font-bold">
-                                         Quitar
-                                    </button>
+                        {% for detalle in detalles %}
+                        <div
+                            class="detalle-item grid md:grid-cols-6 gap-4 p-5 border border-neutral-200 rounded-xl bg-neutral-50">
+                            <!-- INSUMO -->
+                            <div class="md:col-span-2">
+                                <label class="text-[10px] text-neutral-400 font-bold uppercase">Insumo</label>
+                                <select name="uuid_insumo[]" required onchange="mostrarInfo(this)"
+                                    class="w-full mt-2 px-3 py-3 bg-white border border-neutral-200 rounded-lg text-sm">
+                                    <option value="">Selecciona...</option>
+                                    {% for insumo in insumos %}
+                                    <option value="{{ insumo.uuid_insumo }}" data-unidad="{{ insumo.unidad_medida }}"
+                                        data-cantidad="{{ insumo.contenido_cantidad }}"
+                                        data-unidaduso="{{ insumo.contenido_unidad_medida }}"
+                                        data-ancho="{{ insumo.ancho or 0 }}" {% if
+                                        detalle.uuid_insumo==insumo.uuid_insumo %}selected{% endif %}>
+                                        {{ insumo.nombre }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="info-insumo text-xs text-neutral-400 mt-1">
+                                    <!-- Se llenará vía JS al cargar o cambiar -->
                                 </div>
                             </div>
-                            {% endfor %}
+
+                            <!-- CANTIDAD POR PRENDA -->
+                            <div class="md:col-span-2">
+                                <label class="text-[10px] text-neutral-400 font-bold uppercase">Cantidad por
+                                    prenda</label>
+                                <input type="number" name="consumo_teorico_unitario[]" required min="0.01" step="0.01"
+                                    value="{{ detalle.consumo_teorico_unitario }}" placeholder="Cantidad"
+                                    class="w-full mt-2 px-3 py-3 border border-neutral-200 rounded-lg text-center text-sm"
+                                    oninput="validarCantidad(this)">
+                            </div>
+
+                            <!-- ANCHO (SOLO ROLLOS) -->
+                            <div class="md:col-span-1">
+                                <label class="text-[10px] text-neutral-400 font-bold uppercase">Ancho (m)</label>
+                                <input type="number" name="ancho_referencia[]" step="0.01"
+                                    value="{{ detalle.ancho_referencia or '' }}" placeholder="Solo ROLLO"
+                                    class="w-full mt-2 px-3 py-3 border border-neutral-200 rounded-lg text-center text-sm">
+                            </div>
+
+                            <!-- ELIMINAR -->
+                            <div class="md:col-span-1 flex items-end justify-end">
+                                <button type="button" onclick="eliminarFila(this)"
+                                    class="text-red-500 hover:text-red-700 text-sm font-bold">
+                                    Quitar
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
                         {% else %}
-                            <!-- Fila vacía si no hay detalles -->
-                            <div class="detalle-item grid md:grid-cols-6 gap-4 p-5 border border-neutral-200 rounded-xl bg-neutral-50">
-                                <div class="md:col-span-2">
-                                    <label class="text-[10px] text-neutral-400 font-bold uppercase">Insumo</label>
-                                    <select name="uuid_insumo[]" required onchange="mostrarInfo(this)"
-                                            class="w-full mt-2 px-3 py-3 bg-white border border-neutral-200 rounded-lg text-sm">
-                                        <option value="">Selecciona...</option>
-                                        {% for insumo in insumos %}
-                                        <option value="{{ insumo.uuid_insumo }}"
-                                                data-unidad="{{ insumo.unidad_medida }}"
-                                                data-cantidad="{{ insumo.contenido_cantidad }}"
-                                                data-unidaduso="{{ insumo.contenido_unidad_medida }}"
-                                                data-ancho="{{ insumo.ancho or 0 }}">
-                                            {{ insumo.nombre }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                    <div class="info-insumo text-xs text-neutral-400 mt-1">Esperando selección...</div>
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label class="text-[10px] text-neutral-400 font-bold uppercase">Cantidad por prenda</label>
-                                    <input type="number" name="consumo_teorico_unitario[]" required min="0.01" step="0.01"
-                                           placeholder="Cantidad" class="w-full mt-2 px-3 py-3 border border-neutral-200 rounded-lg text-center text-sm"
-                                           oninput="validarCantidad(this)">
-                                </div>
-                                <div class="md:col-span-1">
-                                    <label class="text-[10px] text-neutral-400 font-bold uppercase">Ancho (m)</label>
-                                    <input type="number" name="ancho_referencia[]" step="0.01"
-                                           placeholder="Solo ROLLO" class="w-full mt-2 px-3 py-3 border border-neutral-200 rounded-lg text-center text-sm">
-                                </div>
-                                <div class="md:col-span-1 flex items-end justify-end">
-                                    <button type="button" onclick="eliminarFila(this)"
-                                            class="text-red-500 hover:text-red-700 text-sm font-bold">
-                                         Quitar
-                                    </button>
-                                </div>
+                        <!-- Fila vacía si no hay detalles -->
+                        <div
+                            class="detalle-item grid md:grid-cols-6 gap-4 p-5 border border-neutral-200 rounded-xl bg-neutral-50">
+                            <div class="md:col-span-2">
+                                <label class="text-[10px] text-neutral-400 font-bold uppercase">Insumo</label>
+                                <select name="uuid_insumo[]" required onchange="mostrarInfo(this)"
+                                    class="w-full mt-2 px-3 py-3 bg-white border border-neutral-200 rounded-lg text-sm">
+                                    <option value="">Selecciona...</option>
+                                    {% for insumo in insumos %}
+                                    <option value="{{ insumo.uuid_insumo }}" data-unidad="{{ insumo.unidad_medida }}"
+                                        data-cantidad="{{ insumo.contenido_cantidad }}"
+                                        data-unidaduso="{{ insumo.contenido_unidad_medida }}"
+                                        data-ancho="{{ insumo.ancho or 0 }}">
+                                        {{ insumo.nombre }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="info-insumo text-xs text-neutral-400 mt-1">Esperando selección...</div>
                             </div>
+                            <div class="md:col-span-2">
+                                <label class="text-[10px] text-neutral-400 font-bold uppercase">Cantidad por
+                                    prenda</label>
+                                <input type="number" name="consumo_teorico_unitario[]" required min="0.01" step="0.01"
+                                    placeholder="Cantidad"
+                                    class="w-full mt-2 px-3 py-3 border border-neutral-200 rounded-lg text-center text-sm"
+                                    oninput="validarCantidad(this)">
+                            </div>
+                            <div class="md:col-span-1">
+                                <label class="text-[10px] text-neutral-400 font-bold uppercase">Ancho (m)</label>
+                                <input type="number" name="ancho_referencia[]" step="0.01" placeholder="Solo ROLLO"
+                                    class="w-full mt-2 px-3 py-3 border border-neutral-200 rounded-lg text-center text-sm">
+                            </div>
+                            <div class="md:col-span-1 flex items-end justify-end">
+                                <button type="button" onclick="eliminarFila(this)"
+                                    class="text-red-500 hover:text-red-700 text-sm font-bold">
+                                    Quitar
+                                </button>
+                            </div>
+                        </div>
                         {% endif %}
                     </div>
 
                     <!-- BOTÓN AGREGAR INSUMO -->
                     <button type="button" onclick="agregarFila()"
-                            class="mt-4 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-xs font-bold rounded-lg border">
+                        class="mt-4 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-xs font-bold rounded-lg border">
                         + Agregar otro insumo
                     </button>
                 </section>
@@ -149,7 +146,7 @@
                 <!-- BOTÓN GUARDAR -->
                 <div class="flex justify-end mt-8">
                     <button type="submit"
-                            class="px-10 py-3 bg-black hover:bg-neutral-800 text-white text-xs font-black tracking-widest rounded-xl shadow-md uppercase transition-all">
+                        class="px-10 py-3 bg-black hover:bg-neutral-800 text-white text-xs font-black tracking-widest rounded-xl shadow-md uppercase transition-all">
                         Actualizar Receta
                     </button>
                 </div>
@@ -160,82 +157,89 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Inicializar info de insumos cargados
-    document.querySelectorAll('select[name="uuid_insumo[]"]').forEach(select => {
-        if (select.value) {
-            mostrarInfo(select);
-        }
+    document.addEventListener("DOMContentLoaded", function () {
+        // Inicializar info de insumos cargados
+        document.querySelectorAll('select[name="uuid_insumo[]"]').forEach(select => {
+            if (select.value) {
+                mostrarInfo(select);
+            }
+        });
     });
-});
 
-function mostrarInfo(select) {
-    let o = select.selectedOptions[0];
-    let div = select.parentElement.querySelector(".info-insumo");
-    let item = select.closest(".detalle-item");
-    let cantidadInput = item.querySelector('input[name="consumo_teorico_unitario[]"]');
-    let anchoInput = item.querySelector('input[name="ancho_referencia[]"]');
+    function mostrarInfo(select) {
+        let o = select.selectedOptions[0];
+        let div = select.parentElement.querySelector(".info-insumo");
+        let item = select.closest(".detalle-item");
+        let cantidadInput = item.querySelector('input[name="consumo_teorico_unitario[]"]');
+        let anchoInput = item.querySelector('input[name="ancho_referencia[]"]');
 
-    if (!o || !o.value) {
-        div.innerText = "Esperando selección...";
-        return;
+        if (!o || !o.value) {
+            div.innerText = "Esperando selección...";
+            return;
+        }
+
+        let unidad = o.dataset.unidad;
+        let cantidad = parseFloat(o.dataset.cantidad);
+        let unidadUso = o.dataset.unidaduso;
+        let ancho = parseFloat(o.dataset.ancho);
+
+        if (unidad === "PIEZA") {
+            div.innerText = `Se compra por piezas. (1 pieza = 1 pieza)`;
+            cantidadInput.placeholder = "Número de piezas";
+            cantidadInput.step = "1";
+            anchoInput.parentElement.style.display = "none";
+        } else {
+            div.innerText = `1 ROLLO = ${cantidad} ${unidadUso} | Ancho: ${ancho} m`;
+            cantidadInput.placeholder = "Metros a lo largo";
+            cantidadInput.step = "0.01";
+            anchoInput.parentElement.style.display = "block";
+        }
     }
 
-    let unidad = o.dataset.unidad;
-    let cantidad = parseFloat(o.dataset.cantidad);
-    let unidadUso = o.dataset.unidaduso;
-    let ancho = parseFloat(o.dataset.ancho);
+    function validarCantidad(input) {
+        let select = input.closest('.detalle-item').querySelector('select[name="uuid_insumo[]"]');
+        let o = select.selectedOptions[0];
+        if (!o || !o.value) return;
 
-    if (unidad === "PIEZA") {
-        div.innerText = `Se compra por piezas. (1 pieza = 1 pieza)`;
-        cantidadInput.placeholder = "Número de piezas";
-        cantidadInput.step = "1";
-        anchoInput.parentElement.style.display = "none";
-    } else {
-        div.innerText = `1 ROLLO = ${cantidad} ${unidadUso} | Ancho: ${ancho} m`;
-        cantidadInput.placeholder = "Metros a lo largo";
-        cantidadInput.step = "0.01";
-        anchoInput.parentElement.style.display = "block";
+        let unidad = o.dataset.unidad;
+
+        // Si el usuario está escribiendo un decimal empezando con "0.", no interrumpir
+        if (input.value === "0" || input.value === "0.") return;
+
+        if (unidad === "PIEZA") {
+            input.value = Math.floor(input.value) || "";
+        }
+
+        if (input.value !== "" && parseFloat(input.value) < 0) {
+            input.value = 0.01;
+        }
     }
-}
 
-function validarCantidad(input) {
-    let select = input.closest('.detalle-item').querySelector('select[name="uuid_insumo[]"]');
-    let o = select.selectedOptions[0];
-    if (!o || !o.value) return;
-    
-    let unidad = o.dataset.unidad;
-    if (unidad === "PIEZA") {
-        input.value = Math.floor(input.value) || "";
+    function agregarFila() {
+        let container = document.getElementById('insumos-container');
+        // Clonar la primera fila o crear una nueva estructura
+        let original = container.querySelector('.detalle-item');
+        let fila = original.cloneNode(true);
+
+        fila.querySelectorAll('input').forEach(i => i.value = '');
+        fila.querySelector('select').selectedIndex = 0;
+        fila.querySelector('.info-insumo').innerText = 'Esperando selección...';
+        fila.querySelector('input[name="ancho_referencia[]"]').parentElement.style.display = 'block';
+        container.appendChild(fila);
     }
-    if (parseFloat(input.value) < 0) input.value = 0.01;
-}
 
-function agregarFila() {
-    let container = document.getElementById('insumos-container');
-    // Clonar la primera fila o crear una nueva estructura
-    let original = container.querySelector('.detalle-item');
-    let fila = original.cloneNode(true);
-
-    fila.querySelectorAll('input').forEach(i => i.value = '');
-    fila.querySelector('select').selectedIndex = 0;
-    fila.querySelector('.info-insumo').innerText = 'Esperando selección...';
-    fila.querySelector('input[name="ancho_referencia[]"]').parentElement.style.display = 'block';
-    container.appendChild(fila);
-}
-
-function eliminarFila(btn) {
-    let container = document.getElementById('insumos-container');
-    if (container.querySelectorAll('.detalle-item').length > 1) {
-        btn.closest('.detalle-item').remove();
-    } else {
-        // Si es la última, solo limpiarla
-        let item = btn.closest('.detalle-item');
-        item.querySelectorAll('input').forEach(i => i.value = '');
-        item.querySelector('select').selectedIndex = 0;
-        mostrarInfo(item.querySelector('select'));
+    function eliminarFila(btn) {
+        let container = document.getElementById('insumos-container');
+        if (container.querySelectorAll('.detalle-item').length > 1) {
+            btn.closest('.detalle-item').remove();
+        } else {
+            // Si es la última, solo limpiarla
+            let item = btn.closest('.detalle-item');
+            item.querySelectorAll('input').forEach(i => i.value = '');
+            item.querySelector('select').selectedIndex = 0;
+            mostrarInfo(item.querySelector('select'));
+        }
     }
-}
 </script>
 
 {% endblock %}

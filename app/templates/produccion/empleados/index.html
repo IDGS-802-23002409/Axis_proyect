@@ -23,11 +23,11 @@ Gestión de Empleados
         <div class="flex justify-between items-center p-5 border-b border-border">
             <h3 class="font-semibold">Directorio de Empleados</h3>
             <div class="flex items-center gap-2">
-                <button onclick="window.location.href='{{ url_for('empleados.registro_empleado') }}';"
+                <a href="{{ url_for('empleados.registro_empleado') }}"
                     class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     Añadir Empleado
-                </button>
+                </a>
             </div>
         </div>
 

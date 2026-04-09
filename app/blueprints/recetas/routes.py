@@ -222,11 +222,6 @@ def edit(uuid_explosion):
         flash('Receta actualizada con éxito.', 'success')
         return redirect(url_for('recetas_bp.index'))
 
-    # Inicializar nombre_producto si es necesario (aunque no se guarde en este modelo)
-    # Si hay productos asociados, podríamos tomar el nombre de uno
-    if not form.nombre_producto.data and receta.productos:
-        form.nombre_producto.data = receta.productos[0].modelo.nombre_modelo
-
     return render_template(
         'produccion/recetas/edit.html',
         form=form,
@@ -278,6 +273,14 @@ def delete(uuid_explosion):
     if receta.estatus == 'INACTIVO':
         flash("La receta ya está inactiva", "warning")
         return redirect(url_for('recetas_bp.index'))
+
+    # Validación: Verificar que no haya órdenes en curso
+    # La receta tiene productos, y los productos tienen órdenes
+    for producto in receta.productos:
+        for orden in producto.ordenes_produccion:
+            if orden.estado in ['Pendiente', 'En Corte', 'Confección']:
+                flash(f"No se puede desactivar: la receta está en uso por la orden en curso '{orden.uuid_op[:8]}' (Estado: {orden.estado}).", "error")
+                return redirect(url_for('recetas_bp.index'))
 
     # Aquí no borramos, solo desactivamos
     receta.estatus = 'INACTIVO'

@@ -4,11 +4,43 @@
 {% block subheader %}Información del Pedido a Proveedor{% endblock %}
 
 {% block container %}
-<div class="mb-6">
+<div class="mb-6 flex justify-between items-center">
     <a href="{{ url_for('pedidos_proveedor_bp.index') }}"
         class="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a Pedidos
     </a>
+
+    {% if pedido.estatus == 'Pendiente' %}
+    <div class="flex gap-3">
+        <form action="{{ url_for('pedidos_proveedor_bp.rechazar', uuid_pedido=pedido.uuid_pedido) }}" method="POST"
+            onsubmit="return confirm('¿Seguro que deseas cancelar este pedido?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit"
+                class="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-bold text-xs uppercase hover:bg-red-100 transition-colors">
+                Cancelar
+            </button>
+        </form>
+        <form action="{{ url_for('pedidos_proveedor_bp.aprobar', uuid_pedido=pedido.uuid_pedido) }}" method="POST"
+            onsubmit="return confirm('¿Seguro que deseas aprobar este pedido? Se generará la compra para Recibir.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit"
+                class="bg-green-600 text-white border border-green-700 px-4 py-2 rounded-lg font-bold text-xs uppercase hover:bg-green-700 transition-colors">
+                Aprobar Pedido
+            </button>
+        </form>
+    </div>
+    {% elif pedido.estatus == 'Aprobado' %}
+    <div class="flex gap-3">
+        <form action="{{ url_for('pedidos_proveedor_bp.completar', uuid_pedido=pedido.uuid_pedido) }}" method="POST"
+            onsubmit="return confirm('¿Seguro que deseas marcar este pedido como COMPLETADO manualmente?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit"
+                class="bg-purple-600 text-white border border-purple-700 px-4 py-2 rounded-lg font-bold text-xs uppercase hover:bg-purple-700 transition-colors">
+                Marcar como Completado
+            </button>
+        </form>
+    </div>
+    {% endif %}
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

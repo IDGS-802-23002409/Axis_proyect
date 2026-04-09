@@ -19,7 +19,7 @@ def get_upload_folder():
 
 @categorias_bp.route("/")
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def index():
     busqueda = request.args.get("q")
     estatus = request.args.get("estatus")
@@ -39,14 +39,16 @@ def index():
             )
         )
 
+    total_global = Categoria.query.count()
+    activas_global = Categoria.query.filter_by(estatus_visible=True).count()
     categorias = query.order_by(Categoria.nombre).all()
-    return render_template("produccion/categorias/index.html", categorias=categorias)
+    return render_template("produccion/categorias/index.html", categorias=categorias, total_global=total_global, activas_global=activas_global, estatus_actual=estatus)
 
 
 #  CREAR CATEGORÍA
 @categorias_bp.route("/create", methods=["GET", "POST"])
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def create():
     form = CategoriaForm()
 
@@ -87,7 +89,7 @@ def create():
 #  EDITAR CATEGORÍA
 @categorias_bp.route("/edit/<uuid_categoria>", methods=["GET", "POST"])
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def edit(uuid_categoria):
     categoria = Categoria.query.get_or_404(uuid_categoria)
     form = CategoriaForm(obj=categoria)
@@ -102,7 +104,7 @@ def edit(uuid_categoria):
 
         if categoria_existente:
             flash(f'La categoría "{form.nombre.data}" ya existe.', "error")
-            return render_template("produccion/categorias/edit.html", form=form, title="Editar Categoría")
+            return render_template("produccion/categorias/edit.html", form=form, title="Editar Categoría", categoria=categoria)
 
         # Actualizar datos
         categoria.nombre = form.nombre.data.strip()
@@ -122,13 +124,13 @@ def edit(uuid_categoria):
         flash("Categoría actualizada correctamente", "success")
         return redirect(url_for("categorias_bp.index"))
 
-    return render_template("produccion/categorias/edit.html", form=form, title="Editar Categoría")
+    return render_template("produccion/categorias/edit.html", form=form, title="Editar Categoría", categoria=categoria)
 
 
 #  DESACTIVAR / ACTIVAR CATEGORÍA
 @categorias_bp.route("/delete/<uuid_categoria>", methods=["POST"])
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def delete(uuid_categoria):
     categoria = Categoria.query.get_or_404(uuid_categoria)
     categoria.estatus_visible = not categoria.estatus_visible

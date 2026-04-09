@@ -111,6 +111,61 @@
         }
     });
     }
+
+    // --- FILTRADO DE TABLA (CLIENT-SIDE) ---
+    document.addEventListener("DOMContentLoaded", function () {
+        // Auto-abrir modal si hay errores (pasado desde Flask)
+        const modalToOpen = "{{ modal_to_open }}";
+        if (modalToOpen) {
+            const m = document.getElementById(modalToOpen);
+            if (m) m.classList.remove('hidden');
+        }
+
+        const searchInput = document.getElementById("input-search");
+        const statusSelect = document.getElementById("select-status");
+
+        if (searchInput && statusSelect) {
+            function filterTable() {
+                const query = searchInput.value.toLowerCase();
+                const statusQuery = statusSelect.value;
+                const rows = document.querySelectorAll("tbody tr:not(#no-results-row)");
+                let count = 0;
+
+                rows.forEach(row => {
+                    const razon = row.querySelector("td:nth-child(1)").textContent.toLowerCase();
+                    const rfc = row.querySelector("td:nth-child(3)").textContent.toLowerCase();
+                    const statusText = row.querySelector("td:nth-child(5)").textContent.toLowerCase().trim();
+                    const rowStatus = statusText.includes('inactivo') ? 'inactivo' : 'activo';
+
+                    const matchesSearch = razon.includes(query) || rfc.includes(query);
+                    const matchesStatus = statusQuery === 'all' || rowStatus === statusQuery;
+
+                    if (matchesSearch && matchesStatus) {
+                        row.style.display = "";
+                        count++;
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+
+                const noResults = document.getElementById("no-results-row");
+                if (noResults) {
+                    if (count > 0) {
+                        noResults.classList.add("hidden");
+                    } else {
+                        noResults.classList.remove("hidden");
+                    }
+                }
+            }
+
+            searchInput.addEventListener("input", filterTable);
+            statusSelect.addEventListener("change", filterTable);
+
+            // Apply initial filter if any value is preset
+            filterTable();
+        }
+    });
+
 </script>
 
 <style>

@@ -25,10 +25,26 @@ def save_cart(cart):
 
 
 def calculate_cart_totals(cart):
-    subtotal = 0
+    subtotal = 0.0
     for item in cart:
-        subtotal += float(item.get('price', 0)) * int(item.get('quantity', 1))
-    shipping = 9.99 if subtotal < 100 else 0
+        # Aseguramos que el precio sea numérico (limpiamos por si viene algo raro)
+        try:
+            p_val = item.get('price', 0.0)
+            if p_val is None: p_val = 0.0
+            price = float(p_val)
+        except (ValueError, TypeError):
+            price = 0.0
+            
+        try:
+            q_val = item.get('quantity', 1)
+            if q_val is None: q_val = 1
+            quantity = int(q_val)
+        except (ValueError, TypeError):
+            quantity = 1
+            
+        subtotal += price * quantity
+        
+    shipping = 9.99 if (0 < subtotal < 100) else 0.0
     total = subtotal + shipping
     return {'subtotal': subtotal, 'shipping': shipping, 'total': total}
 
@@ -67,8 +83,13 @@ def agregar_carrito():
 
     cart = load_cart()
     total_quantity = sum(item.get('quantity', 0) for item in cart)
+    
     if total_quantity + cantidad > 100:
-        flash('El carrito no puede tener más de 100 productos en total.', 'error')
+        flash(f'No se pueden añadir {cantidad} unidades. El carrito tiene un límite máximo de 100 productos totales.', 'warning')
+        return redirect(request.referrer or url_for('catalog.catalog_view'))
+
+    if producto.precio_venta <= 0:
+        flash('Este producto no tiene un precio configurado y no puede venderse.', 'error')
         return redirect(request.referrer or url_for('catalog.catalog_view'))
 
     # Buscar si ya existe este producto específico (por su uuid_producto real)
@@ -193,7 +214,9 @@ def procesar_checkout():
         from app.models.produccion import OrdenProduccion
         from app.models.explosion_materiales import ExplosionMaterialesCabecera
         
-        numero_pedido = f"AXIS-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
+        # Generar folio seguro (máx 25 caracteres según el modelo)
+        # AXIS (4) + DATE (8) + - (1) + UUID[:6] (6) = 19 caracteres
+        numero_pedido = f"AXIS-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
         
         # Determinar si el pedido completo será Pendiente o Completado
         # Regla: Si hay stock insuficiente en AL MENOS UN producto, el pedido queda Pendiente.
@@ -347,7 +370,9 @@ def procesar_checkout():
 
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al procesar el pedido: {str(e)}', 'error')
+        import traceback
+        print(traceback.format_exc()) # Log para consola
+        flash(f'Error al procesar el pedido (DB): {str(e)}', 'error')
         return redirect(url_for('checkout.checkout_view'))
 
 
