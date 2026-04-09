@@ -13,11 +13,11 @@
     {% if pedido.estatus == 'Pendiente' %}
     <div class="flex gap-3">
         <form action="{{ url_for('pedidos_proveedor_bp.rechazar', uuid_pedido=pedido.uuid_pedido) }}" method="POST"
-            onsubmit="return confirm('¿Seguro que deseas rechazar este pedido?');">
+            onsubmit="return confirm('¿Seguro que deseas cancelar este pedido?');">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit"
                 class="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-bold text-xs uppercase hover:bg-red-100 transition-colors">
-                Rechazar
+                Cancelar
             </button>
         </form>
         <form action="{{ url_for('pedidos_proveedor_bp.aprobar', uuid_pedido=pedido.uuid_pedido) }}" method="POST"
