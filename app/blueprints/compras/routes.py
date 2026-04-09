@@ -249,27 +249,34 @@ def recibir(uuid_compra):
                             )
                             return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
 
-            # En la recepción no se pueden modificar insumos, cantidades ni costos.
-            # Solo se verifica y se ingresa el metraje_real para rollos.
-            metrajes_reales = request.form.getlist("metraje_real[]")
-
             # Validar tolerancia para rollos
-            for i, detalle in enumerate(compra.detalles):
+            for detalle in compra.detalles:
                 insumo = detalle.insumo
                 cantidad = detalle.cantidad_comprada
 
                 if insumo.unidad_medida == "ROLLO":
+                    input_name = f"metraje_real_{detalle.uuid_detalle_compra}"
+                    metraje_form = request.form.get(input_name)
+                    
                     try:
-                        metraje_real = Decimal(metrajes_reales[i])
-                    except (InvalidOperation, TypeError, IndexError):
-                        flash("Metraje real inválido.", "error")
+                        metraje_real = Decimal(metraje_form)
+                    except (InvalidOperation, TypeError):
+                        flash(f"Metraje real inválido para {insumo.nombre}.", "error")
                         return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
 
                     metraje_esperado = cantidad * Decimal(insumo.contenido_cantidad)
-                    tolerancia = cantidad * Decimal('0.05') # 5cm por rollo
+                    # Tolerancia de +- 5cm (0.05m) por cada UNIDAD (rollo) del pedido
+                    tolerancia = cantidad * Decimal('0.05')
 
-                    if abs(metraje_real - metraje_esperado) > tolerancia:
-                        flash(f"Rechazado: {insumo.nombre} no cumple la tolerancia exacta (±5cm por rollo). Esperado: {metraje_esperado}m, Recibido: {metraje_real}m.", "error")
+                    # Usamos una pequeña epsilon para evitar problemas de precisión decimal en el límite exacto
+                    diff = abs(metraje_real - metraje_esperado)
+                    if diff > (tolerancia + Decimal('0.0001')):
+                        flash(
+                            f"Rechazado: {insumo.nombre} fuera de tolerancia (±5cm por rollo). "
+                            f"Esperado: {metraje_esperado}m, Recibido: {metraje_real}m. "
+                            f"Máximo permitido: {metraje_esperado + tolerancia}m, Mínimo: {metraje_esperado - tolerancia}m.", 
+                            "error"
+                        )
                         return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
 
                     # Si es aceptado, actualizamos stock y creamos rollos
