@@ -1,77 +1,88 @@
-<div class="bg-[#111111] border border-gray-800 rounded-2xl overflow-hidden shadow-2xl">
-    <div class="p-6 border-b border-gray-800 flex items-center gap-3">
+<div class="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm">
+    <div class="p-6 border-b border-neutral-100 flex items-center gap-3 bg-white">
         <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500"></i>
-        <h2 class="text-sm font-bold uppercase tracking-wider text-white">Alertas de Insumos Críticos</h2>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-black">Alertas de Insumos Críticos</h2>
     </div>
 
     <div class="overflow-x-auto">
         <table class="w-full text-left">
-            <thead class="text-[10px] uppercase text-gray-500 tracking-widest border-b border-gray-800 bg-gray-900/20">
+            <thead class="text-[10px] uppercase text-neutral-400 tracking-widest border-b border-neutral-100 bg-neutral-50/50">
                 <tr>
-                    <th class="px-8 py-4 font-semibold">Insumo</th>
-                    <th class="px-4 py-4 font-semibold">Proveedor Principal</th>
-                    <th class="px-4 py-4 font-semibold">Stock Actual</th>
-                    <th class="px-4 py-4 font-semibold text-center">Mínimo Requerido</th>
-                    <th class="px-4 py-4 font-semibold">Estado</th>
-                    <th class="px-8 py-4 font-semibold text-right">Acción Sugerida</th>
+                    <th class="px-8 py-4 font-bold">Insumo</th>
+                    <th class="px-4 py-4 font-bold">Proveedor Principal</th>
+                    <th class="px-4 py-4 font-bold">Stock Actual</th>
+                    <th class="px-4 py-4 font-bold text-center">Mínimo Requerido</th>
+                    <th class="px-4 py-4 font-bold">Estado</th>
+                    <th class="px-8 py-4 font-bold text-right">Acción Sugerida</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-800">
+            <tbody class="divide-y divide-neutral-100">
                 {% for item in criticos %}
-                <tr class="hover:bg-gray-800/20 transition-all group">
+                <tr class="hover:bg-neutral-50 transition-all group">
 
                     {# Insumo #}
                     <td class="px-8 py-5">
                         <div class="flex items-center gap-4">
-                            <div class="bg-gray-900 p-3 rounded-xl border border-gray-800 group-hover:border-gray-700">
-                                <i data-lucide="box" class="w-5 h-5 text-gray-500"></i>
+                            <div class="bg-neutral-50 p-3 rounded-xl border border-neutral-100 group-hover:border-neutral-200 transition-colors">
+                                <i data-lucide="box" class="w-5 h-5 text-neutral-400"></i>
                             </div>
                             <div>
-                                <p class="text-[10px] text-gray-600 font-mono tracking-tighter">{{ item.sku }}</p>
-                                <p class="text-sm font-bold text-gray-200">{{ item.nombre }}</p>
+                                <p class="text-[10px] text-neutral-400 font-mono tracking-tighter">{{ item.sku }}</p>
+                                <p class="text-sm font-bold text-neutral-900">{{ item.nombre }}</p>
                             </div>
                         </div>
                     </td>
 
                     {# Proveedor #}
-                    <td class="px-4 py-5 text-xs text-gray-400 italic">
-                        {{ item.proveedor_nombre }}
+                    <td class="px-4 py-5 text-xs text-neutral-500 italic">
+                        {{ item.proveedor_nombre or "Sin asignar" }}
                     </td>
 
                     {# Stock #}
                     <td class="px-4 py-5">
                         <div class="flex items-center gap-1">
-                            <span class="text-sm font-bold
-                                {% if item.estado == 'AGOTADO' %}text-red-400{% else %}text-amber-400{% endif %}">
+                            <span class="text-sm font-bold {% if item.estado == 'AGOTADO' %}text-red-600{% else %}text-amber-600{% endif %}">
                                 {{ item.stock }}
                             </span>
-                            <span class="text-[10px] text-gray-600 uppercase font-medium">uds.</span>
+                            <span class="text-[10px] text-neutral-400 uppercase font-medium">uds.</span>
                         </div>
                     </td>
 
                     {# Mínimo #}
-                    <td class="px-4 py-5 text-center text-xs text-gray-400 font-medium">
+                    <td class="px-4 py-5 text-center text-xs text-neutral-500 font-medium">
                         {{ item.minimo }} uds.
                     </td>
 
-                    {# Estado #}
+                    {# Estado con Badges mejorados #}
                     <td class="px-4 py-5">
                         {% if item.estado == 'AGOTADO' %}
-                        <span
-                            class="bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter italic">
+                        <span class="bg-red-50 text-red-600 border border-red-100 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider">
                             ● AGOTADO
                         </span>
                         {% else %}
-                        <span
-                            class="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter italic">
+                        <span class="bg-amber-50 text-amber-600 border border-amber-100 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider">
                             ● BAJO STOCK
                         </span>
                         {% endif %}
                     </td>
 
-                    {# Acción #}
+                    {# Acción con estilo AXIS (Negro y Minimalista) #}
                     <td class="px-8 py-5 text-right">
                         {% if item.estado == 'AGOTADO' %}
+                        <a href="{{ url_for('proveedores.index') }}" 
+                           class="inline-block bg-black text-white px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-neutral-800 transition-all shadow-sm">
+                            Crear Orden
+                        </a>
+                        {% else %}
+                        <button onclick='abrirModalProveedor({
+                            "insumo_nombre": {{ item.nombre | tojson }},
+                            "insumo_sku": {{ item.sku | tojson }},
+                            "prov_nombre": {{ (item.proveedor_nombre or "No asignado") | tojson }},
+                            "prov_rfc": {{ (item.proveedor_rfc or "N/A") | tojson }},
+                            "prov_contacto": {{ (item.proveedor_contacto or "N/A") | tojson }},
+                            "prov_tel": {{ (item.proveedor_tel or "") | tojson }},
+                            "prov_uuid": {{ (item.proveedor_uuid or "") | tojson }}
+                        })' class="bg-white border border-neutral-200 text-black px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-neutral-50 transition-all shadow-sm">
                         {# Redirige a la vista de Pedidos A Proveedor con pre-llenado #}
                         <a href="{{ url_for('pedidos_proveedor_bp.create', uuid_proveedor=item.proveedor_uuid or '', uuid_insumo=item.uuid_insumo) }}"
                             class="inline-block bg-red-500/10 border border-red-500/30 hover:bg-red-500 text-red-400 hover:text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">
@@ -96,12 +107,14 @@
                 {% if not criticos %}
                 <tr>
                     <td colspan="6" class="px-8 py-16 text-center">
-                        <div class="flex flex-col items-center gap-3 opacity-40">
-                            <i data-lucide="check-circle" class="w-10 h-10 text-green-500"></i>
-                            <p class="text-sm font-bold text-gray-400 uppercase tracking-widest">
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="bg-green-50 p-4 rounded-full">
+                                <i data-lucide="check-circle" class="w-8 h-8 text-green-500"></i>
+                            </div>
+                            <p class="text-sm font-bold text-neutral-800 uppercase tracking-widest">
                                 Sin alertas críticas
                             </p>
-                            <p class="text-xs text-gray-600">Todos los insumos están dentro del rango normal.</p>
+                            <p class="text-xs text-neutral-400">Todos los insumos están dentro del rango normal.</p>
                         </div>
                     </td>
                 </tr>
