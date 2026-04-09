@@ -69,28 +69,14 @@
                     {# Acción con estilo AXIS (Negro y Minimalista) #}
                     <td class="px-8 py-5 text-right">
                         {% if item.estado == 'AGOTADO' %}
-                        <a href="{{ url_for('proveedores.index') }}" 
-                           class="inline-block bg-black text-white px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-neutral-800 transition-all shadow-sm">
-                            Crear Orden
-                        </a>
-                        {% else %}
-                        <button onclick='abrirModalProveedor({
-                            "insumo_nombre": {{ item.nombre | tojson }},
-                            "insumo_sku": {{ item.sku | tojson }},
-                            "prov_nombre": {{ (item.proveedor_nombre or "No asignado") | tojson }},
-                            "prov_rfc": {{ (item.proveedor_rfc or "N/A") | tojson }},
-                            "prov_contacto": {{ (item.proveedor_contacto or "N/A") | tojson }},
-                            "prov_tel": {{ (item.proveedor_tel or "") | tojson }},
-                            "prov_uuid": {{ (item.proveedor_uuid or "") | tojson }}
-                        })' class="bg-white border border-neutral-200 text-black px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-neutral-50 transition-all shadow-sm">
                         {# Redirige a la vista de Pedidos A Proveedor con pre-llenado #}
                         <a href="{{ url_for('pedidos_proveedor_bp.create', uuid_proveedor=item.proveedor_uuid or '', uuid_insumo=item.uuid_insumo) }}"
-                            class="inline-block bg-red-500/10 border border-red-500/30 hover:bg-red-500 text-red-400 hover:text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">
+                            class="inline-block bg-black text-white px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-neutral-800 transition-all shadow-sm">
                             Crear Orden
                         </a>
                         {% else %}
                         <button
-                            class="btn-contactar bg-transparent border border-gray-700 hover:bg-white hover:text-black hover:border-white text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                            class="btn-contactar bg-white border border-neutral-200 text-black px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-neutral-50 transition-all shadow-sm"
                             data-nombre="{{ item.nombre }}" data-sku="{{ item.sku or '—' }}"
                             data-prov-nombre="{{ item.proveedor_nombre or 'No asignado' }}"
                             data-prov-rfc="{{ item.proveedor_rfc or 'N/A' }}"
