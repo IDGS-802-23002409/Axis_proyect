@@ -77,7 +77,7 @@
                                 {% for corte in cortes %}
                                 <tr>
                                     <td class="px-4 py-4 font-mono text-xs">{{ corte.uuid_rollo_used[:8] }}...</td>
-                                    <td class="px-4 py-4">{{ corte.rollo.insumo.nombre }}</td>
+                                    <td class="px-4 py-4">{{ corte.rollo_usado.insumo.nombre }}</td>
                                     <td class="px-4 py-4 text-right">{{ corte.metros_teoricos_requeridos }} m</td>
                                     <td class="px-4 py-4 text-right font-bold">{{ corte.prendas_reales_logradas }}</td>
                                 </tr>

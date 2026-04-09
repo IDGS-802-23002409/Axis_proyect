@@ -211,9 +211,9 @@ def rechazar(uuid_pedido):
         flash('Solo se pueden rechazar pedidos pendientes.', 'error')
         return redirect(url_for('pedidos_proveedor_bp.ver', uuid_pedido=uuid_pedido))
     
-    pedido.estatus = 'Rechazado'
+    pedido.estatus = 'Cancelado'
     db.session.commit()
-    flash('Pedido rechazado.', 'success')
+    flash('Pedido cancelado.', 'success')
     return redirect(url_for('pedidos_proveedor_bp.index'))
 
 @pedidos_proveedor_bp.route("/completar/<uuid_pedido>", methods=["POST"])

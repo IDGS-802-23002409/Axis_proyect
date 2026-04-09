@@ -1,31 +1,81 @@
 from flask import render_template, flash, request
-from flask_security import login_required, roles_required, roles_accepted
+from flask_security import login_required, roles_accepted
 from . import dashboard_bp
 from app.utils.database_connection import db
 from app.models.ventas import VentaEncabezado, VentaDetalle
 from app.models.modelos_productos import ProductoTerminado, ModeloRopa
-from app.models.produccion import OrdenProduccion
 from app.models.insumos import Insumo
-from sqlalchemy import func, case
+from sqlalchemy import func, extract
 from datetime import datetime, timedelta
+from calendar import monthrange
 
 
-def _suma_ventas(fecha_inicio, fecha_fin):
-    return db.session.query(
-        func.sum(VentaDetalle.cantidad * VentaDetalle.precio_unitario_historico)
-    ).join(VentaEncabezado).filter(
-        func.date(VentaEncabezado.fecha_venta) >= fecha_inicio,
-        func.date(VentaEncabezado.fecha_venta) <= fecha_fin,
-    ).scalar() or 0
+def _ventas_por_dia(year: int, month: int) -> dict:
+    """Devuelve {dia: monto} para todos los días del mes indicado."""
+    rows = (
+        db.session.query(
+            extract('day', VentaEncabezado.fecha_venta).label('dia'),
+            func.sum(
+                VentaDetalle.cantidad * VentaDetalle.precio_unitario_historico
+            ).label('monto'),
+        )
+        .join(VentaDetalle, VentaEncabezado.uuid_venta == VentaDetalle.uuid_venta)
+        .filter(
+            extract('year',  VentaEncabezado.fecha_venta) == year,
+            extract('month', VentaEncabezado.fecha_venta) == month,
+        )
+        .group_by('dia')
+        .all()
+    )
+    return {int(r.dia): float(r.monto) for r in rows}
 
 
-def _suma_unidades(fecha_inicio, fecha_fin):
-    return db.session.query(
-        func.sum(VentaDetalle.cantidad)
-    ).join(VentaEncabezado).filter(
-        func.date(VentaEncabezado.fecha_venta) >= fecha_inicio,
-        func.date(VentaEncabezado.fecha_venta) <= fecha_fin,
-    ).scalar() or 0
+def _top_bottom_productos(fecha_inicio, fecha_fin):
+    """
+    Devuelve (top_unidades, top_monto, bottom_unidades, bottom_monto)
+    para el rango dado.
+    """
+    base = (
+        db.session.query(
+            ModeloRopa.nombre_modelo,
+            ProductoTerminado.talla,
+            func.coalesce(func.sum(VentaDetalle.cantidad), 0).label('total_u'),
+            func.coalesce(
+                func.sum(VentaDetalle.cantidad * VentaDetalle.precio_unitario_historico), 0
+            ).label('total_m'),
+        )
+        .select_from(ProductoTerminado)
+        .join(ModeloRopa, ProductoTerminado.uuid_modelo == ModeloRopa.uuid_modelo)
+        .outerjoin(VentaDetalle,    ProductoTerminado.uuid_producto == VentaDetalle.uuid_producto)
+        .outerjoin(VentaEncabezado, VentaDetalle.uuid_venta == VentaEncabezado.uuid_venta)
+        .filter(
+            (func.date(VentaEncabezado.fecha_venta).between(fecha_inicio, fecha_fin)) |
+            (VentaEncabezado.fecha_venta == None)
+        )
+        .group_by(ModeloRopa.nombre_modelo, ProductoTerminado.talla)
+        .all()
+    )
+
+    if not base:
+        return None, None, None, None
+
+    by_u = sorted(base, key=lambda r: r.total_u, reverse=True)
+    by_m = sorted(base, key=lambda r: r.total_m, reverse=True)
+
+    def _fmt(r, key):
+        return {
+            'nombre'  : f"{r.nombre_modelo} · {r.talla}",
+            'unidades': int(r.total_u),
+            'monto'   : float(r.total_m),
+            'imagen'  : None,
+        }
+
+    return (
+        _fmt(by_u[0],  'u'),   # top por unidades
+        _fmt(by_m[0],  'm'),   # top por monto
+        _fmt(by_u[-1], 'u'),   # bottom por unidades
+        _fmt(by_m[-1], 'm'),   # bottom por monto
+    )
 
 
 @dashboard_bp.route('/')
@@ -33,185 +83,96 @@ def _suma_unidades(fecha_inicio, fecha_fin):
 @roles_accepted('admin', 'gerente')
 def index():
     try:
-        hoy  = datetime.now().date()
-        ayer = hoy - timedelta(days=1)
+        hoy         = datetime.now().date()
+        mes_actual  = hoy.month
+        anio_actual = hoy.year
 
-        # ── 1. Filtros GET ────────────────────────────────────────────────
-        start_str = request.args.get('start')
-        end_str   = request.args.get('end')
+        # Mes anterior
+        if mes_actual == 1:
+            mes_ant  = 12
+            anio_ant = anio_actual - 1
+        else:
+            mes_ant  = mes_actual - 1
+            anio_ant = anio_actual
 
-        fecha_inicio = hoy
-        fecha_fin    = hoy
-
-        if start_str and end_str:
-            try:
-                fecha_inicio = datetime.strptime(start_str, '%Y-%m-%d').date()
-                fecha_fin    = datetime.strptime(end_str,   '%Y-%m-%d').date()
-                if fecha_inicio > fecha_fin:
-                    raise ValueError("Rango inválido")
-            except ValueError as exc:
-                flash(f"Fechas incorrectas: {exc}", "warning")
-                fecha_inicio = fecha_fin = hoy
-
-        # ── 2. KPI Ventas + comparativa ───────────────────────────────────
-        delta_dias  = (fecha_fin - fecha_inicio).days + 1
-        inicio_prev = fecha_inicio - timedelta(days=delta_dias)
-        fin_prev    = fecha_inicio - timedelta(days=1)
-
-        ventas_rango = float(_suma_ventas(fecha_inicio, fecha_fin))
-        ventas_prev  = float(_suma_ventas(inicio_prev, fin_prev))
-
-        variacion_ventas_pct = (
-            ((ventas_rango - ventas_prev) / ventas_prev) * 100
-            if ventas_prev > 0 else (100.0 if ventas_rango > 0 else 0.0)
-        )
-        tendencia_ventas = "up" if variacion_ventas_pct >= 0 else "down"
-
-        # ── 3. KPI Unidades + comparativa ─────────────────────────────────
-        unidades_rango = int(_suma_unidades(fecha_inicio, fecha_fin))
-        unidades_prev  = int(_suma_unidades(inicio_prev, fin_prev))
-
-        variacion_unidades_pct = (
-            ((unidades_rango - unidades_prev) / unidades_prev) * 100
-            if unidades_prev > 0 else (100.0 if unidades_rango > 0 else 0.0)
-        )
-        tendencia_unidades = "up" if variacion_unidades_pct >= 0 else "down"
-
-        # ── 4. KPI Órdenes de producción ──────────────────────────────────
-        estados_activos = ('Pendiente', 'En Corte', 'Confección')
-        ops_por_estado  = db.session.query(
-            OrdenProduccion.estado,
-            func.count(OrdenProduccion.uuid_op).label('cantidad')
-        ).filter(OrdenProduccion.estado.in_(estados_activos))\
-         .group_by(OrdenProduccion.estado).all()
-
-        ops_produccion = {
-            'abiertas'  : sum(r.cantidad for r in ops_por_estado),
-            'pendientes': next((r.cantidad for r in ops_por_estado if r.estado == 'Pendiente'), 0),
-            'en_corte'  : next((r.cantidad for r in ops_por_estado if r.estado == 'En Corte'), 0),
-            'confeccion': next((r.cantidad for r in ops_por_estado if r.estado == 'Confección'), 0),
-        }
-
-        # ── 5. Alertas de stock — SIN filtro active ────────────────────────
-        alertas_stock = db.session.query(
-            ModeloRopa.nombre_modelo,
-            ProductoTerminado.talla,
-            ProductoTerminado.stock_fisico_actual,
-            ProductoTerminado.stock_minimo_alerta,
-        ).join(ModeloRopa).filter(
-            ProductoTerminado.stock_fisico_actual <= ProductoTerminado.stock_minimo_alerta,
-        ).order_by(ProductoTerminado.stock_fisico_actual.asc()).limit(5).all()
-
-        # ── 5b. Alertas de insumos ─────────────────────────────────────────
-        alertas_insumos = db.session.query(
-            Insumo.nombre,
-            Insumo.stock_total_acumulado,
-            Insumo.stock_minimo_alerta,
-        ).filter(
-            Insumo.stock_total_acumulado <= Insumo.stock_minimo_alerta
-        ).order_by(Insumo.stock_total_acumulado.asc()).limit(5).all()
-
-        total_rupturas = len(alertas_stock) + len(alertas_insumos)
-
-        # ── 6. Top 5 productos más vendidos ───────────────────────────────
-        top_productos_raw = db.session.query(
-            ModeloRopa.nombre_modelo,
-            ProductoTerminado.talla,
-            func.sum(VentaDetalle.cantidad).label('total_unidades'),
-            func.sum(
-                VentaDetalle.cantidad * VentaDetalle.precio_unitario_historico
-            ).label('total_ingresos'),
-        ).select_from(VentaDetalle)\
-         .join(ProductoTerminado, VentaDetalle.uuid_producto == ProductoTerminado.uuid_producto)\
-         .join(ModeloRopa,        ProductoTerminado.uuid_modelo == ModeloRopa.uuid_modelo)\
-         .join(VentaEncabezado,   VentaDetalle.uuid_venta == VentaEncabezado.uuid_venta)\
-         .filter(
-             func.date(VentaEncabezado.fecha_venta) >= fecha_inicio,
-             func.date(VentaEncabezado.fecha_venta) <= fecha_fin,
-         ).group_by(ModeloRopa.nombre_modelo, ProductoTerminado.talla)\
-          .order_by(func.sum(VentaDetalle.cantidad).desc())\
-          .limit(5).all()
-
-        top_productos = top_productos_raw  # lista para tabla
-
-        # ── 7. Top producto y bottom producto (para las cards) ─────────────
-        # Período extendido: últimos 30 días para tener más datos
-        hace_30 = hoy - timedelta(days=30)
-
-        ranking_completo = db.session.query(
-            ModeloRopa.nombre_modelo,
-            ProductoTerminado.talla,
-            ProductoTerminado.stock_fisico_actual,
-            func.coalesce(func.sum(VentaDetalle.cantidad), 0).label('total_vendido'),
-            func.coalesce(
-                func.sum(VentaDetalle.cantidad * VentaDetalle.precio_unitario_historico), 0
-            ).label('total_monto'),
-        ).select_from(ProductoTerminado)\
-         .join(ModeloRopa, ProductoTerminado.uuid_modelo == ModeloRopa.uuid_modelo)\
-         .outerjoin(VentaDetalle,   ProductoTerminado.uuid_producto == VentaDetalle.uuid_producto)\
-         .outerjoin(VentaEncabezado, VentaDetalle.uuid_venta == VentaEncabezado.uuid_venta)\
-         .filter(
-             (func.date(VentaEncabezado.fecha_venta) >= hace_30) |
-             (VentaEncabezado.fecha_venta == None)
-         ).group_by(
-             ModeloRopa.nombre_modelo,
-             ProductoTerminado.talla,
-             ProductoTerminado.stock_fisico_actual,
-         ).order_by(func.coalesce(func.sum(VentaDetalle.cantidad), 0).desc())\
-          .all()
-
-        top_producto    = None
-        bottom_producto = None
-
-        if ranking_completo:
-            t = ranking_completo[0]
-            top_producto = {
-                'nombre'  : f"{t.nombre_modelo} · {t.talla}",
-                'unidades': int(t.total_vendido),
-                'monto'   : float(t.total_monto),
-                'imagen'  : None,
-            }
-            b = ranking_completo[-1]
-            bottom_producto = {
-                'nombre' : f"{b.nombre_modelo} · {b.talla}",
-                'stock'  : int(b.stock_fisico_actual or 0),
-                'imagen' : None,
-            }
-
-        # ── 8. Gráfica: últimos 7 días ────────────────────────────────────
-        chart_labels = []
-        chart_data   = []
-
-        for i in range(6, -1, -1):
-            dia = hoy - timedelta(days=i)
-            chart_labels.append(dia.strftime('%d %b'))
-            monto = db.session.query(
+        # ── KPI: ventas del mes actual (acumulado hasta hoy) ──────────────
+        ventas_mes = float(
+            db.session.query(
                 func.sum(VentaDetalle.cantidad * VentaDetalle.precio_unitario_historico)
-            ).join(VentaEncabezado)\
-             .filter(func.date(VentaEncabezado.fecha_venta) == dia)\
+            ).join(VentaEncabezado)
+             .filter(
+                 extract('year',  VentaEncabezado.fecha_venta) == anio_actual,
+                 extract('month', VentaEncabezado.fecha_venta) == mes_actual,
+             ).scalar() or 0
+        )
+
+        # KPI: ventas mes anterior (completo)
+        ventas_mes_ant = float(
+            db.session.query(
+                func.sum(VentaDetalle.cantidad * VentaDetalle.precio_unitario_historico)
+            ).join(VentaEncabezado)
+             .filter(
+                 extract('year',  VentaEncabezado.fecha_venta) == anio_ant,
+                 extract('month', VentaEncabezado.fecha_venta) == mes_ant,
+             ).scalar() or 0
+        )
+
+        variacion_pct = (
+            round(((ventas_mes - ventas_mes_ant) / ventas_mes_ant) * 100, 1)
+            if ventas_mes_ant > 0 else (100.0 if ventas_mes > 0 else 0.0)
+        )
+        tendencia = "up" if variacion_pct >= 0 else "down"
+
+        # ── KPI: ventas de HOY ─────────────────────────────────────────────
+        ventas_hoy = float(
+            db.session.query(
+                func.sum(VentaDetalle.cantidad * VentaDetalle.precio_unitario_historico)
+            ).join(VentaEncabezado)
+             .filter(func.date(VentaEncabezado.fecha_venta) == hoy)
              .scalar() or 0
-            chart_data.append(float(monto))
+        )
+
+        # ── Gráfica: mes actual vs mes anterior día a día ─────────────────
+        dias_mes_actual = monthrange(anio_actual, mes_actual)[1]
+        dias_mes_ant    = monthrange(anio_ant, mes_ant)[1]
+        max_dias        = max(dias_mes_actual, dias_mes_ant)
+
+        datos_actual = _ventas_por_dia(anio_actual, mes_actual)
+        datos_ant    = _ventas_por_dia(anio_ant, mes_ant)
+
+        chart_labels   = [str(d) for d in range(1, max_dias + 1)]
+        chart_data_act = [datos_actual.get(d, 0) for d in range(1, max_dias + 1)]
+        chart_data_ant = [datos_ant.get(d, 0)    for d in range(1, max_dias + 1)]
+
+        # Nombres de meses en español para la leyenda
+        MESES = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+                 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+        label_actual = f"{MESES[mes_actual]} {anio_actual}"
+        label_ant    = f"{MESES[mes_ant]} {anio_ant}"
+
+        # ── Top / Bottom productos (últimos 30 días) ───────────────────────
+        hace_30 = hoy - timedelta(days=30)
+        top_u, top_m, bot_u, bot_m = _top_bottom_productos(hace_30, hoy)
 
         return render_template(
             'dashboard/index.html',
-            ventas_hoy             = ventas_rango,
-            variacion_ventas_pct   = round(variacion_ventas_pct, 1),
-            tendencia_ventas       = tendencia_ventas,
-            unidades_24h           = unidades_rango,
-            variacion_unidades_pct = round(variacion_unidades_pct, 1),
-            tendencia_unidades     = tendencia_unidades,
-            ops_produccion         = ops_produccion,
-            alertas_stock          = alertas_stock,
-            alertas_insumos        = alertas_insumos,
-            total_rupturas         = total_rupturas,
-            top_productos          = top_productos,
-            top_producto           = top_producto,
-            bottom_producto        = bottom_producto,
-            rotacion               = [],
-            chart_labels           = chart_labels,
-            chart_data             = chart_data,
-            fecha_inicio           = fecha_inicio.strftime('%Y-%m-%d'),
-            fecha_fin              = fecha_fin.strftime('%Y-%m-%d'),
+            # KPIs
+            ventas_hoy       = ventas_hoy,
+            ventas_mes       = ventas_mes,
+            ventas_mes_ant   = ventas_mes_ant,
+            variacion_pct    = variacion_pct,
+            tendencia        = tendencia,
+            label_actual     = label_actual,
+            label_ant        = label_ant,
+            # Cards productos
+            top_u            = top_u,
+            top_m            = top_m,
+            bot_u            = bot_u,
+            bot_m            = bot_m,
+            # Gráfica
+            chart_labels     = chart_labels,
+            chart_data_act   = chart_data_act,
+            chart_data_ant   = chart_data_ant,
         )
 
     except Exception as e:
@@ -219,8 +180,9 @@ def index():
         flash(f"Error interno: {str(e)}", "danger")
         return render_template(
             'dashboard/index.html',
-            ops_produccion={}, alertas_stock=[], alertas_insumos=[],
-            top_productos=[], top_producto=None, bottom_producto=None,
-            chart_labels=[], chart_data=[],
-            ventas_hoy=0, unidades_24h=0, total_rupturas=0, rotacion=[],
+            ventas_hoy=0, ventas_mes=0, ventas_mes_ant=0,
+            variacion_pct=0, tendencia='up',
+            label_actual='', label_ant='',
+            top_u=None, top_m=None, bot_u=None, bot_m=None,
+            chart_labels=[], chart_data_act=[], chart_data_ant=[],
         )

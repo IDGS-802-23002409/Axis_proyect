@@ -175,6 +175,23 @@ def editar_producto(uuid):
                 explosiones_data=data_explosiones
             )
 
+        # NUEVO: Validar si se intenta cambiar la receta y hay órdenes activas
+        if form.explosion.data != producto.uuid_explosion:
+            from app.models.produccion import OrdenProduccion
+            ordenes_activas = OrdenProduccion.query.filter(
+                OrdenProduccion.uuid_producto == producto.uuid_producto,
+                OrdenProduccion.estado != 'Terminado'
+            ).first()
+            
+            if ordenes_activas:
+                flash('No se puede cambiar la receta porque existen órdenes de producción activas para este producto.', 'error')
+                return render_template(
+                    'produccion/productos_terminados/update_producto.html',
+                    form=form,
+                    producto=producto,
+                    explosiones_data=data_explosiones
+                )
+
         # Actualizar datos (SIN stock)
         producto.uuid_modelo = form.modelo.data
         producto.uuid_explosion = form.explosion.data
