@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 from flask import Flask, redirect, url_for
 from flask_migrate import Migrate
@@ -83,6 +84,11 @@ def create_app():
     }
     application.config['SECURITY_TOTP_ISSUER'] = 'Axis Urban Apparel'
 
+    # Seguridad avanzada: Códigos de recuperación y Sesiones
+    application.config['SECURITY_MULTI_FACTOR_RECOVERY_CODES'] = True
+    application.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
+    application.config['SESSION_REFRESH_EACH_REQUEST'] = True
+
     # Plantillas personalizadas
     application.config['SECURITY_LOGIN_USER_TEMPLATE'] = 'security/login.html'
     application.config['SECURITY_REGISTER_USER_TEMPLATE'] = 'security/register_user.html'
@@ -91,6 +97,7 @@ def create_app():
     application.config['SECURITY_FORGOT_PASSWORD_TEMPLATE'] = 'security/reset_password.html'
     application.config['SECURITY_TWO_FACTOR_SETUP_TEMPLATE'] = 'security/two_factor_setup.html'
     application.config['SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE'] = 'security/two_factor_verify_code.html'
+    application.config['SECURITY_TWO_FACTOR_RESCUE_TEMPLATE'] = 'security/two_factor_rescue.html'
 
     # Redirecciones
     application.config['SECURITY_POST_LOGIN_VIEW'] = '/security/post-login'
@@ -238,6 +245,7 @@ def create_app():
         no verá la información anterior.
         """
         if current_user.is_authenticated:
+            session.permanent = True
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, post-check=0, pre-check=0"
             response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"
