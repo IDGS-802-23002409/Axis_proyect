@@ -80,8 +80,8 @@
                         <!-- METRAJE REAL -->
                         <td class="px-4 py-4">
                             {% if detalle.insumo.unidad_medida == 'ROLLO' %}
-                            <input type="number" step="0.01" name="metraje_real[]" required
-                                placeholder="Ej: {{ detalle.cantidad_comprada * detalle.insumo.contenido_cantidad }}"
+                            <input type="number" step="0.01" name="metraje_real_{{ detalle.uuid_detalle_compra }}" required
+                                placeholder="Ej: {{ (detalle.cantidad_comprada * detalle.insumo.contenido_cantidad)|round(2) }}"
                                 class="w-full border rounded-lg px-3 py-2 text-sm bg-white">
                             <p class="text-[10px] text-neutral-500 mt-1">Esperado: {{ detalle.cantidad_comprada * detalle.insumo.contenido_cantidad }} m</p>
                             {% else %}
