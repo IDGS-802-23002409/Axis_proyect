@@ -7,13 +7,14 @@ class ExplosionMaterialesCabecera(db.Model):
     __tablename__ = 'explosion_materiales_cabecera'
 
     uuid_explosion = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    #uuid_producto = Column(String(36), ForeignKey('productos_terminados.uuid_producto'), unique=True, nullable=False)
+    nombre_receta = Column(String(100), nullable=False)
     instrucciones_proceso = Column(Text)
+    uuid_categoria = Column(String(36), ForeignKey('categorias.uuid_categoria'), nullable=False)
+    talla = Column(Enum('XSS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'Unica'), nullable=False)
+    fecha_creacion = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
-    #falta saber quien lo hizo
-    # NUEVO: usuario que creó la receta
     uuid_usuario = Column(String(36), nullable=False)
-
+    categoria = db.relationship('Categoria', backref=db.backref('modelos', lazy=True))
     # NUEVO CAMPO ESTATUS
     estatus = Column(
         Enum('ACTIVO', 'INACTIVO', name='estatus_receta'),
