@@ -74,8 +74,10 @@ def create_app():
     application.config['SECURITY_MSG_TWO_FACTOR_INVALID_TOKEN'] = ('Código de verificación inválido.', 'error')
 
     # 2FA — solo email y authenticator, sin SMS
-    application.config['SECURITY_TWO_FACTOR'] = True
-    application.config['SECURITY_TWO_FACTOR_REQUIRED'] = True
+    # application.config['SECURITY_TWO_FACTOR'] = True
+    application.config['SECURITY_TWO_FACTOR'] = False
+    # application.config['SECURITY_TWO_FACTOR_REQUIRED'] = True
+    application.config['SECURITY_TWO_FACTOR_REQUIRED'] = False
     application.config['SECURITY_TWO_FACTOR_ENABLED_METHODS'] = ['email', 'authenticator']
     application.config['SECURITY_TWO_FACTOR_ALWAYS_VALIDATE'] = True
     application.config['SECURITY_TOTP_SECRETS'] = {
@@ -179,7 +181,6 @@ def create_app():
     application.register_blueprint(bp.costo_utilidad_bp, url_prefix='')
 
     application.register_blueprint(bp.usuarios_bp, url_prefix='/usuarios')
-    application.register_blueprint(bp.modelos_bp, url_prefix='/modelos')
     application.register_blueprint(bp.empleados_bp, url_prefix='/empleados')
     application.register_blueprint(bp.clientes_bp, url_prefix='/clientes')
     application.register_blueprint(bp.insumos_bp, url_prefix='/insumos')
@@ -188,7 +189,6 @@ def create_app():
     application.register_blueprint(bp.categorias_bp, url_prefix='/categorias')
     application.register_blueprint(bp.recetas_bp, url_prefix='/recetas')
     application.register_blueprint(bp.pedidos_proveedor_bp, url_prefix='/pedidos_proveedor')
-    application.register_blueprint(bp.modelo_aux_bp, url_prefix='/recetas_modelo')
     application.register_blueprint(bp.productos_bp, url_prefix='/productos_terminados')
     application.register_blueprint(bp.orden_bp, url_prefix='/orden_produccion')
     application.register_blueprint(bp.security_bp, url_prefix='/security')

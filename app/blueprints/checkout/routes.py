@@ -3,6 +3,7 @@ from flask_security import login_required, current_user
 from app.utils.database_connection import db
 from app.models.clientes import Cliente
 from app.models.modelos_productos import ProductoTerminado
+from app.models.explosion_materiales import ExplosionMaterialesCabecera
 from app.models.ventas import VentaEncabezado, VentaDetalle
 from datetime import datetime
 import uuid
@@ -51,29 +52,26 @@ def calculate_cart_totals(cart):
 
 @checkout_bp.route('/carrito/agregar', methods=['POST'])
 def agregar_carrito():
-    uuid_modelo = request.form.get('uuid_producto')  # Del catálogo viene el ID del modelo
+    uuid_explosion = request.form.get('uuid_producto')  # Del catálogo viene el ID de la receta/explosión
     try:
         cantidad = int(request.form.get('cantidad', 1))
     except (ValueError, TypeError):
         cantidad = 1
-    talla = request.form.get('talla', 'M')
 
-    if not uuid_modelo:
+    if not uuid_explosion:
         flash('Producto no especificado', 'error')
         return redirect(request.referrer or url_for('catalog.catalog_view'))
 
-    # Intentar encontrar el producto terminado específico por modelo y talla
-    producto = ProductoTerminado.query.filter_by(uuid_modelo=uuid_modelo, talla=talla, active=True).first()
+    # Obtener la explosión para validar que existe
+    explosion = ExplosionMaterialesCabecera.query.get(uuid_explosion)
+    if not explosion or explosion.estatus != 'ACTIVO':
+        flash('Lo sentimos, este producto no está disponible en este momento.', 'error')
+        return redirect(request.referrer or url_for('catalog.catalog_view'))
+
+    # Buscar un ProductoTerminado asociado a esta explosión que esté activo
+    producto = ProductoTerminado.query.filter_by(uuid_explosion=uuid_explosion, active=True).first()
     
     if not producto:
-        # Fallback 1: Buscar cualquier talla disponible para ese modelo
-        producto = ProductoTerminado.query.filter_by(uuid_modelo=uuid_modelo, active=True).first()
-    
-    if not producto:
-        # Fallback 2: Intentar buscar por ID directo por si acaso
-        producto = ProductoTerminado.query.get(uuid_modelo)
-    
-    if not producto or not producto.active:
         flash('Lo sentimos, este producto no está disponible en este momento.', 'error')
         return redirect(request.referrer or url_for('catalog.catalog_view'))
 
@@ -108,18 +106,18 @@ def agregar_carrito():
     else:
         cart.append({
             'uuid_producto': producto.uuid_producto,
-            'uuid_modelo': producto.uuid_modelo,
-            'nombre': producto.modelo.nombre_modelo if producto.modelo else 'Producto',
-            'talla': producto.talla,
+            'uuid_explosion': producto.uuid_explosion,
+            'nombre': explosion.nombre_receta if explosion else 'Producto',
+            'talla': explosion.talla if explosion else 'Única',
             'price': float(producto.precio_venta),
-            'image': producto.modelo.imagen_url if producto.modelo else '/static/images/default/default-image.png',
+            'image': producto.imagen_url if producto.imagen_url else '/static/images/default/default-image.png',
             'quantity': cantidad,
             'stock': stock_disponible
         })
 
     save_cart(cart)
     session['open_cart'] = True  # Flag para abrir el carrito en el frontend
-    flash(f'¡{producto.modelo.nombre_modelo} añadido al carrito! ✓', 'success')
+    flash(f'¡{explosion.nombre_receta if explosion else "Producto"} añadido al carrito! ✓', 'success')
     return redirect(request.referrer or url_for('catalog.catalog_view'))
 
 

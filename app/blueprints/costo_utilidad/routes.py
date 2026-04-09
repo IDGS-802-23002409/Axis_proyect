@@ -264,8 +264,8 @@ def _construir_mermas_pieza(producto, detalles_explosion):
 @roles_accepted('admin', 'gerente')
 def index():
     productos = ProductoTerminado.query.order_by(
-        ProductoTerminado.uuid_modelo,
-        ProductoTerminado.talla
+        ProductoTerminado.uuid_explosion,
+        ProductoTerminado.sku_especifico
     ).all()
 
     return render_template(

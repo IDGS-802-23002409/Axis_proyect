@@ -1,7 +1,8 @@
 from flask import flash, redirect, render_template, request, url_for
 from app.blueprints.productos_terminados import productos_bp
 from app.blueprints.productos_terminados.form import ProductoTerminadoForm
-from app.models.modelos_productos import ProductoTerminado, ModeloRopa
+from app.models.modelos_productos import ProductoTerminado
+from app.models.explosion_materiales import ExplosionMaterialesCabecera
 from app.utils.database_connection import db
 from flask_security import login_required, roles_accepted
 
@@ -9,13 +10,13 @@ from flask_security import login_required, roles_accepted
 @login_required
 @roles_accepted('admin', 'produccion')
 def index():
-    modelo_id = request.args.get('modelo', '').strip()
+    explosion_id = request.args.get('explosion', '').strip()
     talla = request.args.get('talla', '').strip()
     sku = request.args.get('sku', '').strip()
     estatus = request.args.get('estatus', '').strip()
     filtro = request.args.get('filtro', '').strip()
 
-    productos = ProductoTerminado.query.join(ModeloRopa)
+    productos = ProductoTerminado.query.join(ExplosionMaterialesCabecera)
 
     # Filtro por estatus
     if estatus.lower() == 'activo':
@@ -26,11 +27,11 @@ def index():
         # Por defecto mostrar solo activos
         productos = productos.filter(ProductoTerminado.active.is_(True))
 
-    if modelo_id:
-        productos = productos.filter(ProductoTerminado.uuid_modelo == modelo_id)
+    if explosion_id:
+        productos = productos.filter(ProductoTerminado.uuid_explosion == explosion_id)
 
     if talla:
-        productos = productos.filter(ProductoTerminado.talla == talla)
+        productos = productos.filter(ExplosionMaterialesCabecera.talla == talla)
 
     if sku:
         productos = productos.filter(ProductoTerminado.sku_especifico.ilike(f"%{sku}%"))
@@ -49,7 +50,8 @@ def index():
     elif filtro == 'agotado':
         productos = [p for p in productos if p.stock_fisico_actual <= 0]
     
-    modelos = ModeloRopa.query.order_by(ModeloRopa.nombre_modelo).all()
+    # Obtener explosiones activas para el dropdown
+    explosiones = ExplosionMaterialesCabecera.query.filter_by(estatus='ACTIVO').order_by(ExplosionMaterialesCabecera.nombre_receta).all()
 
     return render_template(
         'produccion/productos_terminados/index.html',
@@ -57,16 +59,13 @@ def index():
         total=total_neto,
         en_bajo_stock=en_bajo_stock_total,
         agotados=agotados_total,
-        modelos=modelos,
-        filtro_modelo=modelo_id,
+        explosiones=explosiones,
+        filtro_explosion=explosion_id,
         filtro_talla=talla,
         filtro_sku=sku,
         filtro_estatus=estatus,
         filtro_stock=filtro,
     )
-
-
-from app.models.explosion_materiales import ExplosionMaterialesCabecera
 
 @productos_bp.route('/registro', methods=['GET', 'POST'])
 @login_required
@@ -108,10 +107,8 @@ def registro_producto():
                 )
 
             producto = ProductoTerminado(
-                uuid_modelo=form.modelo.data,
                 uuid_explosion=form.explosion.data,
                 sku_especifico=sku,
-                talla=form.talla.data,
                 precio_venta=float(form.precio_venta.data),
                 stock_fisico_actual=0,
                 stock_minimo_alerta=form.stock_minimo_alerta.data or 0,
@@ -192,11 +189,9 @@ def editar_producto(uuid):
                     explosiones_data=data_explosiones
                 )
 
-        # Actualizar datos (SIN stock)
-        producto.uuid_modelo = form.modelo.data
+        # Actualizar datos (SIN stock, SIN uuid_modelo, SIN talla - vienen de la explosión)
         producto.uuid_explosion = form.explosion.data
         producto.sku_especifico = nuevo_sku
-        producto.talla = form.talla.data
         producto.precio_venta = form.precio_venta.data
         producto.active = bool(form.active.data)
 
@@ -209,9 +204,8 @@ def editar_producto(uuid):
         flash('Producto terminado actualizado correctamente', 'success')
         return redirect(url_for('productos_bp.index'))
 
-    # Cargar datos en GET (SIN stock físico)
+    # Cargar datos en GET (SIN stock físico, SIN modelo, SIN talla)
     if request.method == 'GET':
-        form.modelo.data = producto.uuid_modelo
         form.explosion.data = producto.uuid_explosion
         form.stock_minimo_alerta.data = producto.stock_minimo_alerta
         form.active.data = 1 if producto.active else 0
@@ -245,6 +239,6 @@ def eliminar_producto(uuid):
 @roles_accepted('admin', 'produccion')
 def detalle_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
-    modelo = producto.modelo
+    explosion = producto.explosion
     
-    return render_template('produccion/productos_terminados/detalle_producto.html', producto=producto, modelo=modelo)
+    return render_template('produccion/productos_terminados/detalle_producto.html', producto=producto, explosion=explosion)

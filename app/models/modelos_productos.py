@@ -1,10 +1,9 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import Boolean, Column, String, Integer, Numeric, DateTime, Enum, Text, ForeignKey, UniqueConstraint, func, CheckConstraint, Index
-from sqlalchemy import Enum
+from sqlalchemy import Boolean, Column, String, Integer, Numeric, DateTime, ForeignKey, UniqueConstraint, func, CheckConstraint, Index
 
-class Producto(db.Model):
-    __tablename__ = 'productos'
+class ProductoTerminado(db.Model):
+    __tablename__ = 'productos_terminados'
 
     uuid_producto = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     uuid_explosion = Column(String(36), ForeignKey('explosion_materiales_cabecera.uuid_explosion'), nullable=False)

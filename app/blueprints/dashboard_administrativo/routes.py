@@ -3,7 +3,8 @@ from flask_security import login_required, roles_accepted
 from . import dashboard_bp
 from app.utils.database_connection import db
 from app.models.ventas import VentaEncabezado, VentaDetalle
-from app.models.modelos_productos import ProductoTerminado, ModeloRopa
+from app.models.modelos_productos import ProductoTerminado
+from app.models.explosion_materiales import ExplosionMaterialesCabecera
 from app.models.insumos import Insumo
 from sqlalchemy import func, extract
 from datetime import datetime, timedelta
@@ -37,22 +38,22 @@ def _top_bottom_productos(fecha_inicio, fecha_fin):
     """
     base = (
         db.session.query(
-            ModeloRopa.nombre_modelo,
-            ProductoTerminado.talla,
+            ExplosionMaterialesCabecera.nombre_receta,
+            ExplosionMaterialesCabecera.talla,
             func.coalesce(func.sum(VentaDetalle.cantidad), 0).label('total_u'),
             func.coalesce(
                 func.sum(VentaDetalle.cantidad * VentaDetalle.precio_unitario_historico), 0
             ).label('total_m'),
         )
         .select_from(ProductoTerminado)
-        .join(ModeloRopa, ProductoTerminado.uuid_modelo == ModeloRopa.uuid_modelo)
+        .join(ExplosionMaterialesCabecera, ProductoTerminado.uuid_explosion == ExplosionMaterialesCabecera.uuid_explosion)
         .outerjoin(VentaDetalle,    ProductoTerminado.uuid_producto == VentaDetalle.uuid_producto)
         .outerjoin(VentaEncabezado, VentaDetalle.uuid_venta == VentaEncabezado.uuid_venta)
         .filter(
             (func.date(VentaEncabezado.fecha_venta).between(fecha_inicio, fecha_fin)) |
             (VentaEncabezado.fecha_venta == None)
         )
-        .group_by(ModeloRopa.nombre_modelo, ProductoTerminado.talla)
+        .group_by(ExplosionMaterialesCabecera.nombre_receta, ExplosionMaterialesCabecera.talla)
         .all()
     )
 
@@ -64,7 +65,7 @@ def _top_bottom_productos(fecha_inicio, fecha_fin):
 
     def _fmt(r, key):
         return {
-            'nombre'  : f"{r.nombre_modelo} · {r.talla}",
+            'nombre'  : f"{r.nombre_receta} · {r.talla}",
             'unidades': int(r.total_u),
             'monto'   : float(r.total_m),
             'imagen'  : None,

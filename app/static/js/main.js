@@ -795,6 +795,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const sizeBtns = document.querySelectorAll('.size-btn');
         const addToCartProductBtn = document.getElementById('btn-add-to-cart-product');
         const formTalla = document.getElementById('form-talla');
+        
+        // Si solo hay una talla (nueva estructura de modelo+talla), seleccionarla automáticamente
+        if (sizeBtns.length === 1) {
+            const singleBtn = sizeBtns[0];
+            singleBtn.click(); // Simular click para disparar el event listener
+        }
+        
         sizeBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 sizeBtns.forEach(b => {

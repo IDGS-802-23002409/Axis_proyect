@@ -8,7 +8,8 @@ from flask_security import login_required, roles_required, roles_accepted, curre
 from . import ventas_bp
 from app.utils.database_connection import db
 from app.models.ventas import VentaEncabezado, VentaDetalle
-from app.models.modelos_productos import ProductoTerminado, ModeloRopa
+from app.models.modelos_productos import ProductoTerminado
+from app.models.explosion_materiales import ExplosionMaterialesCabecera
 from app.models.clientes import Cliente
 from app.models.usuarios import Usuario
 from app.models.produccion import OrdenProduccion
@@ -117,12 +118,12 @@ def index():
     for ve, nombre_cliente, total_venta, total_unidades in ventas_rows:
         # Detalle de productos de esta venta
         productos = db.session.query(
-            ModeloRopa.nombre_modelo,
-            ProductoTerminado.talla,
+            ExplosionMaterialesCabecera.nombre_receta,
+            ExplosionMaterialesCabecera.talla,
             VentaDetalle.cantidad,
             VentaDetalle.precio_unitario_historico,
         ).join(ProductoTerminado, VentaDetalle.uuid_producto == ProductoTerminado.uuid_producto)\
-         .join(ModeloRopa,        ProductoTerminado.uuid_modelo == ModeloRopa.uuid_modelo)\
+         .join(ExplosionMaterialesCabecera, ProductoTerminado.uuid_explosion == ExplosionMaterialesCabecera.uuid_explosion)\
          .filter(VentaDetalle.uuid_venta == ve.uuid_venta)\
          .all()
 
@@ -137,7 +138,7 @@ def index():
             'total_unidades'  : int(total_unidades or 0),
             'productos'       : [
                 {
-                    'nombre' : p.nombre_modelo,
+                    'nombre' : p.nombre_receta,
                     'talla'  : p.talla,
                     'qty'    : p.cantidad,
                     'precio' : float(p.precio_unitario_historico),

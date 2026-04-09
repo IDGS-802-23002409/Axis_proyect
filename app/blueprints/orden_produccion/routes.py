@@ -1,7 +1,7 @@
 from flask import flash, redirect, render_template, request, url_for
 from app.blueprints.orden_produccion import orden_bp
 from app.blueprints.productos_terminados.form import ProductoTerminadoForm
-from app.models.modelos_productos import ProductoTerminado, ModeloRopa
+from app.models.modelos_productos import ProductoTerminado
 
 from app.utils.database_connection import db
 from flask_security import login_required, roles_accepted
@@ -22,8 +22,6 @@ def index():
 
     ordenes = db.session.query(OrdenProduccion).join(
         ProductoTerminado
-    ).join(
-        ModeloRopa
     ).order_by(OrdenProduccion.fecha_solicitud.desc()).all()
 
     return render_template(
