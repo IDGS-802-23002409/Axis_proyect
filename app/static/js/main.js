@@ -796,11 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const addToCartProductBtn = document.getElementById('btn-add-to-cart-product');
         const formTalla = document.getElementById('form-talla');
         
-        // Si solo hay una talla (nueva estructura de modelo+talla), seleccionarla automáticamente
-        if (sizeBtns.length === 1) {
-            const singleBtn = sizeBtns[0];
-            singleBtn.click(); // Simular click para disparar el event listener
-        }
+
         
         sizeBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -809,14 +805,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 btn.className = "size-btn w-12 h-12 text-sm border transition-all border-primary bg-primary text-primary-foreground";
                 selectedSizeVal = btn.dataset.size;
+                const uuidExplosion = btn.dataset.uuid;
                 document.getElementById('selected-size-label').textContent = selectedSizeVal;
                 if (formTalla) formTalla.value = selectedSizeVal;
+                
+                const formUuidProducto = document.getElementById('form-uuid-producto');
+                if (formUuidProducto && uuidExplosion) {
+                    formUuidProducto.value = uuidExplosion;
+                }
 
-                // Enable the submit button now that a size is selected
-                addToCartProductBtn.disabled = false;
-                addToCartProductBtn.className = "w-full py-4 font-[var(--font-display)] text-xl tracking-[0.2em] flex items-center justify-center gap-3 transition-all bg-primary text-primary-foreground hover:bg-primary/90";
+                if (addToCartProductBtn) {
+                    addToCartProductBtn.disabled = false;
+                    addToCartProductBtn.className = "w-full py-4 font-[var(--font-display)] text-xl tracking-[0.2em] flex items-center justify-center gap-3 transition-all bg-primary text-primary-foreground hover:bg-primary/90";
+                }
             });
         });
+
+        if (sizeBtns.length === 1) {
+            sizeBtns[0].click();
+        }
 
         let quantityVal = 1;
         const qtyMinus = document.getElementById('qty-minus');
