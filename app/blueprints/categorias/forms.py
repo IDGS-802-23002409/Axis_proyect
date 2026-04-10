@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, TextAreaField, BooleanField, SubmitField
+from wtforms import StringField, TextAreaField, BooleanField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Optional, Length
 
 
@@ -19,6 +19,14 @@ class CategoriaForm(FlaskForm):
             Optional(),
             Length(max=255, message="Máximo 255 caracteres")
         ]
+    )
+
+    tipo = SelectField(
+        "Tipo",
+        choices=[("Insumo", "Insumo"), ("Prenda", "Prenda")],
+        validators=[DataRequired(message="Selecciona un tipo")],
+        coerce=str,
+        default="Insumo",
     )
 
     imagen = FileField(

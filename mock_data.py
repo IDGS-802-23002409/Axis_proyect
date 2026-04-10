@@ -1,5 +1,6 @@
 import sys
 import os
+import uuid
 from datetime import datetime, timezone, timedelta
 
 # Asegurar que importamos desde el root
@@ -89,12 +90,15 @@ def run_seed():
         for u in test_users:
             user = Usuario.query.filter_by(email=u["email"]).first()
             if not user:
+                now = datetime.now(timezone.utc)
                 user = Usuario(
                     nombre_completo=u["nombre"],
                     email=u["email"],
                     password=hash_password(u["pass"]),
-                    confirmed_at=datetime.now(timezone.utc),
-                    active=True
+                    active=True,
+                    fs_uniquifier=uuid.uuid4().hex,
+                    confirmed_at=now,
+                    password_changed_at=now,
                 )
                 user.roles.append(roles_dict[u["role"]])
                 db.session.add(user)

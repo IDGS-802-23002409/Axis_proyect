@@ -43,7 +43,7 @@ def index():
 @roles_accepted('admin', 'gerente', 'produccion')
 def create():
     insumos_list = Insumo.query.filter_by(estatus='ACTIVO').all()
-    categorias_list = Categoria.query.all()
+    categorias_list = Categoria.query.filter_by(tipo="Prenda").order_by(Categoria.nombre).all()
     form = RecetaForm()
     
     # Popular el SelectField de categorías
@@ -153,7 +153,7 @@ def edit(uuid_explosion):
     receta = ExplosionMaterialesCabecera.query.get_or_404(uuid_explosion)
     detalles = ExplosionMaterialesDetalle.query.filter_by(uuid_explosion=uuid_explosion).all()
     insumos_list = Insumo.query.filter_by(estatus='ACTIVO').all()
-    categorias_list = Categoria.query.all()
+    categorias_list = Categoria.query.filter_by(tipo="Prenda").order_by(Categoria.nombre).all()
     
     form = RecetaForm(obj=receta)
     

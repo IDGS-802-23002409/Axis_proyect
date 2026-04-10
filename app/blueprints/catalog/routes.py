@@ -22,7 +22,7 @@ def serialize_receta(e, is_new=False):
 
 def get_serialized_categories():
     base = [{"id": "all", "name": "Todo", "image": "/static/images/default/default-image.png"}]
-    for c in Categoria.query.filter_by(estatus_visible=True).all():
+    for c in Categoria.query.filter_by(estatus_visible=True, tipo="Prenda").order_by(Categoria.nombre).all():
         base.append({
             "id": c.uuid_categoria, 
             "name": c.nombre.upper(), 
@@ -33,7 +33,7 @@ def get_serialized_categories():
 
 @catalog_bp.route('/')
 def index():
-    categorias = Categoria.query.filter_by(estatus_visible=True).order_by(Categoria.nombre).all()
+    categorias = Categoria.query.filter_by(estatus_visible=True, tipo="Prenda").order_by(Categoria.nombre).all()
     # Traer las últimas 4 recetas como destacadas
     recetas_db = ExplosionMaterialesCabecera.query.filter_by(estatus='ACTIVO').order_by(ExplosionMaterialesCabecera.fecha_creacion.desc()).limit(4).all()
     featured_products = [serialize_receta(e) for e in recetas_db]

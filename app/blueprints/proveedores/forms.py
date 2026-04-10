@@ -30,7 +30,7 @@ class ProveedorForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super(ProveedorForm, self).__init__(*args, **kwargs)
         from app.models.categorias import Categoria
-        categorias = Categoria.query.filter_by(estatus_visible=True).all()
+        categorias = Categoria.query.filter_by(estatus_visible=True, tipo="Insumo").order_by(Categoria.nombre).all()
         self.categoria_insumo.choices = [(c.nombre, c.nombre) for c in categorias]
 
     def validate_razon_social(self, field):

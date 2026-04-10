@@ -30,6 +30,16 @@
                 {% endfor %}
             </div>
 
+            <!-- TIPO -->
+            <div class="flex flex-col">
+                {{ form.tipo.label(class="text-sm font-bold mb-1") }}
+                {{ form.tipo(class="px-4 py-3 border border-neutral-200 rounded-xl text-sm bg-white") }}
+                <span class="text-xs text-neutral-500 mt-1">Insumo: materiales; Prenda: productos y recetas en catálogo.</span>
+                {% for error in form.tipo.errors %}
+                <span class="text-red-500 text-xs mt-1">{{ error }}</span>
+                {% endfor %}
+            </div>
+
             <!-- IMAGEN -->
             <div class="flex flex-col">
                 {{ form.imagen.label(class="text-sm font-bold mb-1") }}

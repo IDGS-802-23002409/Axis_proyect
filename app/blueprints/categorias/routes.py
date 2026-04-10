@@ -55,10 +55,13 @@ def create():
     if form.validate_on_submit():
         # Verificar si ya existe una categoría con el mismo nombre (ignorando mayúsculas/minúsculas)
         nombre_lower = form.nombre.data.strip().lower()
-        categoria_existente = Categoria.query.filter(db.func.lower(Categoria.nombre) == nombre_lower).first()
+        categoria_existente = Categoria.query.filter(
+            db.func.lower(Categoria.nombre) == nombre_lower,
+            Categoria.tipo == form.tipo.data,
+        ).first()
 
         if categoria_existente:
-            flash(f'La categoría "{form.nombre.data}" ya existe.', "error")
+            flash(f'Ya existe una categoría "{form.nombre.data}" con el mismo tipo.', "error")
             return render_template("produccion/categorias/create.html", form=form, title="Registrar Categoría")
 
         # Procesar imagen
@@ -75,6 +78,7 @@ def create():
         nueva_categoria = Categoria(
             nombre=form.nombre.data.strip(),
             descripcion=form.descripcion.data.strip() if form.descripcion.data else None,
+            tipo=form.tipo.data,
             imagen_url=imagen_url,
             estatus_visible=True
         )
@@ -93,22 +97,26 @@ def create():
 def edit(uuid_categoria):
     categoria = Categoria.query.get_or_404(uuid_categoria)
     form = CategoriaForm(obj=categoria)
+    _t = categoria.tipo
+    form.tipo.data = str(getattr(_t, "value", _t)) if _t is not None else "Insumo"
 
     if form.validate_on_submit():
         nombre_lower = form.nombre.data.strip().lower()
         # Verificar si existe otra categoría con el mismo nombre
         categoria_existente = Categoria.query.filter(
             db.func.lower(Categoria.nombre) == nombre_lower,
-            Categoria.uuid_categoria != uuid_categoria
+            Categoria.tipo == form.tipo.data,
+            Categoria.uuid_categoria != uuid_categoria,
         ).first()
 
         if categoria_existente:
-            flash(f'La categoría "{form.nombre.data}" ya existe.', "error")
+            flash(f'Ya existe una categoría "{form.nombre.data}" con el mismo tipo.', "error")
             return render_template("produccion/categorias/edit.html", form=form, title="Editar Categoría", categoria=categoria)
 
         # Actualizar datos
         categoria.nombre = form.nombre.data.strip()
         categoria.descripcion = form.descripcion.data.strip() if form.descripcion.data else None
+        categoria.tipo = form.tipo.data
         categoria.estatus_visible = True
 
         # Procesar imagen nueva si se proporciona
