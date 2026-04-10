@@ -29,7 +29,7 @@
                 <thead class="bg-neutral-100 text-neutral-600 uppercase text-xs">
                     <tr>
                         <th class="px-6 py-4 text-left">Producto</th>
-                        <th class="px-6 py-4 text-left">Modelo</th>
+                        <th class="px-6 py-4 text-left">Receta</th>
                         <th class="px-6 py-4 text-left">Talla</th>
                         <th class="px-6 py-4 text-left">Cantidad</th>
                         <th class="px-6 py-4 text-left">Estado</th>
@@ -49,11 +49,11 @@
                         </td>
 
                         <td class="px-6 py-4">
-                            {{ orden.producto.modelo.nombre_modelo }}
+                            {{ orden.producto.explosion.nombre_receta }}
                         </td>
 
                         <td class="px-6 py-4">
-                            {{ orden.producto.talla }}
+                            {{ orden.producto.explosion.talla }}
                         </td>
 
                         <td class="px-6 py-4">

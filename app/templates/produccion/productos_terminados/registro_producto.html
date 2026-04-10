@@ -12,7 +12,6 @@
       {{ form.hidden_tag() }}
       {% import "produccion/usuarios/_macros.html" as macros %}
 
-      {{ macros.fieldUser(form.modelo, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
 
       {{ macros.fieldUser(form.explosion, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
 
@@ -23,7 +22,7 @@
       </div>
 
       {{ macros.fieldUser(form.sku_especifico, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
-      {{ macros.fieldUser(form.talla, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+
       {{ macros.fieldUser(form.precio_venta, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
       {{ macros.fieldUser(form.stock_minimo_alerta, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
 
