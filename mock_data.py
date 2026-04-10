@@ -1,8 +1,6 @@
 import sys
 import os
-import uuid
 from datetime import datetime, timezone, timedelta
-
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
 
@@ -24,7 +22,7 @@ def run_seed():
         # ─────────────────────────────
         # 1. ROLES
         # ─────────────────────────────
-        roles_names = ["admin", "gerente", "produccion", "cliente"]
+        roles_names = ['admin', 'gerente', 'produccion', 'cliente']
         roles_dict = {}
 
         for r_name in roles_names:
@@ -48,7 +46,7 @@ def run_seed():
                 "role": "admin",
                 "emp_num": "EMP-001",
                 "puesto": "Director General",
-                "depto": "Dirección",
+                "depto": "Dirección"
             },
             {
                 "nombre": "Modista Principal",
@@ -57,66 +55,73 @@ def run_seed():
                 "role": "produccion",
                 "emp_num": "EMP-002",
                 "puesto": "Jefe de Taller",
-                "depto": "Producción",
-            },
+                "depto": "Producción"
+            }
         ]
 
         for u in test_users:
             user = Usuario.query.filter_by(email=u["email"]).first()
             if not user:
-                now = datetime.now(timezone.utc)
                 user = Usuario(
                     nombre_completo=u["nombre"],
                     email=u["email"],
                     password=hash_password(u["pass"]),
-                    active=True,
-                    fs_uniquifier=uuid.uuid4().hex,
-                    confirmed_at=now,
-                    password_changed_at=now,
+                    confirmed_at=datetime.now(timezone.utc),
+                    active=True
                 )
                 user.roles.append(roles_dict[u["role"]])
                 db.session.add(user)
                 db.session.flush()
 
-                if u["role"] in ["admin", "produccion", "gerente"]:
-                    db.session.add(
-                        Empleado(
-                            uuid_usuario=user.uuid_usuario,
-                            numero_empleado=u["emp_num"],
-                            puesto=u["puesto"],
-                            departamento=u["depto"],
-                            fecha_ingreso=datetime.now(timezone.utc)
-                            - timedelta(days=365),
-                        )
-                    )
+                if u["role"] in ['admin', 'produccion', 'gerente']:
+                    db.session.add(Empleado(
+                        uuid_usuario=user.uuid_usuario,
+                        numero_empleado=u["emp_num"],
+                        puesto=u["puesto"],
+                        departamento=u["depto"],
+                        fecha_ingreso=datetime.now(timezone.utc) - timedelta(days=365)
+                    ))
 
         db.session.commit()
         print(" [OK] Usuarios creados.")
 
-        # ─────────────────────────────
+                # ─────────────────────────────
         # 3. CATEGORÍAS
         # ─────────────────────────────
         categorias_data = [
-            {"nombre": "Telas", "descripcion": "Tipos de telas"},
-            {"nombre": "Cinta tapacostura", "descripcion": "Cintas"},
-            {"nombre": "Hilo", "descripcion": "Hilos"},
-            {"nombre": "Rib de algodon", "descripcion": "Rib"},
-            {"nombre": "Etiquetas", "descripcion": "Etiquetas"},
-            {"nombre": "Estampados", "descripcion": "Estampados"},
-            {"nombre": "Ojalillos", "descripcion": "Ojales"},
-            {"nombre": "Forro", "descripcion": "Forro"},
-            {"nombre": "Cierre", "descripcion": "Cierres"},
-            {"nombre": "Botones", "descripcion": "Botones"},
-            {"nombre": "Remaches", "descripcion": "Remaches"},
-            {"nombre": "Elastico", "descripcion": "Elásticos"},
+            # ── Categorías de Insumos ──
+            {"nombre": "Telas",             "descripcion": "Tipos de telas",          "tipo": "Insumo"},
+            {"nombre": "Cinta tapacostura", "descripcion": "Cintas",                  "tipo": "Insumo"},
+            {"nombre": "Hilo",              "descripcion": "Hilos",                   "tipo": "Insumo"},
+            {"nombre": "Rib de algodon",    "descripcion": "Rib",                     "tipo": "Insumo"},
+            {"nombre": "Etiquetas",         "descripcion": "Etiquetas",               "tipo": "Insumo"},
+            {"nombre": "Estampados",        "descripcion": "Estampados",              "tipo": "Insumo"},
+            {"nombre": "Ojalillos",         "descripcion": "Ojales",                  "tipo": "Insumo"},
+            {"nombre": "Forro",             "descripcion": "Forro",                   "tipo": "Insumo"},
+            {"nombre": "Cierre",            "descripcion": "Cierres",                 "tipo": "Insumo"},
+            {"nombre": "Botones",           "descripcion": "Botones",                 "tipo": "Insumo"},
+            {"nombre": "Remaches",          "descripcion": "Remaches",                "tipo": "Insumo"},
+            {"nombre": "Elastico",          "descripcion": "Elásticos",               "tipo": "Insumo"},
+
+            # ── Categorías de Prendas ──
+            {"nombre": "Playeras",          "descripcion": "Playeras y camisetas",    "tipo": "Prenda"},
+            {"nombre": "Pantalones",        "descripcion": "Pantalones y jeans",      "tipo": "Prenda"},
+            {"nombre": "Vestidos",          "descripcion": "Vestidos y faldas",       "tipo": "Prenda"},
+            {"nombre": "Sudaderas",         "descripcion": "Sudaderas y hoodies",     "tipo": "Prenda"},
+            {"nombre": "Chamarras",         "descripcion": "Chamarras y abrigos",     "tipo": "Prenda"},
+            {"nombre": "Shorts",            "descripcion": "Shorts y bermudas",       "tipo": "Prenda"},
         ]
 
         categorias_dict = {}
 
         for c in categorias_data:
-            categoria = Categoria.query.filter_by(nombre=c["nombre"]).first()
+            categoria = Categoria.query.filter_by(nombre=c["nombre"], tipo=c["tipo"]).first()
             if not categoria:
-                categoria = Categoria(nombre=c["nombre"], descripcion=c["descripcion"])
+                categoria = Categoria(
+                    nombre=c["nombre"],
+                    descripcion=c["descripcion"],
+                    tipo=c["tipo"]
+                )
                 db.session.add(categoria)
                 db.session.flush()
 
@@ -129,6 +134,7 @@ def run_seed():
         # 4. INSUMOS
         # ─────────────────────────────
         insumos_data = [
+
             # ───── TELAS ─────
             {
                 "sku": "TEL-JER-NEG-001",
@@ -139,7 +145,7 @@ def run_seed():
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
                 "stock_min": 50,
-                "ancho": 2.0,
+                "ancho": 2.0
             },
             {
                 "sku": "TEL-FEL-NEG-001",
@@ -150,7 +156,7 @@ def run_seed():
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
                 "stock_min": 30,
-                "ancho": 2.0,
+                "ancho": 2.0
             },
             {
                 "sku": "TEL-GAB-001",
@@ -161,7 +167,7 @@ def run_seed():
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
                 "stock_min": 20,
-                "ancho": 1.50,
+                "ancho": 1.50
             },
             {
                 "sku": "TEL-MEZ-AZUL-001",
@@ -172,7 +178,7 @@ def run_seed():
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
                 "stock_min": 20,
-                "ancho": 1.50,
+                "ancho": 1.50
             },
             {
                 "sku": "TEL-POLALG-NEG-001",
@@ -183,8 +189,9 @@ def run_seed():
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
                 "stock_min": 30,
-                "ancho": 1.75,
+                "ancho": 1.75
             },
+
             # ───── RIB ─────
             {
                 "sku": "RIB-NEG-001",
@@ -195,7 +202,7 @@ def run_seed():
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
                 "stock_min": 20,
-                "ancho": 0.50,
+                "ancho": 0.50
             },
             {
                 "sku": "RIB-BEI-001",
@@ -206,8 +213,9 @@ def run_seed():
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
                 "stock_min": 15,
-                "ancho": 0.60,
+                "ancho": 0.60
             },
+
             # ───── HILO ─────
             {
                 "sku": "HIL-POL-NEG-001",
@@ -217,7 +225,7 @@ def run_seed():
                 "contenido_cantidad": 3000,
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
-                "stock_min": 10,
+                "stock_min": 10
             },
             {
                 "sku": "HIL-POL-BEI-001",
@@ -227,8 +235,9 @@ def run_seed():
                 "contenido_cantidad": 3000,
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
-                "stock_min": 10,
+                "stock_min": 10
             },
+
             # ───── FORRO ─────
             {
                 "sku": "FOR-TAF-001",
@@ -239,8 +248,9 @@ def run_seed():
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
                 "stock_min": 20,
-                "ancho": 1.40,
+                "ancho": 1.40
             },
+
             # ───── CINTAS ─────
             {
                 "sku": "CIN-TAPA-NEG-001",
@@ -251,7 +261,7 @@ def run_seed():
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
                 "stock_min": 80,
-                "ancho": 0.10,
+                "ancho": 0.10
             },
             {
                 "sku": "CIN-VIVO-BLA-001",
@@ -262,8 +272,9 @@ def run_seed():
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
                 "stock_min": 20,
-                "ancho": 0.02,
+                "ancho": 0.02
             },
+
             # ───── ELÁSTICO ─────
             {
                 "sku": "ELA-NEG-004CM-001",
@@ -274,8 +285,9 @@ def run_seed():
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
                 "stock_min": 20,
-                "ancho": 0.04,
+                "ancho": 0.04
             },
+
             # ───── PIEZAS ─────
             {
                 "sku": "CIE-FRON-001",
@@ -285,7 +297,7 @@ def run_seed():
                 "contenido_cantidad": 1,
                 "contenido_unidad_medida": "PIEZA",
                 "stock": 0,
-                "stock_min": 20,
+                "stock_min": 20
             },
             {
                 "sku": "BTN-GOL-001",
@@ -295,7 +307,7 @@ def run_seed():
                 "contenido_cantidad": 1,
                 "contenido_unidad_medida": "PIEZA",
                 "stock": 0,
-                "stock_min": 50,
+                "stock_min": 50
             },
             {
                 "sku": "REM-MET-001",
@@ -305,7 +317,7 @@ def run_seed():
                 "contenido_cantidad": 1,
                 "contenido_unidad_medida": "PIEZA",
                 "stock": 0,
-                "stock_min": 100,
+                "stock_min": 100
             },
             {
                 "sku": "OJA-MET-001",
@@ -315,8 +327,9 @@ def run_seed():
                 "contenido_cantidad": 1,
                 "contenido_unidad_medida": "PIEZA",
                 "stock": 0,
-                "stock_min": 100,
+                "stock_min": 100
             },
+
             # ───── ESTAMPADOS ─────
             {
                 "sku": "EST-LOWKEY-001",
@@ -326,7 +339,7 @@ def run_seed():
                 "contenido_cantidad": 1,
                 "contenido_unidad_medida": "PIEZA",
                 "stock": 0,
-                "stock_min": 50,
+                "stock_min": 50
             },
             {
                 "sku": "EST-PERS-001",
@@ -336,8 +349,9 @@ def run_seed():
                 "contenido_cantidad": 1,
                 "contenido_unidad_medida": "PIEZA",
                 "stock": 0,
-                "stock_min": 30,
+                "stock_min": 30
             },
+
             # ───── ETIQUETAS ─────
             {
                 "sku": "ETQ-TALLA-001",
@@ -347,7 +361,7 @@ def run_seed():
                 "contenido_cantidad": 1,
                 "contenido_unidad_medida": "PIEZA",
                 "stock": 0,
-                "stock_min": 100,
+                "stock_min": 100
             },
             {
                 "sku": "ETQ-MARCA-001",
@@ -357,7 +371,7 @@ def run_seed():
                 "contenido_cantidad": 1,
                 "contenido_unidad_medida": "PIEZA",
                 "stock": 0,
-                "stock_min": 100,
+                "stock_min": 100
             },
             {
                 "sku": "ETQ-CUIDADO-001",
@@ -367,9 +381,11 @@ def run_seed():
                 "contenido_cantidad": 1,
                 "contenido_unidad_medida": "PIEZA",
                 "stock": 0,
-                "stock_min": 100,
-            },
+                "stock_min": 100
+            }
         ]
+
+
         for i in insumos_data:
             insumo = Insumo.query.filter_by(sku=i["sku"]).first()
 
@@ -397,5 +413,5 @@ def run_seed():
         print("\n>> [ÉXITO] Seed completo.")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     run_seed()
