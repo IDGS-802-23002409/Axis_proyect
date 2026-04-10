@@ -68,8 +68,9 @@
                 <p class="text-muted-foreground text-sm">
                     Únete para acceso exclusivo a drops y ofertas.
                 </p>
-                <form class="flex">
-                    <input type="email" placeholder="tu@email.com"
+                <form action="{{ url_for('checkout.newsletter') }}" method="POST" class="flex">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="email" name="email" required placeholder="tu@email.com"
                         class="flex-1 bg-background border border-border px-4 py-2 text-sm focus:outline-none focus:border-primary transition-colors" />
                     <button type="submit"
                         class="bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors">

@@ -10,7 +10,8 @@
             <p class="text-gray-500 text-sm mt-1">Historial de pedidos, clientes y montos generados.</p>
         </div>
         <div class="text-right text-xs text-gray-400 mt-1">
-            <p class="font-bold text-gray-600">{{ total }} venta{{ 's' if total != 1 else '' }} encontrada{{ 's' if total != 1 else '' }}</p>
+            <p class="font-bold text-gray-600">{{ total }} venta{{ 's' if total != 1 else '' }} encontrada{{ 's' if
+                total != 1 else '' }}</p>
             <p>{{ start }} → {{ end }}</p>
         </div>
     </div>
@@ -36,16 +37,16 @@
 
     {# ══ Filtros ═════════════════════════════════════════════════════════════ #}
     <form method="GET" action="{{ url_for('ventas.index') }}"
-          class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm mb-6 flex flex-wrap gap-4 items-end">
+        class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm mb-6 flex flex-wrap gap-4 items-end">
 
         <div class="flex-1 min-w-[180px]">
             <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">
                 Buscar cliente
             </label>
             <div class="relative">
-                <i data-lucide="search" class="w-3.5 h-3.5 text-gray-400 absolute left-3 top-2.5 pointer-events-none"></i>
-                <input type="text" name="q" value="{{ q }}" placeholder="Nombre del cliente..."
-                    class="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg
+                <i data-lucide="search"
+                    class="w-3.5 h-3.5 text-gray-400 absolute left-3 top-2.5 pointer-events-none"></i>
+                <input type="text" name="q" value="{{ q }}" placeholder="Nombre del cliente..." class="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg
                            focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-800">
             </div>
         </div>
@@ -67,10 +68,11 @@
             <select name="estatus"
                 class="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white">
                 <option value="">Todos</option>
-                <option value="Procesando" {% if estatus == 'Procesando' %}selected{% endif %}>Procesando</option>
-                <option value="Enviado"    {% if estatus == 'Enviado'    %}selected{% endif %}>Enviado</option>
-                <option value="Entregado"  {% if estatus == 'Entregado'  %}selected{% endif %}>Entregado</option>
-                <option value="Devuelto"   {% if estatus == 'Devuelto'   %}selected{% endif %}>Devuelto</option>
+                <option value="Procesando" {% if estatus=='Procesando' %}selected{% endif %}>Procesando</option>
+                <option value="Pendiente" {% if estatus=='Pendiente' %}selected{% endif %}>Pendiente</option>
+                <option value="Enviado" {% if estatus=='Enviado' %}selected{% endif %}>Enviado</option>
+                <option value="Entregado" {% if estatus=='Entregado' %}selected{% endif %}>Entregado</option>
+                <option value="Devuelto" {% if estatus=='Devuelto' %}selected{% endif %}>Devuelto</option>
             </select>
         </div>
 
@@ -116,7 +118,8 @@
                     {# Cliente #}
                     <td class="px-4 py-4">
                         <div class="flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-gray-500">
+                            <div
+                                class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-gray-500">
                                 {{ v.cliente[0].upper() if v.cliente != '—' else '?' }}
                             </div>
                             <span class="text-xs font-medium text-gray-700">{{ v.cliente }}</span>
@@ -154,13 +157,21 @@
                     {# Estatus #}
                     <td class="px-4 py-4 text-center">
                         {% if v.estatus_envio == 'Entregado' %}
-                        <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Entregado</span>
+                        <span
+                            class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Entregado</span>
                         {% elif v.estatus_envio == 'Enviado' %}
-                        <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Enviado</span>
+                        <span
+                            class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Enviado</span>
                         {% elif v.estatus_envio == 'Procesando' %}
-                        <span class="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Procesando</span>
+                        <span
+                            class="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Procesando</span>
+                        {% elif v.estatus_envio == 'Pendiente' %}
+                        <span
+                            class="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Pendiente</span>
                         {% else %}
-                        <span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">{{ v.estatus_envio }}</span>
+                        <span
+                            class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">{{
+                            v.estatus_envio }}</span>
                         {% endif %}
                     </td>
 
@@ -174,6 +185,22 @@
                 <tr id="detalle-{{ v.uuid_venta }}" class="hidden bg-gray-50">
                     <td colspan="8" class="px-6 py-4">
                         <div class="border border-gray-200 rounded-xl overflow-hidden">
+                            <div class="flex justify-between items-center p-4 bg-gray-100/50 border-b border-gray-200">
+                                <h4 class="text-[10px] font-black uppercase tracking-widest text-gray-500">Detalles del
+                                    Pedido</h4>
+                                <div class="flex gap-2">
+                                    {% if v.estatus_envio in ['Procesando', 'Completado', 'Pendiente'] %}
+                                    <form action="{{ url_for('ventas.marcar_enviado', uuid_venta=v.uuid_venta) }}"
+                                        method="POST">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit"
+                                            class="bg-blue-600 text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase hover:bg-blue-700 transition-colors">
+                                            Marcar como Enviado
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
                             <table class="w-full text-xs">
                                 <thead class="bg-gray-100 text-[10px] uppercase tracking-widest text-gray-500">
                                     <tr>
@@ -190,12 +217,15 @@
                                         <td class="px-4 py-2 font-medium text-gray-700">{{ p.nombre }}</td>
                                         <td class="px-4 py-2 text-center text-gray-500">{{ p.talla }}</td>
                                         <td class="px-4 py-2 text-center text-gray-700 font-bold">{{ p.qty }}</td>
-                                        <td class="px-4 py-2 text-right text-gray-500">${{ "{:,.2f}".format(p.precio) }}</td>
-                                        <td class="px-4 py-2 text-right font-bold text-gray-800">${{ "{:,.2f}".format(p.qty * p.precio) }}</td>
+                                        <td class="px-4 py-2 text-right text-gray-500">${{ "{:,.2f}".format(p.precio) }}
+                                        </td>
+                                        <td class="px-4 py-2 text-right font-bold text-gray-800">${{
+                                            "{:,.2f}".format(p.qty * p.precio) }}</td>
                                     </tr>
                                     {% endfor %}
                                     <tr class="bg-gray-50">
-                                        <td colspan="4" class="px-4 py-2 text-right text-[10px] font-black uppercase tracking-widest text-gray-500">
+                                        <td colspan="4"
+                                            class="px-4 py-2 text-right text-[10px] font-black uppercase tracking-widest text-gray-500">
                                             Total del Pedido
                                         </td>
                                         <td class="px-4 py-2 text-right font-black text-gray-900">
@@ -213,7 +243,8 @@
                     <td colspan="8" class="px-6 py-16 text-center">
                         <div class="flex flex-col items-center gap-3 opacity-40">
                             <i data-lucide="shopping-cart" class="w-10 h-10 text-gray-400"></i>
-                            <p class="text-sm font-bold text-gray-500 uppercase tracking-widest">Sin ventas en este período</p>
+                            <p class="text-sm font-bold text-gray-500 uppercase tracking-widest">Sin ventas en este
+                                período</p>
                             <p class="text-xs text-gray-400">Ajusta el rango de fechas o los filtros.</p>
                         </div>
                     </td>
@@ -236,12 +267,12 @@
                 ← Anterior
             </a>
             {% endif %}
-            {% if page < total_pages %}
-            <a href="{{ url_for('ventas.index', page=page+1, q=q, start=start, end=end, estatus=estatus) }}"
+            {% if page < total_pages %} <a
+                href="{{ url_for('ventas.index', page=page+1, q=q, start=start, end=end, estatus=estatus) }}"
                 class="px-4 py-2 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                 Siguiente →
-            </a>
-            {% endif %}
+                </a>
+                {% endif %}
         </div>
     </div>
     {% endif %}

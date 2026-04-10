@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="pedidos-container" class="min-h-screen bg-background pt-32 pb-24">
+    <div class="container mx-auto px-4 lg:px-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
+                <div>
+                    <h1 class="font-[var(--font-display)] text-6xl md:text-7xl tracking-[0.05em] mb-4 uppercase">MIS
+                        PEDIDOS</h1>
+                    <p class="text-muted-foreground tracking-widest text-sm uppercase">Historial y seguimiento de tus
+                        compras en AXIS.</p>
+                </div>
+                <div class="flex items-center gap-4 bg-secondary/30 px-6 py-4 border border-border">
+                    <div class="text-right">
+                        <p class="text-[10px] text-muted-foreground uppercase tracking-widest">Total pedidos</p>
+                        <p class="font-[var(--font-display)] text-2xl">{{ pedidos|length }}</p>
+                    </div>
+                    <div class="w-px h-8 bg-border"></div>
+                    <i data-lucide="package" class="w-6 h-6 text-primary"></i>
+                </div>
+            </div>
+
+            {% if not pedidos %}
+            <div class="text-center py-24 border border-dashed border-border">
+                <i data-lucide="shopping-bag" class="w-16 h-16 mx-auto text-muted-foreground mb-6"></i>
+                <h2 class="text-xl font-bold uppercase tracking-widest mb-4">Aún no tienes pedidos</h2>
+                <p class="text-muted-foreground mb-8">¿Qué esperas para unirte al movimiento?</p>
+                <a href="/catalogo"
+                    class="inline-block px-8 py-4 bg-primary text-primary-foreground font-[var(--font-display)] text-xl tracking-[0.2em] hover:bg-primary/90 transition-colors">
+                    IR AL CATÁLOGO
+                </a>
+            </div>
+            {% else %}
+            <div class="space-y-8">
+                {% for pedido in pedidos %}
+                <div
+                    class="bg-secondary/10 border border-border overflow-hidden group hover:border-primary/50 transition-all">
+                    <!-- Order Summary Header -->
+                    <div
+                        class="bg-secondary/20 p-6 flex flex-wrap justify-between items-center gap-6 border-b border-border">
+                        <div class="flex gap-8">
+                            <div>
+                                <p class="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Folio</p>
+                                <p class="font-bold text-sm tracking-widest">{{ pedido.numero_pedido }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Fecha</p>
+                                <p class="font-bold text-sm">{{ pedido.fecha_venta.strftime('%d/%m/%Y') }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Total</p>
+                                <p class="font-bold text-sm">${{ "%.2f"|format(pedido.total_calculado) }}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-4">
+                            <div class="flex flex-col items-end">
+                                <p class="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Estatus del
+                                    pedido</p>
+                                <span class="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full 
+                                    {% if pedido.estatus_envio == 'Completado' %} bg-emerald-500/10 text-emerald-500 border border-emerald-500/20
+                                    {% elif pedido.estatus_envio == 'Pendiente' %} bg-amber-500/10 text-amber-500 border border-amber-500/20
+                                    {% elif pedido.estatus_envio == 'Enviado' %} bg-blue-500/10 text-blue-500 border border-blue-500/20
+                                    {% else %} bg-secondary text-muted-foreground border border-border {% endif %}">
+                                    {{ pedido.estatus_envio }}
+                                </span>
+                            </div>
+
+                            {% if pedido.estatus_envio == 'Pendiente' %}
+                            <div class="relative group/tip">
+                                <i data-lucide="info" class="w-4 h-4 text-amber-500 cursor-help"></i>
+                                <div
+                                    class="absolute bottom-full right-0 mb-2 w-48 p-2 bg-foreground text-background text-[10px] opacity-0 group-hover/tip:opacity-100 transition-opacity pointer-events-none z-10">
+                                    Este pedido requiere fabricación. Se añaden 5 días adicionales al tiempo de entrega
+                                    coordinado.
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Order Details -->
+                    <div class="p-6">
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {% for detalle in pedido.detalles %}
+                            <div class="flex gap-4">
+                                <div class="w-16 h-20 bg-secondary flex-shrink-0">
+                                    <img src="{{ detalle.producto.modelo.imagen_url if detalle.producto.modelo else '/static/images/default/default-image.png' }}"
+                                        alt="Producto" class="w-full h-full object-cover">
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold uppercase tracking-wider mb-1">
+                                        {{ detalle.producto.modelo.nombre_modelo if detalle.producto.modelo else
+                                        'Producto AXIS' }}
+                                    </p>
+                                    <p class="text-[10px] text-muted-foreground uppercase">Talla: {{
+                                        detalle.producto.talla }} · Cantidad: {{ detalle.cantidad }}</p>
+                                    <p class="text-xs font-bold mt-2 text-primary">${{
+                                        "%.2f"|format(detalle.precio_unitario_historico * detalle.cantidad) }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Back to Account -->
+            <div class="mt-12 pt-8 border-t border-border">
+                <a href="{{ url_for('checkout.mi_cuenta') }}"
+                    class="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm uppercase tracking-widest font-bold">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a mi cuenta
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -176,7 +176,30 @@ def eliminar_carrito():
 @checkout_bp.route('/carrito/vaciar', methods=['POST'])
 def vaciar_carrito():
     save_cart([])
+    session.pop('axis_discount', None)
+    session.pop('discount_code', None)
     flash('Carrito vaciado', 'success')
+    return redirect(url_for('checkout.checkout_view'))
+
+
+@checkout_bp.route('/carrito/descuento', methods=['POST'])
+def aplicar_descuento():
+    codigo = request.form.get('codigo', '').strip().upper()
+    if codigo == 'AXIS10':
+        session['axis_discount'] = 0.10
+        session['discount_code'] = codigo
+        flash('¡Cupón AXIS10 aplicado correctamente! 10% de descuento.', 'success')
+    else:
+        flash('Código de descuento inválido.', 'error')
+    
+    return redirect(url_for('checkout.checkout_view'))
+
+
+@checkout_bp.route('/carrito/quitar-descuento', methods=['POST'])
+def quitar_descuento():
+    session.pop('axis_discount', None)
+    session.pop('discount_code', None)
+    flash('Cupón eliminado.', 'info')
     return redirect(url_for('checkout.checkout_view'))
 
 
@@ -191,6 +214,34 @@ def checkout_view():
         return redirect(url_for('checkout.completar_perfil'))
 
     return render_template('carrito.html', cart=cart, totals=totals)
+
+
+@checkout_bp.route('/newsletter', methods=['POST'])
+def newsletter():
+    email = request.form.get('email')
+    if not email:
+        flash('Por favor ingresa un correo válido.', 'error')
+        return redirect(request.referrer or '/')
+
+    try:
+        from app.app import mail
+        from flask_mail import Message
+        msg = Message(
+            "¡Bienvenido al Movimiento AXIS! 🎁 Tu regalo de bienvenida",
+            recipients=[email]
+        )
+        msg.html = render_template(
+            'emails/newsletter.html',
+            url_host=request.host_url.rstrip('/')
+        )
+        mail.send(msg)
+        flash('¡Gracias por unirte! Revisa tu correo, te hemos enviado un regalo. 🖤', 'success')
+    except Exception as e:
+        # Fallback si el correo falla, pero el usuario se "suscribió"
+        flash('¡Bienvenido al movimiento! (Usa el código AXIS10 para un 10% de descuento)', 'success')
+        print(f"Error newsletter mail: {e}")
+
+    return redirect(request.referrer or '/')
 
 
 @checkout_bp.route('/checkout/procesar', methods=['POST'])
@@ -219,16 +270,22 @@ def procesar_checkout():
         numero_pedido = f"AXIS-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
         
         # Determinar si el pedido completo será Pendiente o Completado
-        # Regla: Si hay stock insuficiente en AL MENOS UN producto, el pedido queda Pendiente.
+        # Regla: Si hay stock insuficiente, el pedido queda "Pendiente" (Bajo Pedido)
         estatus_global = 'Completado'
         mensajes_extra = []
         
+        # Validar si alguno es bajo pedido para cambiar estatus global
+        for item in cart:
+            if int(item.get('quantity', 0)) > int(item.get('stock', 0)):
+                estatus_global = 'Pendiente'
+                break
+
         venta = VentaEncabezado(
             uuid_venta=str(uuid.uuid4()),
             numero_pedido=numero_pedido,
             uuid_cliente=current_user.cliente.uuid_cliente,
             metodo_pago=request.form.get('metodo_pago', 'Transferencia'),
-            estatus_envio='Procesando' # Temporal
+            estatus_envio=estatus_global
         )
         db.session.add(venta)
         db.session.flush()
@@ -356,11 +413,14 @@ def procesar_checkout():
                 # Si hay stock suficiente: Se descuenta y queda como completado (si no hay otros pendientes)
                 producto.stock_fisico_actual -= cantidad_pedida
 
-        venta.estatus_envio = estatus_global
+        # No sobrescribir estatus_envio al final, ya lo determinamos arriba
+        # venta.estatus_envio = estatus_global 
         db.session.commit()
 
-        # Limpiar carrito
+        # Limpiar carrito y descuentos
         save_cart([])
+        session.pop('axis_discount', None)
+        session.pop('discount_code', None)
 
         for msg in mensajes_extra:
             flash(msg, 'info')
@@ -374,6 +434,25 @@ def procesar_checkout():
         print(traceback.format_exc()) # Log para consola
         flash(f'Error al procesar el pedido (DB): {str(e)}', 'error')
         return redirect(url_for('checkout.checkout_view'))
+
+
+@checkout_bp.route('/mis-pedidos')
+@login_required
+def mis_pedidos():
+    if not current_user.cliente:
+        return redirect(url_for('checkout.completar_perfil'))
+    
+    # Obtener ventas del cliente actual
+    ventas = VentaEncabezado.query.filter_by(uuid_cliente=current_user.cliente.uuid_cliente).order_by(VentaEncabezado.fecha_venta.desc()).all()
+    
+    # Calcular totales manuales para cada venta (o podríamos usar una property en el modelo)
+    for v in ventas:
+        total = 0
+        for d in v.detalles:
+            total += (d.precio_unitario_historico * d.cantidad)
+        v.total_calculado = total
+
+    return render_template('mis_pedidos.html', pedidos=ventas)
 
 
 @checkout_bp.route('/checkout/exito/<numero_pedido>')

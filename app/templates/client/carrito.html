@@ -45,7 +45,11 @@
                     <div class="col-span-2 text-right">Total</div>
                 </div>
 
+                {% set needs_backorder = false %}
                 {% for item in cart %}
+                {% if item.quantity > item.stock %}
+                {% set needs_backorder = true %}
+                {% endif %}
                 <div class="grid grid-cols-12 gap-4 py-6 border-b border-border items-center">
                     <div class="col-span-12 md:col-span-6 flex gap-4">
                         <div class="relative w-24 h-28 bg-secondary flex-shrink-0">
@@ -57,6 +61,12 @@
                                     class="font-medium hover:text-primary transition-colors">{{ item.nombre }}</a>
                                 <div class="text-sm text-muted-foreground mt-1">
                                     <p>Talla: {{ item.talla }}</p>
+                                    {% if item.quantity > item.stock %}
+                                    <p class="text-destructive font-bold text-[10px] uppercase mt-1">
+                                        <i data-lucide="alert-circle" class="w-3 h-3 inline"></i> Bajo Pedido (Stock: {{
+                                        item.stock }})
+                                    </p>
+                                    {% endif %}
                                 </div>
                             </div>
                             <form action="{{ url_for('checkout.eliminar_carrito') }}" method="POST" class="md:hidden">
@@ -115,6 +125,19 @@
             <div class="lg:col-span-1">
                 <div class="bg-secondary p-6 lg:p-8 sticky top-24">
                     <h2 class="font-[var(--font-display)] text-2xl tracking-[0.2em] mb-6">RESUMEN</h2>
+
+                    {% if needs_backorder %}
+                    <div class="mb-6 p-4 bg-amber-500/10 border border-amber-500/50 text-amber-200 text-xs space-y-2">
+                        <div class="flex items-center gap-2 font-bold uppercase tracking-wider">
+                            <i data-lucide="clock" class="w-4 h-4 text-amber-500"></i>
+                            IMPORTANTE: BAJO PEDIDO
+                        </div>
+                        <p>Tu orden contiene productos que superan nuestro stock actual. La entrega tendrá <strong>5
+                                días adicionales</strong> al tiempo estándar para su preparación conforme a nuestras
+                            reglas de negocio.</p>
+                    </div>
+                    {% endif %}
+
                     <div class="space-y-4 mb-6">
                         <div class="flex justify-between">
                             <span class="text-muted-foreground">Subtotal</span>
@@ -125,6 +148,14 @@
                             <span>{% if totals.shipping == 0 %}Gratis{% else %}${{ "%.2f"|format(totals.shipping) }}{%
                                 endif %}</span>
                         </div>
+
+                        {% if session.get('axis_discount') %}
+                        <div class="flex justify-between text-emerald-400 font-bold">
+                            <span>Descuento ({{ (session.axis_discount * 100)|int }}%)</span>
+                            <span>-${{ "%.2f"|format(totals.subtotal * session.axis_discount) }}</span>
+                        </div>
+                        {% endif %}
+
                         {% if totals.subtotal < 100 %} <p class="text-xs text-primary">Añade ${{ "%.2f"|format(100 -
                             totals.subtotal) }} más para envío gratis</p>
                             {% endif %}
@@ -132,17 +163,31 @@
                     <div class="border-t border-border pt-4 mb-6">
                         <div class="flex justify-between items-center">
                             <span class="text-lg">Total</span>
-                            <span class="font-[var(--font-display)] text-3xl">${{ "%.2f"|format(totals.total) }}</span>
+                            {% set final_total = totals.total %}
+                            {% if session.get('axis_discount') %}
+                            {% set final_total = final_total - (totals.subtotal * session.axis_discount) %}
+                            {% endif %}
+                            <span class="font-[var(--font-display)] text-3xl">${{ "%.2f"|format(final_total) }}</span>
                         </div>
                     </div>
                     <div class="mb-6">
                         <label class="text-sm text-muted-foreground block mb-2">Código promocional</label>
-                        <div class="flex">
-                            <input type="text" placeholder="Ingresa código"
-                                class="flex-1 bg-background border border-border px-4 py-2 text-sm focus:outline-none focus:border-primary" />
-                            <button
+                        <form action="{{ url_for('checkout.aplicar_descuento') }}" method="POST" class="flex">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="text" name="codigo" placeholder="Ingresa código"
+                                value="{{ session.get('discount_code', '') }}"
+                                class="flex-1 bg-background border border-border px-4 py-2 text-sm focus:outline-none focus:border-primary uppercase" />
+                            <button type="submit"
                                 class="px-4 py-2 border border-l-0 border-border hover:border-primary hover:text-primary transition-colors text-sm">Aplicar</button>
-                        </div>
+                        </form>
+                        {% if session.get('axis_discount') %}
+                        <form action="{{ url_for('checkout.quitar_descuento') }}" method="POST" class="mt-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit"
+                                class="text-[10px] text-muted-foreground hover:text-destructive underline uppercase tracking-widest">Eliminar
+                                cupón</button>
+                        </form>
+                        {% endif %}
                     </div>
                     {% if not current_user.is_authenticated %}
                     {# Usuario no autenticado: invitar a hacer login #}

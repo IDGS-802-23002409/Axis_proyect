@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #09090b;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px;
+            border: 1px solid #e4e4e7;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 0.3em;
+            margin: 0;
+        }
+
+        .discount-box {
+            margin: 32px 0;
+            padding: 32px;
+            border: 2px dashed #09090b;
+            background-color: #f4f4f5;
+        }
+
+        .code {
+            font-size: 36px;
+            font-weight: 900;
+            letter-spacing: 0.2em;
+            color: #09090b;
+            margin: 16px 0;
+        }
+
+        .footer {
+            font-size: 12px;
+            color: #71717a;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="logo">AXIS</h1>
+        <p
+            style="text-transform: uppercase; letter-spacing: 0.2em; font-size: 10px; color: #71717a; margin-bottom: 40px;">
+            Unete al Movimiento</p>
+
+        <h2 style="font-weight: 800;">¡BIENVENIDO A LA CULTURA URBAN!</h2>
+        <p>Gracias por suscribirte a nuestro newsletter. Como parte del movimiento, te regalamos un descuento exclusivo
+            para tu primera compra.</p>
+
+        <div class="discount-box">
+            <p style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px; margin: 0;">Tu código de
+                descuento del 10%:</p>
+            <div class="code">AXIS10</div>
+            <p style="font-size: 12px; color: #71717a; margin: 0;">VÁLIDO EN TODO EL CATÁLOGO</p>
+        </div>
+
+        <p>Usa este código al finalizar tu compra en el checkout.</p>
+
+        <div style="margin-top: 32px;">
+            <a href="{{ url_host }}/catalogo"
+                style="display: inline-block; padding: 16px 32px; background-color: #09090b; color: #ffffff; text-decoration: none; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; font-size: 14px;">EXPLORAR
+                DROPS</a>
+        </div>
+
+        <div class="footer">
+            <p>© 2026 AXIS CLOTHING. Redefiniendo el streetwear.</p>
+        </div>
+    </div>
+</body>
+
+</html>
