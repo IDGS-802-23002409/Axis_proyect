@@ -26,7 +26,7 @@
             <option value="">Seleccione un producto</option>
             {% for p in productos %}
             <option value="{{ p.uuid_producto }}" {% if producto and producto.uuid_producto == p.uuid_producto %}selected{% endif %}>
-              {{ p.sku_especifico }} – {{ p.modelo.nombre_modelo }} – Talla {{ p.talla }}
+              {{ p.sku_especifico }} – {{ p.explosion.nombre_receta }} – Talla {{ p.explosion.talla }}
             </option>
             {% endfor %}
           </select>
@@ -47,11 +47,11 @@
     <div class="mb-6 pb-6 border-b border-border">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <h2 class="text-2xl font-bold mb-2">{{ producto.modelo.nombre_modelo }}</h2>
+          <h2 class="text-2xl font-bold mb-2">{{ producto.explosion.nombre_receta }}</h2>
           <div class="space-y-1 text-sm text-muted-foreground">
             <p><span class="font-semibold">SKU:</span> {{ producto.sku_especifico }}</p>
-            <p><span class="font-semibold">Talla:</span> {{ producto.talla }}</p>
-            <p><span class="font-semibold">Categoría:</span> {{ producto.modelo.categoria.nombre if producto.modelo and producto.modelo.categoria else 'N/A' }}</p>
+            <p><span class="font-semibold">Talla:</span> {{ producto.explosion.talla }}</p>
+            <p><span class="font-semibold">Categoría:</span> {{ producto.explosion.categoria.nombre if producto.explosion and producto.explosion.categoria else 'N/A' }}</p>
           </div>
         </div>
         <div class="flex items-start justify-end">

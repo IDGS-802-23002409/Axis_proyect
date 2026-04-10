@@ -261,7 +261,7 @@ def procesar_checkout():
                 # Validar que tenga receta antes de crear OP
                 receta = ExplosionMaterialesCabecera.query.filter_by(uuid_explosion=producto.uuid_explosion).first()
                 if not receta:
-                     flash(f"Error: El producto {producto.modelo.nombre_modelo} no tiene una receta asignada. Contacte a soporte.", "error")
+                     flash(f"Error: El producto {producto.sku_especifico} no tiene una receta asignada. Contacte a soporte.", "error")
                      db.session.rollback()
                      return redirect(url_for('checkout.checkout_view'))
 
@@ -269,13 +269,13 @@ def procesar_checkout():
                     faltante = cantidad_pedida - stock_actual
                     producto.stock_fisico_actual = 0
                     mensajes_extra.append(
-                        f"{producto.modelo.nombre_modelo}: {stock_actual} uds. del stock + "
+                        f"{receta.nombre_receta}: {stock_actual} uds. del stock + "
                         f"{faltante} uds. entrarán a producción (+5 días entrega)."
                     )
                     cantidad_op_base = faltante
                 else:
                     mensajes_extra.append(
-                        f"{producto.modelo.nombre_modelo} entrará a producción completa (+5 días entrega)."
+                        f"{receta.nombre_receta} entrará a producción completa (+5 días entrega)."
                     )
                     cantidad_op_base = cantidad_pedida
 
@@ -304,7 +304,7 @@ def procesar_checkout():
                     
                     if insumo.stock_total_acumulado < cantidad_total_necesaria:
                         db.session.rollback()
-                        flash(f"No hay suficientes materiales en bodega (Falta {insumo.nombre}) para fabricar {producto.modelo.nombre_modelo}.", "error")
+                        flash(f"No hay suficientes materiales en bodega (Falta {insumo.nombre}) para fabricar {receta.nombre_receta}.", "error")
                         return redirect(url_for('checkout.checkout_view'))
                     
                     insumo.stock_total_acumulado -= cantidad_total_necesaria
@@ -347,7 +347,7 @@ def procesar_checkout():
 
                         if prendas_restantes > 0:
                             db.session.rollback()
-                            flash(f"No hay suficientes rollos continuos (Falta {insumo.nombre}) para fabricar {producto.modelo.nombre_modelo}.", "error")
+                            flash(f"No hay suficientes rollos continuos (Falta {insumo.nombre}) para fabricar {receta.nombre_receta}.", "error")
                             return redirect(url_for('checkout.checkout_view'))
 
             else:

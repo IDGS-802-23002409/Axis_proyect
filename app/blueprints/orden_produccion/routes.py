@@ -42,7 +42,7 @@ def create():
     # Productos activos
     productos = ProductoTerminado.query.filter_by(active=True).all()
     form.uuid_producto.choices = [
-        (p.uuid_producto, f"{p.sku_especifico} - {p.modelo.nombre_modelo} ({p.talla})")
+        (p.uuid_producto, f"{p.sku_especifico} - {p.explosion.nombre_receta} ({p.explosion.talla})")
         for p in productos
     ]
 
@@ -170,7 +170,7 @@ def create():
 @roles_accepted('admin', 'gerente', 'produccion')
 def ver(uuid_op):
     orden = db.session.query(OrdenProduccion).options(
-        joinedload(OrdenProduccion.producto).joinedload(ProductoTerminado.modelo),
+        joinedload(OrdenProduccion.producto).joinedload(ProductoTerminado.explosion),
         joinedload(OrdenProduccion.venta_detalle)
     ).get_or_404(uuid_op)
     
@@ -206,7 +206,7 @@ def avanzar_estado(uuid_op):
                 else:
                     producto = orden.producto
                     producto.stock_fisico_actual = (producto.stock_fisico_actual or 0) + orden.cantidad_a_producir
-                    flash(f"Orden terminada. {orden.cantidad_a_producir} unidades añadidas al stock de {producto.modelo.nombre_modelo}.", "success")
+                    flash(f"Orden terminada. {orden.cantidad_a_producir} unidades añadidas al stock de {producto.explosion.nombre_receta}.", "success")
             else:
                 flash(f"Estado de la orden actualizado a {nuevo_estado}.", "success")
                 

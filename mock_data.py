@@ -85,32 +85,42 @@ def run_seed():
         db.session.commit()
         print(" [OK] Usuarios creados.")
 
-        # ─────────────────────────────
+                # ─────────────────────────────
         # 3. CATEGORÍAS
         # ─────────────────────────────
         categorias_data = [
-            {"nombre": "Telas", "descripcion": "Tipos de telas"},
-            {"nombre": "Cinta tapacostura", "descripcion": "Cintas"},
-            {"nombre": "Hilo", "descripcion": "Hilos"},
-            {"nombre": "Rib de algodon", "descripcion": "Rib"},
-            {"nombre": "Etiquetas", "descripcion": "Etiquetas"},
-            {"nombre": "Estampados", "descripcion": "Estampados"},
-            {"nombre": "Ojalillos", "descripcion": "Ojales"},
-            {"nombre": "Forro", "descripcion": "Forro"},
-            {"nombre": "Cierre", "descripcion": "Cierres"},
-            {"nombre": "Botones", "descripcion": "Botones"},
-            {"nombre": "Remaches", "descripcion": "Remaches"},
-            {"nombre": "Elastico", "descripcion": "Elásticos"},
+            # ── Categorías de Insumos ──
+            {"nombre": "Telas",             "descripcion": "Tipos de telas",          "tipo": "Insumo"},
+            {"nombre": "Cinta tapacostura", "descripcion": "Cintas",                  "tipo": "Insumo"},
+            {"nombre": "Hilo",              "descripcion": "Hilos",                   "tipo": "Insumo"},
+            {"nombre": "Rib de algodon",    "descripcion": "Rib",                     "tipo": "Insumo"},
+            {"nombre": "Etiquetas",         "descripcion": "Etiquetas",               "tipo": "Insumo"},
+            {"nombre": "Estampados",        "descripcion": "Estampados",              "tipo": "Insumo"},
+            {"nombre": "Ojalillos",         "descripcion": "Ojales",                  "tipo": "Insumo"},
+            {"nombre": "Forro",             "descripcion": "Forro",                   "tipo": "Insumo"},
+            {"nombre": "Cierre",            "descripcion": "Cierres",                 "tipo": "Insumo"},
+            {"nombre": "Botones",           "descripcion": "Botones",                 "tipo": "Insumo"},
+            {"nombre": "Remaches",          "descripcion": "Remaches",                "tipo": "Insumo"},
+            {"nombre": "Elastico",          "descripcion": "Elásticos",               "tipo": "Insumo"},
+
+            # ── Categorías de Prendas ──
+            {"nombre": "Playeras",          "descripcion": "Playeras y camisetas",    "tipo": "Prenda"},
+            {"nombre": "Pantalones",        "descripcion": "Pantalones y jeans",      "tipo": "Prenda"},
+            {"nombre": "Vestidos",          "descripcion": "Vestidos y faldas",       "tipo": "Prenda"},
+            {"nombre": "Sudaderas",         "descripcion": "Sudaderas y hoodies",     "tipo": "Prenda"},
+            {"nombre": "Chamarras",         "descripcion": "Chamarras y abrigos",     "tipo": "Prenda"},
+            {"nombre": "Shorts",            "descripcion": "Shorts y bermudas",       "tipo": "Prenda"},
         ]
 
         categorias_dict = {}
 
         for c in categorias_data:
-            categoria = Categoria.query.filter_by(nombre=c["nombre"]).first()
+            categoria = Categoria.query.filter_by(nombre=c["nombre"], tipo=c["tipo"]).first()
             if not categoria:
                 categoria = Categoria(
                     nombre=c["nombre"],
-                    descripcion=c["descripcion"]
+                    descripcion=c["descripcion"],
+                    tipo=c["tipo"]
                 )
                 db.session.add(categoria)
                 db.session.flush()

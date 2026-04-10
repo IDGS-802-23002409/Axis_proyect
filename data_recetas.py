@@ -41,6 +41,21 @@ def run_seed():
             {
                 "nombre": "Playera Negra con Estampado",
                 "categoria": "Telas",
+                "talla": "XS",
+                "detalles": [
+                    {"sku": "TEL-JER-NEG-001", "consumo": 0.68, "ancho": 1.70},
+                    {"sku": "RIB-NEG-001", "consumo": 0.08, "ancho": 0.50},
+                    {"sku": "HIL-POL-NEG-001", "consumo": 138.00, "ancho": 0.00015},
+                    {"sku": "CIN-TAPA-NEG-001", "consumo": 0.66, "ancho": 0.01},
+                    {"sku": "EST-LOWKEY-001", "consumo": 1},
+                    {"sku": "ETQ-TALLA-001", "consumo": 1},
+                    {"sku": "ETQ-MARCA-001", "consumo": 1},
+                    {"sku": "ETQ-CUIDADO-001", "consumo": 1}
+                ]
+            },
+            {
+                "nombre": "Playera Negra con Estampado",
+                "categoria": "Telas",
                 "talla": "S",
                 "detalles": [
                     {"sku": "TEL-JER-NEG-001", "consumo": 0.70, "ancho": 1.65},

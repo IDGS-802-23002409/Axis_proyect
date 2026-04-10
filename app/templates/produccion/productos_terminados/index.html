@@ -47,12 +47,12 @@
         </div>
 
         <div>
-          <label class="text-xs text-muted-foreground" for="modelo">Modelo</label>
-          <select name="modelo" id="modelo" class="w-full border border-border bg-input rounded-md px-3 py-2">
+          <label class="text-xs text-muted-foreground" for="explosion">Receta</label>
+          <select name="explosion" id="explosion" class="w-full border border-border bg-input rounded-md px-3 py-2">
             <option value="">Todas</option>
-            {% for m in modelos %}
-            <option value="{{ m.uuid_modelo }}" {% if filtro_modelo==m.uuid_modelo %}selected{% endif %}>{{
-              m.nombre_modelo }}</option>
+            {% for m in explosiones %}
+            <option value="{{ m.uuid_explosion }}" {% if filtro_explosion==m.uuid_explosion %}selected{% endif %}>{{
+              m.nombre_receta }}</option>
             {% endfor %}
           </select>
         </div>
@@ -98,7 +98,7 @@
         <thead class="bg-secondary text-muted-foreground uppercase text-xs">
           <tr>
             <th class="px-4 py-3 text-left">SKU</th>
-            <th class="px-4 py-3 text-left">Modelo</th>
+            <th class="px-4 py-3 text-left">Receta</th>
             <th class="px-4 py-3 text-left">Talla</th>
             <th class="px-4 py-3 text-left">Stock</th>
             <th class="px-4 py-3 text-left">Precio</th>
@@ -109,8 +109,8 @@
           {% for p in productos %}
           <tr class="border-b border-border hover:bg-muted">
             <td class="px-4 py-3">{{ p.sku_especifico }}</td>
-            <td class="px-4 py-3">{{ p.modelo.nombre_modelo }}</td>
-            <td class="px-4 py-3">{{ p.talla }}</td>
+            <td class="px-4 py-3">{{ p.explosion.nombre_receta }}</td>
+            <td class="px-4 py-3">{{ p.explosion.talla }}</td>
             <td class="px-4 py-3">
               <span
                 class="px-2 py-1 rounded-full text-xs font-semibold {% if p.stock_fisico_actual == 0 %}bg-rose-500 text-white{% elif p.stock_fisico_actual <= p.stock_minimo_alerta %}bg-amber-500 text-gray-800{% else %}bg-emerald-500 text-white{% endif %}">{{

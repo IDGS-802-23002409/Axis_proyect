@@ -16,7 +16,7 @@
     <input 
       type="text" 
       id="buscar" 
-      placeholder="Buscar por SKU, nombre de modelo o talla..." 
+      placeholder="Buscar por SKU, nombre de receta o talla..." 
       class="w-full border border-border bg-input rounded-md px-4 py-3 text-sm"
     >
   </div>
@@ -28,19 +28,19 @@
       href="{{ url_for('costo_utilidad.detalle', uuid_producto=producto.uuid_producto) }}"
       class="grupo producto-card"
       data-sku="{{ producto.sku_especifico | lower }}"
-      data-modelo="{{ producto.modelo.nombre_modelo | lower }}"
-      data-talla="{{ producto.talla | lower }}"
+      data-receta="{{ producto.explosion.nombre_receta | lower }}"
+      data-talla="{{ producto.explosion.talla | lower }}"
     >
       <div class="bg-card border border-border rounded-lg p-6 h-full hover:border-primary hover:shadow-lg transition-all duration-200 cursor-pointer">
         <!-- Header del producto -->
         <div class="grid grid-cols-5 gap-2 mb-4">
           <div class="col-span-3">
-            <h3 class="text-sm font-semibold truncate">{{ producto.modelo.nombre_modelo }}</h3>
+            <h3 class="text-sm font-semibold truncate">{{ producto.explosion.nombre_receta }}</h3>
             <p class="text-xs text-muted-foreground">{{ producto.sku_especifico }}</p>
           </div>
           <div class="col-span-2 text-right">
             <p class="text-xs text-muted-foreground">Talla</p>
-            <p class="text-lg font-bold">{{ producto.talla }}</p>
+            <p class="text-lg font-bold">{{ producto.explosion.talla }}</p>
           </div>
         </div>
 
@@ -62,7 +62,7 @@
           </div>
           <div class="text-right">
             <p class="text-muted-foreground">Categoría</p>
-            <p class="text-foreground font-semibold">{{ producto.modelo.categoria.nombre if producto.modelo and producto.modelo.categoria else 'N/A' }}</p>
+            <p class="text-foreground font-semibold">{{ producto.explosion.categoria.nombre if producto.explosion and producto.explosion.categoria else 'N/A' }}</p>
           </div>
         </div>
 
@@ -93,10 +93,10 @@ document.getElementById('buscar').addEventListener('keyup', function() {
 
   tarjetas.forEach(tarjeta => {
     const sku = tarjeta.getAttribute('data-sku');
-    const modelo = tarjeta.getAttribute('data-modelo');
+    const receta = tarjeta.getAttribute('data-receta');
     const talla = tarjeta.getAttribute('data-talla');
 
-    const coincide = sku.includes(filtro) || modelo.includes(filtro) || talla.includes(filtro);
+    const coincide = sku.includes(filtro) || receta.includes(filtro) || talla.includes(filtro);
     tarjeta.style.display = coincide ? '' : 'none';
   });
 });
