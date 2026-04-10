@@ -4,10 +4,25 @@ from werkzeug.utils import secure_filename
 from . import categorias_bp
 from flask_security import login_required, roles_required, hash_password,roles_accepted
 from app.models.categorias import Categoria
+from app.models.insumos import Insumo
+from app.models.proveedores import Proveedor
+from app.models.explosion_materiales import ExplosionMaterialesCabecera
 from .forms import CategoriaForm
 from app.utils.database_connection import db
 from flask import render_template, request, redirect, url_for, flash, current_app
 from sqlalchemy import or_, func
+
+
+def _categoria_usos(uuid_categoria):
+    """Lista de áreas donde la categoría está referenciada (no vacía si hay uso)."""
+    usos = []
+    if Insumo.query.filter_by(uuid_categoria=uuid_categoria).first():
+        usos.append("insumos")
+    if Proveedor.query.filter_by(uuid_categoria=uuid_categoria).first():
+        usos.append("proveedores")
+    if ExplosionMaterialesCabecera.query.filter_by(uuid_categoria=uuid_categoria).first():
+        usos.append("recetas / explosión de materiales")
+    return usos
 
 
 def get_upload_folder():
@@ -141,6 +156,19 @@ def edit(uuid_categoria):
 @roles_accepted('admin', 'gerente')
 def delete(uuid_categoria):
     categoria = Categoria.query.get_or_404(uuid_categoria)
+
+    # Solo impedir la "baja" (desactivar) si sigue referenciada
+    if categoria.estatus_visible:
+        usos = _categoria_usos(uuid_categoria)
+        if usos:
+            flash(
+                "No se puede desactivar esta categoría porque está en uso: "
+                + ", ".join(usos)
+                + ".",
+                "error",
+            )
+            return redirect(url_for("categorias_bp.index"))
+
     categoria.estatus_visible = not categoria.estatus_visible
     db.session.commit()
 

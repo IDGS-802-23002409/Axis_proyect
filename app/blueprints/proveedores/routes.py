@@ -1,9 +1,10 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify
+from sqlalchemy.orm import joinedload
 from . import proveedores_bp
 from .forms import ProveedorForm
 from app.models.proveedores import Proveedor
 from app.models.usuarios import Usuario
-from app.utils.database_connection import db 
+from app.utils.database_connection import db
 from flask_security import login_required, roles_accepted, roles_required, current_user
 import uuid
 import re
@@ -35,7 +36,7 @@ def index():
     q = request.args.get('q', '').strip()
     estatus = request.args.get('estatus', '').strip()
 
-    query = Proveedor.query
+    query = Proveedor.query.options(joinedload(Proveedor.categoria))
 
     if q:
         query = query.filter(
@@ -85,8 +86,8 @@ def guardar(uid=None):
             if form.telefono.data:
                 proveedor.telefono = re.sub(r'\D', '', form.telefono.data)     
             
-            proveedor.categoria_insumo = form.categoria_insumo.data
-            
+            proveedor.uuid_categoria = form.uuid_categoria.data
+
             if uid:
                 proveedor.estatus = form.estatus.data
 
@@ -100,7 +101,11 @@ def guardar(uid=None):
             return redirect(url_for('proveedores.index'))
     
     # Si falla la validación, recarga los errores
-    all_proveedores = Proveedor.query.order_by(Proveedor.fecha_creacion.desc()).all()
+    all_proveedores = (
+        Proveedor.query.options(joinedload(Proveedor.categoria))
+        .order_by(Proveedor.fecha_creacion.desc())
+        .all()
+    )
     target_modal = 'modal-update' if uid else 'modal-registro'
     chart_labels, chart_data = _get_chart_data()
     return render_template('proveedores_index.html', proveedores=all_proveedores, form=form, modal_to_open=target_modal,
@@ -133,7 +138,11 @@ def detalles(uid):
     # --- LOGICA DE REDIRECCIÓN ---
     # Si NO viene el parámetro format=json, significa que el usuario entró desde la URL
     if request.args.get('format') != 'json':
-        proveedores = Proveedor.query.all()
+        proveedores = (
+            Proveedor.query.options(joinedload(Proveedor.categoria))
+            .order_by(Proveedor.fecha_creacion.desc())
+            .all()
+        )
         from .forms import ProveedorForm
         form = ProveedorForm()
         
@@ -144,12 +153,13 @@ def detalles(uid):
 
     uuid_a_mostrar = p.usuario_creo_uuid if p.usuario_creo_uuid else "SISTEMA"
     return jsonify({
-        "uuid": str(p.uuid_proveedor), 
+        "uuid": str(p.uuid_proveedor),
         "razon_social": p.razon_social,
         "rfc": p.rfc,
         "contacto_nombre": p.contacto_nombre,
-        "telefono": p.telefono,           
-        "categoria_insumo": p.categoria_insumo, 
+        "telefono": p.telefono,
+        "uuid_categoria": p.uuid_categoria or "",
+        "categoria_nombre": p.categoria.nombre if p.categoria else "",
         "estatus": bool(p.estatus),
         "fecha_creacion": p.fecha_creacion.strftime('%d/%m/%Y %H:%M') if p.fecha_creacion else '---',
         "fecha_actualizacion": p.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') if p.fecha_actualizacion else '---',

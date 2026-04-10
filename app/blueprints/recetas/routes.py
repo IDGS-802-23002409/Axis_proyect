@@ -2,7 +2,7 @@ from . import recetas_bp
 from flask_security import login_required, roles_required, hash_password,roles_accepted,current_user
 from .forms import RecetaForm
 from flask import render_template, redirect, url_for, flash, request
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from app.utils.database_connection import db
 from app.models.insumos import Insumo
 from app.models.modelos_productos import ProductoTerminado
@@ -43,7 +43,11 @@ def index():
 @roles_accepted('admin', 'gerente', 'produccion')
 def create():
     insumos_list = Insumo.query.filter_by(estatus='ACTIVO').all()
-    categorias_list = Categoria.query.filter_by(tipo="Prenda").order_by(Categoria.nombre).all()
+    categorias_list = (
+        Categoria.query.filter_by(tipo="Prenda", estatus_visible=True)
+        .order_by(Categoria.nombre)
+        .all()
+    )
     form = RecetaForm()
     
     # Popular el SelectField de categorías
@@ -153,7 +157,17 @@ def edit(uuid_explosion):
     receta = ExplosionMaterialesCabecera.query.get_or_404(uuid_explosion)
     detalles = ExplosionMaterialesDetalle.query.filter_by(uuid_explosion=uuid_explosion).all()
     insumos_list = Insumo.query.filter_by(estatus='ACTIVO').all()
-    categorias_list = Categoria.query.filter_by(tipo="Prenda").order_by(Categoria.nombre).all()
+    categorias_list = (
+        Categoria.query.filter(
+            Categoria.tipo == "Prenda",
+            or_(
+                Categoria.estatus_visible == True,
+                Categoria.uuid_categoria == receta.uuid_categoria,
+            ),
+        )
+        .order_by(Categoria.nombre)
+        .all()
+    )
     
     form = RecetaForm(obj=receta)
     

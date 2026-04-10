@@ -45,7 +45,7 @@
                         {% endif %}
                     </td>
                     <td class="px-6 py-4 text-sm font-mono text-muted-foreground">{{ p.rfc }}</td>
-                    <td class="px-6 py-4 text-xs italic text-muted-foreground">{{ p.categoria_insumo or '---' }}</td>
+                    <td class="px-6 py-4 text-xs italic text-muted-foreground">{{ p.categoria.nombre if p.categoria else '---' }}</td>
                     <td class="px-6 py-4 text-center">
                         <span class="status-badge px-3 py-1 text-[10px] font-bold uppercase rounded-full {{ 'bg-green-100 text-green-700' if p.estatus else 'bg-zinc-100 text-zinc-400' }}">
                             {{ 'Activo' if p.estatus else 'Inactivo' }}
