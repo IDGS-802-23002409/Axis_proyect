@@ -5,7 +5,7 @@ from .forms import InventarioForm
 from flask import render_template, request
 from sqlalchemy import func
 from app.utils.database_connection import db
-from app.models.inventario import RolloInventario, RetazoInventario
+from app.models.inventario import RolloInventario
 from app.models.compras import CompraDetalle, CompraEncabezado
 from app.models.insumos import Insumo
 from app.models.produccion import EjecucionCorte, OrdenProduccion
@@ -129,10 +129,7 @@ def ver_insumo(uuid):
             float(e.merma_real_calculada or 0) for e in ejecuciones
         )
 
-        #  RETAZOS
-        retazos = RetazoInventario.query.join(RolloInventario).filter(
-            RolloInventario.uuid_insumo == uuid
-        ).all()
+        
 
         total_retazos = sum(
             float(r.metraje or 0) for r in retazos

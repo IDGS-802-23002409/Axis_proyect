@@ -30,12 +30,7 @@ class ProveedorForm(FlaskForm):
         DataRequired(message="El teléfono es obligatorio"),
         Length(max=15, message="El campo no puede tener más de 10 dígitos numéricos")
     ])
-    uuid_categoria = SelectField(
-        'Categoría de Insumo',
-        choices=[],
-        validators=[Optional()],
-        coerce=_coerce_uuid_categoria,
-    )
+    
     submit = SubmitField('Guardar Proveedor')
 
     def __init__(self, *args, **kwargs):
@@ -44,25 +39,8 @@ class ProveedorForm(FlaskForm):
         from app.models.categorias import Categoria
         from app.utils.database_connection import db
 
-        used_uuids = (
-            db.session.query(Proveedor.uuid_categoria)
-            .filter(Proveedor.uuid_categoria.isnot(None))
-            .distinct()
-        )
-        categorias = (
-            Categoria.query.filter(
-                Categoria.tipo == "Insumo",
-                or_(
-                    Categoria.estatus_visible == True,
-                    Categoria.uuid_categoria.in_(used_uuids),
-                ),
-            )
-            .order_by(Categoria.nombre)
-            .all()
-        )
-        self.uuid_categoria.choices = [("", "Seleccione una categoría")] + [
-            (c.uuid_categoria, c.nombre) for c in categorias
-        ]
+        
+        
 
     def validate_razon_social(self, field):
         uid = request.view_args.get('uid')

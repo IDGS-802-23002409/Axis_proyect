@@ -15,7 +15,7 @@ class Proveedor(db.Model):
     usuario_creo_uuid = Column(String(36))
     estatus = Column(Boolean, default=True)
     telefono = Column(String(20), nullable=False, unique=True)
-    uuid_categoria = Column(String(36), ForeignKey('categorias.uuid_categoria'))
-    categoria = db.relationship('Categoria', backref=db.backref('proveedores', lazy=True))
+   # uuid_categoria = Column(String(36), ForeignKey('categorias.uuid_categoria'))
+    # categoria = db.relationship('Categoria', backref=db.backref('proveedores', lazy=True))
     def __repr__(self):
         return f'<Proveedor {self.razon_social}>'

@@ -69,6 +69,84 @@ def _obtener_costo_promedio_insumo(uuid_insumo, cache_costos=None):
 
     return costo_promedio
 
+def _obtener_merma_promedio_tela(uuid_producto):
+    """
+    Merma promedio ponderada de tela (METRO) para el producto,
+    basada en EjecucionCorte.
+
+    Fórmula:
+        sum(merma_real_calculada) / sum(metros_teoricos_requeridos)
+
+    Retorna decimal: 0.10 = 10 %
+    """
+    ejecuciones = (
+        EjecucionCorte.query
+        .join(OrdenProduccion)
+        .filter(OrdenProduccion.uuid_producto == uuid_producto)
+        .all()
+    )
+
+    if not ejecuciones:
+        return 0.0
+
+    total_merma_real    = 0.0
+    total_metros_teoricos = 0.0
+
+    for e in ejecuciones:
+        if (
+            e.merma_real_calculada is not None
+            and e.metros_teoricos_requeridos is not None
+            and float(e.metros_teoricos_requeridos) > 0
+        ):
+            total_merma_real      += float(e.merma_real_calculada)
+            total_metros_teoricos += float(e.metros_teoricos_requeridos)
+
+    if total_metros_teoricos == 0:
+        return 0.0
+
+    return total_merma_real / total_metros_teoricos
+
+
+def _obtener_merma_promedio_pieza(uuid_producto, uuid_insumo):
+    """
+    Merma promedio ponderada de un insumo tipo PIEZA para el producto,
+    basada en MermaPiezas.
+
+    Fórmula:
+        sum(cantidad_real_consumida - cantidad_teorica) / sum(cantidad_teorica)
+
+    Retorna decimal: 0.05 = 5 %
+    Puede ser negativo si históricamente se consume menos de lo teórico.
+    """
+    registros = (
+        MermaPiezas.query
+        .join(OrdenProduccion)
+        .filter(
+            OrdenProduccion.uuid_producto == uuid_producto,
+            MermaPiezas.uuid_insumo == uuid_insumo,
+        )
+        .all()
+    )
+
+    if not registros:
+        return 0.0
+
+    total_diferencia = 0.0
+    total_teorico    = 0.0
+
+    for r in registros:
+        if (
+            r.cantidad_real_consumida is not None
+            and r.cantidad_teorica is not None
+            and float(r.cantidad_teorica) > 0
+        ):
+            total_diferencia += float(r.cantidad_real_consumida) - float(r.cantidad_teorica)
+            total_teorico    += float(r.cantidad_teorica)
+
+    if total_teorico == 0:
+        return 0.0
+
+    return total_diferencia / total_teorico
 
 def _obtener_explosion_y_detalles(producto):
     if not producto.uuid_explosion:
@@ -175,7 +253,7 @@ def _construir_mermas_pieza(producto, detalles_explosion):
     for d in detalles_explosion:
         insumo = d.insumo
         if insumo and insumo.contenido_unidad_medida != "METRO":
-            mermas[insumo.uuid_insumo] = (
+            mermas[insumo.uuid_insumo] = _obtener_merma_promedio_pieza(
                 producto.uuid_producto,
                 insumo.uuid_insumo,
             )
@@ -226,7 +304,9 @@ def detalle(uuid_producto):
             if product:
                 _, detalles = _obtener_explosion_y_detalles(product)
 
-               
+                merma_tela   = _obtener_merma_promedio_tela(product.uuid_producto)
+                mermas_pieza = _construir_mermas_pieza(product, detalles)
+
                 costo_mp         = _calcular_costo_mp(product, merma_tela, mermas_pieza)
                 desglose_insumos = _obtener_desglose_insumos(product, merma_tela, mermas_pieza)
 
@@ -279,7 +359,8 @@ def detalle(uuid_producto):
                 url_for("costo_utilidad.detalle", uuid_producto=product.uuid_producto)
             )
 
-        
+        merma_tela   = _obtener_merma_promedio_tela(product.uuid_producto)
+        mermas_pieza = _construir_mermas_pieza(product, detalles)
 
         costo_mp         = _calcular_costo_mp(product, merma_tela, mermas_pieza)
         desglose_insumos = _obtener_desglose_insumos(product, merma_tela, mermas_pieza)

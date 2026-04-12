@@ -192,7 +192,7 @@ def create_app():
     application.register_blueprint(bp.productos_bp, url_prefix='/productos_terminados')
     application.register_blueprint(bp.orden_bp, url_prefix='/orden_produccion')
     application.register_blueprint(bp.security_bp, url_prefix='/security')
-    application.register_blueprint(bp.merma_bp, url_prefix='/merma')
+    # application.register_blueprint(bp.merma_bp, url_prefix='/merma')
 
     # ── CSRF Exemptions (rutas públicas del carrito) ──────────────
     # El carrito es una función pública del ecommerce: cualquier usuario

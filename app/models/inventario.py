@@ -21,7 +21,7 @@ class RolloInventario(db.Model):
     def __repr__(self):
         return f'<RolloInventario {self.uuid_rollo}>'
 
-
+'''
 class RetazoInventario(db.Model):
     __tablename__ = 'retazos_inventario'
 
@@ -37,3 +37,5 @@ class RetazoInventario(db.Model):
 
     def __repr__(self):
         return f'<RetazoInventario {self.uuid_retazo}>'
+
+'''
