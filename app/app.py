@@ -122,6 +122,9 @@ def create_app():
     mail.init_app(application)
     Migrate(application, db)
 
+    from app.utils.db_hooks import init_stored_procedures
+    init_stored_procedures(application)
+
     from app.blueprints.dashboard_administrativo import dashboard_bp
     application.register_blueprint(dashboard_bp, url_prefix='/dashboard_administrativo')
 

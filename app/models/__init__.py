@@ -11,6 +11,7 @@ from app.models.modelos_productos import ModeloRopa, ProductoTerminado  # noqa: 
 from app.models.explosion_materiales import ExplosionMaterialesCabecera, ExplosionMaterialesDetalle  # noqa: F401
 from app.models.produccion import OrdenProduccion, EjecucionCorte, MermaPiezas  # noqa: F401
 from app.models.ventas import VentaEncabezado, VentaDetalle  # noqa: F401
+from app.models.pedidos_cliente import PedidoClienteEncabezado, PedidoClienteDetalle  # noqa: F401
 from app.models.pedidos_proveedor import PedidoProveedorEncabezado, PedidoProveedorDetalle  # noqa: F401
 from app.models.empleados import Empleado  # noqa: F401
 
