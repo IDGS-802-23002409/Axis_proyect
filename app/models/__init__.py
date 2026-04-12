@@ -15,3 +15,5 @@ from app.models.pedidos_proveedor import PedidoProveedorEncabezado, PedidoProvee
 from app.models.empleados import Empleado  # noqa: F401
 
 
+from app.models.produccion import EjecucionCorteRollo
+from app.models.mermas import Merma

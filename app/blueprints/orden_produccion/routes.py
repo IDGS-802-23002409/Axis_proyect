@@ -7,13 +7,18 @@ from app.utils.database_connection import db
 from flask_security import login_required, roles_accepted
 from sqlalchemy.orm import joinedload
 from decimal import Decimal
-from app.models.explosion_materiales import ExplosionMaterialesDetalle
+from app.models.explosion_materiales import ExplosionMaterialesDetalle, ExplosionMaterialesCabecera
 from app.models.inventario import RolloInventario
 from app.models.insumos import Insumo
 from app.models.produccion import OrdenProduccion, EjecucionCorte
 from app.models.ventas import VentaEncabezado, VentaDetalle
 from app.utils.database_connection import db
 from .forms import OrdenProduccionForm
+from flask_security import current_user
+from decimal import Decimal
+from sqlalchemy.orm import joinedload
+from app.utils.database_connection import db
+from app.models import OrdenProduccion, Insumo, RolloInventario, EjecucionCorte
 
 
 @orden_bp.route("/")
@@ -169,6 +174,7 @@ def create():
 # YA NO SE CREA POR LOTES SE INGRESAN LAS PRENDAS A PRODUCIR
 # SE DESCUENTAN INSUMOS Y TELA HASTA QUE SU ESTADO PASA A CORTE, SIMPLEMENTE SE CREA LA  SOLICITUD
 
+
 @orden_bp.route("/crear", methods=["GET", "POST"])
 @login_required
 @roles_accepted("admin", "gerente", "produccion")
@@ -176,12 +182,10 @@ def create():
 
     form = OrdenProduccionForm()
 
-    # 🔥 SIEMPRE cargar productos activos
+    #  SIEMPRE cargar productos activos
     productos = ProductoTerminado.query.filter_by(active=True).all()
 
-    form.uuid_producto.choices = [
-        ("", "Seleccione una prenda")
-    ] + [
+    form.uuid_producto.choices = [("", "Seleccione una prenda")] + [
         (
             str(p.uuid_producto),
             f"{p.sku_especifico} - {p.explosion.nombre_receta} ({p.explosion.talla})",
@@ -208,7 +212,7 @@ def create():
                 flash("La cantidad debe ser mayor a 0", "warning")
                 return redirect(url_for("orden_bp.create"))
 
-            # 🔥 SOLO ORDEN (SIN RECETA, SIN INVENTARIO, SIN NADA MÁS)
+            #  SOLO ORDEN (SIN RECETA, SIN INVENTARIO, SIN NADA MÁS)
             orden = OrdenProduccion(
                 uuid_producto=producto.uuid_producto,
                 uuid_venta_detalle=None,
@@ -257,6 +261,177 @@ def ver(uuid_op):
     return render_template("produccion/orden/ver.html", orden=orden, cortes=cortes)
 
 
+
+from decimal import Decimal
+from sqlalchemy.orm import joinedload
+
+def iniciar_corte(uuid_op, uuid_usuario):
+    try:
+
+        op = (
+            OrdenProduccion.query.options(
+                joinedload(OrdenProduccion.producto)
+                .joinedload(ProductoTerminado.explosion)
+                .joinedload(ExplosionMaterialesCabecera.detalles)
+                .joinedload(ExplosionMaterialesDetalle.insumo)
+            )
+            .filter_by(uuid_op=uuid_op)
+            .with_for_update()
+            .first()
+        )
+
+        if not op:
+            raise Exception("Orden no encontrada")
+
+        if op.estado != "Pendiente":
+            raise Exception("La orden no está en estado Pendiente")
+
+        explosion = op.producto.explosion
+
+        if not explosion or explosion.estatus != "ACTIVO":
+            raise Exception("La receta no es válida")
+
+        cantidad = Decimal(op.cantidad_a_producir)
+
+        # ─────────────────────────────
+        # 1. AGRUPAR CONSUMO
+        # ─────────────────────────────
+        consumo_insumos = {}
+
+        for detalle in explosion.detalles:
+            insumo = detalle.insumo
+            requerido = Decimal(detalle.consumo_teorico_unitario) * cantidad
+
+            if insumo.uuid_insumo not in consumo_insumos:
+                consumo_insumos[insumo.uuid_insumo] = {
+                    "insumo": insumo,
+                    "cantidad": Decimal(0)
+                }
+
+            consumo_insumos[insumo.uuid_insumo]["cantidad"] += requerido
+
+        # ─────────────────────────────
+        # 2. VALIDAR PIEZAS
+        # ─────────────────────────────
+        for data in consumo_insumos.values():
+            insumo = data["insumo"]
+            requerido = data["cantidad"]
+
+            if insumo.unidad_medida == "PIEZA":
+
+                db_insumo = (
+                    Insumo.query
+                    .filter_by(uuid_insumo=insumo.uuid_insumo)
+                    .with_for_update()
+                    .first()
+                )
+
+                if not db_insumo:
+                    raise Exception(f"Insumo no encontrado: {insumo.nombre}")
+
+                if (db_insumo.stock_total_acumulado or 0) < requerido:
+                    raise Exception(f"Stock insuficiente de {db_insumo.nombre}")
+
+        # ─────────────────────────────
+        # 3. DESCONTAR PIEZAS
+        # ─────────────────────────────
+        for data in consumo_insumos.values():
+            insumo = data["insumo"]
+            requerido = data["cantidad"]
+
+            if insumo.unidad_medida == "PIEZA":
+
+                db_insumo = (
+                    Insumo.query
+                    .filter_by(uuid_insumo=insumo.uuid_insumo)
+                    .with_for_update()
+                    .first()
+                )
+
+                db_insumo.stock_total_acumulado -= requerido
+
+        # ─────────────────────────────
+        # 4. PROCESAR ROLLOS (CORREGIDO Y ROBUSTO)
+        # ─────────────────────────────
+        for data in consumo_insumos.values():
+            insumo = data["insumo"]
+            requerido = Decimal(data["cantidad"])
+
+            if insumo.unidad_medida == "ROLLO":
+
+                rollos = (
+                    RolloInventario.query
+                    .filter(RolloInventario.uuid_insumo == insumo.uuid_insumo)
+                    .with_for_update()
+                    .order_by(RolloInventario.metraje_continuo_actual.desc())
+                    .all()
+                )
+
+                if not rollos:
+                    raise Exception(
+                        f"No existe inventario en rollos para {insumo.nombre}"
+                    )
+
+                total_disponible = sum(
+                    Decimal(r.metraje_continuo_actual or 0)
+                    for r in rollos
+                )
+
+                if total_disponible < requerido:
+                    raise Exception(
+                        f"No hay suficiente metraje para {insumo.nombre}. "
+                        f"Disponible: {total_disponible}, requerido: {requerido}"
+                    )
+
+                restante = requerido
+
+                for rollo in rollos:
+                    if restante <= 0:
+                        break
+
+                    disponible = Decimal(rollo.metraje_continuo_actual or 0)
+
+                    if disponible <= 0:
+                        continue
+
+                    if disponible >= restante:
+                        rollo.metraje_continuo_actual -= restante
+                        restante = 0
+                    else:
+                        rollo.metraje_continuo_actual = 0
+                        restante -= disponible
+
+        # ─────────────────────────────
+        # 5. CREAR EJECUCIÓN
+        # ─────────────────────────────
+        ejecucion = EjecucionCorte(
+            uuid_op=op.uuid_op,
+           
+            metros_teoricos_requeridos=0,
+            metros_sacados_bodega=0,
+            prendas_reales_logradas=0,
+            usuario_corto_uuid=uuid_usuario,
+        )
+
+        db.session.add(ejecucion)
+
+        # ─────────────────────────────
+        # 6. CAMBIAR ESTADO
+        # ─────────────────────────────
+        op.estado = "En Corte"
+
+        db.session.commit()
+
+        return {
+            "ok": True,
+            "mensaje": "Corte iniciado correctamente"
+        }
+
+    except Exception as e:
+        db.session.rollback()
+        return {"ok": False, "error": str(e)}
+    
+
 @orden_bp.route("/avanzar_estado/<uuid_op>", methods=["POST"])
 @login_required
 @roles_accepted("admin", "gerente", "produccion")
@@ -267,32 +442,48 @@ def avanzar_estado(uuid_op):
 
     try:
         idx_actual = estados.index(orden.estado)
-        if idx_actual < len(estados) - 1:
-            nuevo_estado = estados[idx_actual + 1]
-            orden.estado = nuevo_estado
 
-            # Si pasamos a Terminado, integramos al stock final
-            if nuevo_estado == "Terminado":
-                if orden.uuid_venta_detalle:
-                    flash(
-                        f"Orden terminada. Las prendas están listas para surtir la venta relacionada.",
-                        "success",
-                    )
-                else:
-                    producto = orden.producto
-                    producto.stock_fisico_actual = (
-                        producto.stock_fisico_actual or 0
-                    ) + orden.cantidad_a_producir
-                    flash(
-                        f"Orden terminada. {orden.cantidad_a_producir} unidades añadidas al stock de {producto.explosion.nombre_receta}.",
-                        "success",
-                    )
-            else:
-                flash(f"Estado de la orden actualizado a {nuevo_estado}.", "success")
-
-            db.session.commit()
-        else:
+        if idx_actual >= len(estados) - 1:
             flash("La orden ya está en estado Terminado.", "info")
+            return redirect(url_for("orden_bp.index"))
+
+        nuevo_estado = estados[idx_actual + 1]
+
+        #  CASO ESPECIAL: PASAR A CORTE
+        if nuevo_estado == "En Corte":
+            resultado = iniciar_corte(uuid_op, current_user.id)
+
+            if not resultado["ok"]:
+                flash(resultado["error"], "danger")
+                return redirect(url_for("orden_bp.index"))
+
+            flash("Corte iniciado correctamente.", "success")
+            return redirect(url_for("orden_bp.index"))
+
+        #  OTROS ESTADOS NORMALES
+        orden.estado = nuevo_estado
+
+        #  SI TERMINA → SUMAR INVENTARIO
+        if nuevo_estado == "Terminado":
+            if orden.uuid_venta_detalle:
+                flash(
+                    "Orden terminada. Lista para surtir la venta.",
+                    "success",
+                )
+            else:
+                producto = orden.producto
+                producto.stock_fisico_actual = (
+                    producto.stock_fisico_actual or 0
+                ) + orden.cantidad_a_producir
+
+                flash(
+                    f"{orden.cantidad_a_producir} unidades agregadas al stock.",
+                    "success",
+                )
+        else:
+            flash(f"Estado actualizado a {nuevo_estado}.", "success")
+
+        db.session.commit()
 
     except ValueError:
         flash("Estado actual inválido.", "danger")

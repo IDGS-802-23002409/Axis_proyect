@@ -135,7 +135,7 @@ def run_seed():
         # ─────────────────────────────
         insumos_data = [
 
-            # ───── TELAS ─────
+            # ───── TELAS (ROLLOS) ─────
             {
                 "sku": "TEL-JER-NEG-001",
                 "nombre": "Tela Jersey Algodón Negra",
@@ -192,7 +192,7 @@ def run_seed():
                 "ancho": 1.75
             },
 
-            # ───── RIB ─────
+            # ───── RIB (ROLLOS) ─────
             {
                 "sku": "RIB-NEG-001",
                 "nombre": "Rib Negro",
@@ -216,12 +216,12 @@ def run_seed():
                 "ancho": 0.60
             },
 
-            # ───── HILO ─────
+            # ───── HILO (AHORA ROLLO  CORREGIDO) ─────
             {
                 "sku": "HIL-POL-NEG-001",
                 "nombre": "Hilo Negro 40/2",
                 "categoria": "Hilo",
-                "unidad_medida": "PIEZA",
+                "unidad_medida": "ROLLO",
                 "contenido_cantidad": 3000,
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
@@ -231,14 +231,14 @@ def run_seed():
                 "sku": "HIL-POL-BEI-001",
                 "nombre": "Hilo Beige 40/2",
                 "categoria": "Hilo",
-                "unidad_medida": "PIEZA",
+                "unidad_medida": "ROLLO",
                 "contenido_cantidad": 3000,
                 "contenido_unidad_medida": "METRO",
                 "stock": 0,
                 "stock_min": 10
             },
 
-            # ───── FORRO ─────
+            # ───── FORRO (ROLLO) ─────
             {
                 "sku": "FOR-TAF-001",
                 "nombre": "Forro Tafeta",
@@ -251,7 +251,7 @@ def run_seed():
                 "ancho": 1.40
             },
 
-            # ───── CINTAS ─────
+            # ───── CINTAS (ROLLOS) ─────
             {
                 "sku": "CIN-TAPA-NEG-001",
                 "nombre": "Cinta Tapacostura Negra",
@@ -275,7 +275,7 @@ def run_seed():
                 "ancho": 0.02
             },
 
-            # ───── ELÁSTICO ─────
+            # ───── ELÁSTICO (ROLLO) ─────
             {
                 "sku": "ELA-NEG-004CM-001",
                 "nombre": "Elástico Negro 4cm",
@@ -330,7 +330,7 @@ def run_seed():
                 "stock_min": 100
             },
 
-            # ───── ESTAMPADOS ─────
+            # ───── RESTO IGUAL (PIEZAS) ─────
             {
                 "sku": "EST-LOWKEY-001",
                 "nombre": "Estampado Lowkey",
@@ -351,38 +351,6 @@ def run_seed():
                 "stock": 0,
                 "stock_min": 30
             },
-
-            # ───── ETIQUETAS ─────
-            {
-                "sku": "ETQ-TALLA-001",
-                "nombre": "Etiqueta de Talla",
-                "categoria": "Etiquetas",
-                "unidad_medida": "PIEZA",
-                "contenido_cantidad": 1,
-                "contenido_unidad_medida": "PIEZA",
-                "stock": 0,
-                "stock_min": 100
-            },
-            {
-                "sku": "ETQ-MARCA-001",
-                "nombre": "Etiqueta de Marca",
-                "categoria": "Etiquetas",
-                "unidad_medida": "PIEZA",
-                "contenido_cantidad": 1,
-                "contenido_unidad_medida": "PIEZA",
-                "stock": 0,
-                "stock_min": 100
-            },
-            {
-                "sku": "ETQ-CUIDADO-001",
-                "nombre": "Etiqueta de Cuidado",
-                "categoria": "Etiquetas",
-                "unidad_medida": "PIEZA",
-                "contenido_cantidad": 1,
-                "contenido_unidad_medida": "PIEZA",
-                "stock": 0,
-                "stock_min": 100
-            }
         ]
 
 
