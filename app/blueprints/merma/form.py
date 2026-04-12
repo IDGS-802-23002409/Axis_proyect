@@ -170,3 +170,88 @@ class RetazoForm(FlaskForm):
 
 
 '''
+
+from flask_wtf import FlaskForm
+from wtforms import (
+    SelectField,
+    DecimalField,
+    TextAreaField,
+    BooleanField
+)
+from wtforms.validators import DataRequired, NumberRange, Optional
+
+
+class MermaForm(FlaskForm):
+
+    # ─────────────────────────────
+    # CLASIFICACIÓN
+    # ─────────────────────────────
+    tipo_merma = SelectField(
+        "Tipo de Merma",
+        choices=[
+            ("TELA", "Tela"),
+            ("INSUMO", "Insumo"),
+            ("PRODUCTO", "Producto")
+        ],
+        validators=[DataRequired()]
+    )
+
+    proceso = SelectField(
+        "Proceso",
+        choices=[
+            ("CORTE", "Corte"),
+            ("CONFECCION", "Confección"),
+            ("ACABADO", "Acabado"),
+            ("ALMACEN", "Almacén")
+        ],
+        validators=[DataRequired()]
+    )
+
+    tipo_evento = SelectField(
+        "Tipo de Evento",
+        choices=[
+            ("DESPERDICIO_TOTAL", "Desperdicio Total"),
+            ("DESPERDICIO_PARCIAL", "Desperdicio Parcial"),
+            ("DEFECTO_CALIDAD", "Defecto de Calidad"),
+            ("ERROR_OPERARIO", "Error de Operario"),
+            ("DANIO_ACCIDENTAL", "Daño Accidental"),
+            ("DEFECTO_ORIGEN", "Defecto de Origen"),
+            ("AJUSTE_INVENTARIO", "Ajuste de Inventario")
+        ],
+        validators=[DataRequired()]
+    )
+
+    motivo = SelectField(
+        "Motivo",
+        choices=[
+            ("CORTE_INCORRECTO", "Corte Incorrecto"),
+            ("TELA_DEFECTUOSA", "Tela Defectuosa"),
+            ("COSTURA_INCORRECTA", "Costura Incorrecta"),
+            ("MANCHA", "Mancha"),
+            ("ROTURA", "Rotura"),
+            ("MEDIDA_ERRONEA", "Medida Errónea"),
+            ("PRUEBA_MUESTRA", "Prueba / Muestra"),
+            ("MAL_USO_MAQUINA", "Mal Uso de Máquina"),
+            ("OTRO", "Otro")
+        ],
+        validators=[Optional()]
+    )
+
+    # ─────────────────────────────
+    # DATO REAL
+    # ─────────────────────────────
+    cantidad = DecimalField(
+        "Cantidad",
+        places=4,
+        validators=[
+            DataRequired(),
+            NumberRange(min=0)
+        ]
+    )
+
+    es_total = BooleanField("Merma Total", default=True)
+
+    observaciones = TextAreaField(
+        "Observaciones",
+        validators=[Optional()]
+    )

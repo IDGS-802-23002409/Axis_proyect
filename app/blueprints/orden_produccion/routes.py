@@ -19,6 +19,7 @@ from decimal import Decimal
 from sqlalchemy.orm import joinedload
 from app.utils.database_connection import db
 from app.models import OrdenProduccion, Insumo, RolloInventario, EjecucionCorte
+from flask import request, jsonify, url_for
 
 
 @orden_bp.route("/")
@@ -432,60 +433,89 @@ def iniciar_corte(uuid_op, uuid_usuario):
         return {"ok": False, "error": str(e)}
     
 
+
 @orden_bp.route("/avanzar_estado/<uuid_op>", methods=["POST"])
 @login_required
 @roles_accepted("admin", "gerente", "produccion")
 def avanzar_estado(uuid_op):
-    orden = OrdenProduccion.query.get_or_404(uuid_op)
 
+    orden = OrdenProduccion.query.get_or_404(uuid_op)
     estados = ["Pendiente", "En Corte", "Confección", "Terminado"]
 
     try:
+        data = request.get_json() or {}
+        con_merma = data.get("con_merma", False)
+
         idx_actual = estados.index(orden.estado)
 
         if idx_actual >= len(estados) - 1:
-            flash("La orden ya está en estado Terminado.", "info")
-            return redirect(url_for("orden_bp.index"))
+            return jsonify({
+                "ok": True,
+                "message": "La orden ya está en estado Terminado"
+            })
 
         nuevo_estado = estados[idx_actual + 1]
 
-        #  CASO ESPECIAL: PASAR A CORTE
+        # ─────────────────────────────
+        # CASO: ENTRAR A CORTE
+        # ─────────────────────────────
         if nuevo_estado == "En Corte":
             resultado = iniciar_corte(uuid_op, current_user.id)
 
             if not resultado["ok"]:
-                flash(resultado["error"], "danger")
-                return redirect(url_for("orden_bp.index"))
+                return jsonify({
+                    "ok": False,
+                    "error": resultado["error"]
+                }), 400
 
-            flash("Corte iniciado correctamente.", "success")
-            return redirect(url_for("orden_bp.index"))
+            orden.estado = nuevo_estado
+            db.session.commit()
 
-        #  OTROS ESTADOS NORMALES
+            return jsonify({
+                "ok": True,
+                "message": "Corte iniciado correctamente"
+            })
+
+        # ─────────────────────────────
+        # CASO: CONFECCIÓN + MERMA
+        # ─────────────────────────────
+        if nuevo_estado == "Confección" and con_merma:
+            return jsonify({
+                "ok": True,
+                "redirect": url_for("orden_bp.merma_form", uuid_op=uuid_op)
+            })
+
+        # ─────────────────────────────
+        # FLUJO NORMAL
+        # ─────────────────────────────
         orden.estado = nuevo_estado
 
-        #  SI TERMINA → SUMAR INVENTARIO
         if nuevo_estado == "Terminado":
             if orden.uuid_venta_detalle:
-                flash(
-                    "Orden terminada. Lista para surtir la venta.",
-                    "success",
-                )
+                message = "Orden terminada. Lista para surtir la venta."
             else:
                 producto = orden.producto
-                producto.stock_fisico_actual = (
-                    producto.stock_fisico_actual or 0
-                ) + orden.cantidad_a_producir
-
-                flash(
-                    f"{orden.cantidad_a_producir} unidades agregadas al stock.",
-                    "success",
-                )
+                producto.stock_fisico_actual = (producto.stock_fisico_actual or 0) + orden.cantidad_a_producir
+                message = f"{orden.cantidad_a_producir} unidades agregadas al stock."
         else:
-            flash(f"Estado actualizado a {nuevo_estado}.", "success")
+            message = f"Estado actualizado a {nuevo_estado}"
 
         db.session.commit()
 
-    except ValueError:
-        flash("Estado actual inválido.", "danger")
+        return jsonify({
+            "ok": True,
+            "message": message
+        })
 
-    return redirect(url_for("orden_bp.index"))
+    except ValueError:
+        return jsonify({
+            "ok": False,
+            "error": "Estado actual inválido"
+        }), 400
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "ok": False,
+            "error": str(e)
+        }), 500
