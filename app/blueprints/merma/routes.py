@@ -1,3 +1,5 @@
+
+'''
 from flask import flash, redirect, render_template, request, url_for, jsonify
 from flask_security import login_required, roles_required, roles_accepted, current_user
 
@@ -479,3 +481,6 @@ def eliminar_retazo(uuid_retazo):
         flash(f'Error al eliminar: {str(e)}', 'error')
 
     return redirect(url_for('merma.index_retazos'))
+
+
+'''

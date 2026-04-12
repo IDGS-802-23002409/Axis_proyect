@@ -37,7 +37,9 @@ class EjecucionCorte(db.Model):
     # Lo que el cortador sacó físicamente del rollo
     metros_sacados_bodega = Column(Numeric(12, 4), nullable=False) 
     prendas_reales_logradas = Column(Integer, nullable=False)
-    merma_real_calculada = Column(Numeric(12, 4), nullable=False)
+
+    #YA NO HAY MERMA CALCULADA
+    #merma_real_calculada = Column(Numeric(12, 4), nullable=False)
     fecha_proceso = Column(DateTime, server_default=func.now())
     usuario_corto_uuid = Column(String(36))
     orden_produccion = db.relationship('OrdenProduccion', backref=db.backref('ejecuciones_corte', lazy=True))
@@ -45,6 +47,12 @@ class EjecucionCorte(db.Model):
     def __repr__(self):
         return f'<EjecucionCorte {self.uuid_corte}>'
 
+
+
+
+
+
+'''
 motivo_merma_pieza_enum = Enum(
     'DEFECTO_PROVEEDOR',    # Pieza llegó dañada desde la compra
     'DAÑO_EN_PROCESO',      # Se dañó durante confección o corte
@@ -55,6 +63,9 @@ motivo_merma_pieza_enum = Enum(
 )
  
  
+
+
+
 class MermaPiezas(db.Model):
     """
     Flujo esperado:
@@ -106,3 +117,5 @@ class MermaPiezas(db.Model):
  
     def __repr__(self):
         return f'<MermaPiezas op={self.uuid_op} insumo={self.uuid_insumo} diff={self.diferencia}>'
+
+'''

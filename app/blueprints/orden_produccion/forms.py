@@ -7,6 +7,7 @@ class OrdenProduccionForm(FlaskForm):
 
     uuid_producto = SelectField(
         'Producto',
+        choices=[],  # 
         validators=[DataRequired()],
         coerce=str
     )
@@ -21,6 +22,7 @@ class OrdenProduccionForm(FlaskForm):
 
     uuid_venta_detalle = SelectField(
         'Venta relacionada (opcional)',
+        choices=[],  # 
         validators=[Optional()],
         coerce=str
     )

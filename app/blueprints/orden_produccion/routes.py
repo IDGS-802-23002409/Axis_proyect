@@ -11,27 +11,27 @@ from app.models.explosion_materiales import ExplosionMaterialesDetalle
 from app.models.inventario import RolloInventario
 from app.models.insumos import Insumo
 from app.models.produccion import OrdenProduccion, EjecucionCorte
-from app.models.ventas import VentaEncabezado,VentaDetalle
+from app.models.ventas import VentaEncabezado, VentaDetalle
 from app.utils.database_connection import db
 from .forms import OrdenProduccionForm
 
-@orden_bp.route('/')
+
+@orden_bp.route("/")
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted("admin", "gerente", "produccion")
 def index():
 
-    ordenes = db.session.query(OrdenProduccion).join(
-        ProductoTerminado
-    ).order_by(OrdenProduccion.fecha_solicitud.desc()).all()
-
-    return render_template(
-        'produccion/orden/index.html',
-        ordenes=ordenes
+    ordenes = (
+        db.session.query(OrdenProduccion)
+        .join(ProductoTerminado)
+        .order_by(OrdenProduccion.fecha_solicitud.desc())
+        .all()
     )
 
+    return render_template("produccion/orden/index.html", ordenes=ordenes)
 
 
-
+"""
 @orden_bp.route('/crear', methods=['GET', 'POST'])
 @login_required
 @roles_accepted('admin', 'gerente', 'produccion')
@@ -164,57 +164,137 @@ def create():
             return redirect(url_for('orden_bp.index'))
 
     return render_template('produccion/orden/create.html', form=form)
+"""
+# CREAR UNA ORDEN DE PRODUCCION QUE NO FUE PEDIDO DE UN CLIENTE, NO TIENE VENTA RELACIONADA
+# YA NO SE CREA POR LOTES SE INGRESAN LAS PRENDAS A PRODUCIR
+# SE DESCUENTAN INSUMOS Y TELA HASTA QUE SU ESTADO PASA A CORTE, SIMPLEMENTE SE CREA LA  SOLICITUD
 
-@orden_bp.route('/ver/<uuid_op>')
+@orden_bp.route("/crear", methods=["GET", "POST"])
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted("admin", "gerente", "produccion")
+def create():
+
+    form = OrdenProduccionForm()
+
+    # 🔥 SIEMPRE cargar productos activos
+    productos = ProductoTerminado.query.filter_by(active=True).all()
+
+    form.uuid_producto.choices = [
+        ("", "Seleccione una prenda")
+    ] + [
+        (
+            str(p.uuid_producto),
+            f"{p.sku_especifico} - {p.explosion.nombre_receta} ({p.explosion.talla})",
+        )
+        for p in productos
+    ]
+
+    if form.validate_on_submit():
+
+        if not form.uuid_producto.data:
+            flash("Debes seleccionar una prenda", "warning")
+            return redirect(url_for("orden_bp.create"))
+
+        producto = ProductoTerminado.query.get(form.uuid_producto.data)
+
+        if not producto:
+            flash("El producto no existe", "danger")
+            return redirect(url_for("orden_bp.create"))
+
+        try:
+            cantidad = int(form.cantidad_a_producir.data)
+
+            if cantidad <= 0:
+                flash("La cantidad debe ser mayor a 0", "warning")
+                return redirect(url_for("orden_bp.create"))
+
+            # 🔥 SOLO ORDEN (SIN RECETA, SIN INVENTARIO, SIN NADA MÁS)
+            orden = OrdenProduccion(
+                uuid_producto=producto.uuid_producto,
+                uuid_venta_detalle=None,
+                cantidad_a_producir=cantidad,
+                estado="Pendiente",
+            )
+
+            db.session.add(orden)
+            db.session.commit()
+
+            flash("Orden creada en estado PENDIENTE.", "success")
+            return redirect(url_for("orden_bp.index"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error al crear la orden: {str(e)}", "danger")
+            return redirect(url_for("orden_bp.create"))
+
+    return render_template("produccion/orden/create.html", form=form)
+
+
+@orden_bp.route("/ver/<uuid_op>")
+@login_required
+@roles_accepted("admin", "gerente", "produccion")
 def ver(uuid_op):
-    orden = db.session.query(OrdenProduccion).options(
-        joinedload(OrdenProduccion.producto).joinedload(ProductoTerminado.explosion),
-        joinedload(OrdenProduccion.venta_detalle)
-    ).get_or_404(uuid_op)
-    
-    # Obtener ejecuciones de corte asociadas con carga ansiosa de relaciones
-    cortes = EjecucionCorte.query.options(
-        joinedload(EjecucionCorte.rollo_usado).joinedload(RolloInventario.insumo)
-    ).filter_by(uuid_op=uuid_op).all()
-    
-    return render_template(
-        'produccion/orden/ver.html',
-        orden=orden,
-        cortes=cortes
+    orden = (
+        db.session.query(OrdenProduccion)
+        .options(
+            joinedload(OrdenProduccion.producto).joinedload(
+                ProductoTerminado.explosion
+            ),
+            joinedload(OrdenProduccion.venta_detalle),
+        )
+        .get_or_404(uuid_op)
     )
 
-@orden_bp.route('/avanzar_estado/<uuid_op>', methods=['POST'])
+    # Obtener ejecuciones de corte asociadas con carga ansiosa de relaciones
+    cortes = (
+        EjecucionCorte.query.options(
+            joinedload(EjecucionCorte.rollo_usado).joinedload(RolloInventario.insumo)
+        )
+        .filter_by(uuid_op=uuid_op)
+        .all()
+    )
+
+    return render_template("produccion/orden/ver.html", orden=orden, cortes=cortes)
+
+
+@orden_bp.route("/avanzar_estado/<uuid_op>", methods=["POST"])
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted("admin", "gerente", "produccion")
 def avanzar_estado(uuid_op):
     orden = OrdenProduccion.query.get_or_404(uuid_op)
-    
-    estados = ['Pendiente', 'En Corte', 'Confección', 'Terminado']
-    
+
+    estados = ["Pendiente", "En Corte", "Confección", "Terminado"]
+
     try:
         idx_actual = estados.index(orden.estado)
         if idx_actual < len(estados) - 1:
             nuevo_estado = estados[idx_actual + 1]
             orden.estado = nuevo_estado
-            
+
             # Si pasamos a Terminado, integramos al stock final
-            if nuevo_estado == 'Terminado':
+            if nuevo_estado == "Terminado":
                 if orden.uuid_venta_detalle:
-                    flash(f"Orden terminada. Las prendas están listas para surtir la venta relacionada.", "success")
+                    flash(
+                        f"Orden terminada. Las prendas están listas para surtir la venta relacionada.",
+                        "success",
+                    )
                 else:
                     producto = orden.producto
-                    producto.stock_fisico_actual = (producto.stock_fisico_actual or 0) + orden.cantidad_a_producir
-                    flash(f"Orden terminada. {orden.cantidad_a_producir} unidades añadidas al stock de {producto.explosion.nombre_receta}.", "success")
+                    producto.stock_fisico_actual = (
+                        producto.stock_fisico_actual or 0
+                    ) + orden.cantidad_a_producir
+                    flash(
+                        f"Orden terminada. {orden.cantidad_a_producir} unidades añadidas al stock de {producto.explosion.nombre_receta}.",
+                        "success",
+                    )
             else:
                 flash(f"Estado de la orden actualizado a {nuevo_estado}.", "success")
-                
+
             db.session.commit()
         else:
             flash("La orden ya está en estado Terminado.", "info")
-            
+
     except ValueError:
         flash("Estado actual inválido.", "danger")
-        
-    return redirect(url_for('orden_bp.index'))
+
+    return redirect(url_for("orden_bp.index"))
