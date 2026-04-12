@@ -303,9 +303,8 @@ def procesar_checkout():
                     insumo = Insumo.query.get(det_receta.uuid_insumo)
                     
                     if insumo.stock_total_acumulado < cantidad_total_necesaria:
-                        db.session.rollback()
-                        flash(f"No hay suficientes materiales en bodega (Falta {insumo.nombre}) para fabricar {receta.nombre_receta}.", "error")
-                        return redirect(url_for('checkout.checkout_view'))
+                        mensajes_extra.append(f"Nota de producción: Pendiente de abastecimiento de {insumo.nombre}.")
+                        continue # Saltamos la reserva automática, el admin la hará después
                     
                     insumo.stock_total_acumulado -= cantidad_total_necesaria
 
@@ -346,9 +345,8 @@ def procesar_checkout():
                                 break
 
                         if prendas_restantes > 0:
-                            db.session.rollback()
-                            flash(f"No hay suficientes rollos continuos (Falta {insumo.nombre}) para fabricar {receta.nombre_receta}.", "error")
-                            return redirect(url_for('checkout.checkout_view'))
+                            mensajes_extra.append(f"Nota para taller: Asegurar trazabilidad de rollo para {insumo.nombre}.")
+                            # Se han descontado los cortes posibles, el resto quedará pendiente de asignar
 
             else:
                 # Si hay stock suficiente: Se descuenta y queda como completado (si no hay otros pendientes)

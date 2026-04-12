@@ -151,6 +151,16 @@ def create_app():
     def on_user_authenticated(sender, user, **kwargs):
         logger.info(f'[LOGIN] Login exitoso para: {user.email} | confirmed_at={user.confirmed_at}')
 
+    from flask_login import user_logged_out
+    from flask import session
+    
+    @user_logged_out.connect_via(application)
+    def on_user_logged_out(sender, user, **kwargs):
+        if 'axis_cart' in session:
+            session.pop('axis_cart')
+        logger.info(f'[LOGOUT] Sesión cerrada y carrito vaciado para: {user.email}')
+
+
     @application.before_request
     def ensure_roles():
         """Asegura que los roles básicos existan en la base de datos."""
