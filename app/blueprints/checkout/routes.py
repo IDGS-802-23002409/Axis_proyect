@@ -4,6 +4,7 @@ from app.utils.database_connection import db
 from app.models.clientes import Cliente
 from app.models.modelos_productos import ProductoTerminado
 from app.models.ventas import VentaEncabezado, VentaDetalle
+from app.models.pedidos_cliente import PedidoClienteEncabezado
 from datetime import datetime
 import uuid
 from decimal import Decimal
@@ -323,7 +324,7 @@ def mis_pedidos():
     ventas = VentaEncabezado.query.filter_by(uuid_cliente=current_user.cliente.uuid_cliente).order_by(VentaEncabezado.fecha_venta.desc()).all()
     pedidos_pendientes = PedidoClienteEncabezado.query.filter_by(uuid_cliente=current_user.cliente.uuid_cliente).order_by(PedidoClienteEncabezado.fecha_pedido.desc()).all()
     
-        for v in ventas:
+    for v in ventas:
         total = 0
         for d in v.detalles:
             total += (d.precio_unitario_historico * d.cantidad)

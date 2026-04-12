@@ -45,10 +45,10 @@
                     <div class="col-span-2 text-right">Total</div>
                 </div>
 
-                {% set needs_backorder = false %}
+                {% set ns = namespace(needs_backorder=false) %}
                 {% for item in cart %}
                 {% if item.quantity > item.stock %}
-                {% set needs_backorder = true %}
+                {% set ns.needs_backorder = true %}
                 {% endif %}
                 <div class="grid grid-cols-12 gap-4 py-6 border-b border-border items-center">
                     <div class="col-span-12 md:col-span-6 flex gap-4">
@@ -126,15 +126,13 @@
                 <div class="bg-secondary p-6 lg:p-8 sticky top-24">
                     <h2 class="font-[var(--font-display)] text-2xl tracking-[0.2em] mb-6">RESUMEN</h2>
 
-                    {% if needs_backorder %}
+                    {% if ns.needs_backorder %}
                     <div class="mb-6 p-4 bg-amber-500/10 border border-amber-500/50 text-amber-200 text-xs space-y-2">
                         <div class="flex items-center gap-2 font-bold uppercase tracking-wider">
                             <i data-lucide="clock" class="w-4 h-4 text-amber-500"></i>
                             IMPORTANTE: BAJO PEDIDO
                         </div>
-                        <p>Tu orden contiene productos que superan nuestro stock actual. La entrega tendrá <strong>5
-                                días adicionales</strong> al tiempo estándar para su preparación conforme a nuestras
-                            reglas de negocio.</p>
+                        <p>Tu orden contiene productos que superan nuestro stock actual. La entrega de esas piezas tendrá <strong>5 días adicionales</strong> al tiempo estándar para su preparación conforme a nuestras reglas de negocio.</p>
                     </div>
                     {% endif %}
 
