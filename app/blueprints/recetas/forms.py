@@ -9,7 +9,7 @@ class RecetaForm(FlaskForm):
             DataRequired(message="El nombre de la receta es requerido"),
             Length(min=3, max=100, message="Debe tener entre 3 y 100 caracteres")
         ],
-        render_kw={"placeholder": "Ej: Hoodie Talla M Negro..."}
+        render_kw={"placeholder": "Ej: Hoodie Negro..."}
     )
 
     talla = SelectField(

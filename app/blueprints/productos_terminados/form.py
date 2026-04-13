@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, DecimalField, IntegerField, RadioField
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import validators
 
 
@@ -14,12 +15,14 @@ class ProductoTerminadoForm(FlaskForm):
         validators.Length(max=50)
     ])
 
+    imagen = FileField('Imagen del producto', validators=[
+    FileAllowed(['jpg', 'png', 'jpeg', 'webp'], 'Solo imágenes (jpg, png, jpeg, webp)')
+    ])
+    
     precio_venta = DecimalField('Precio de venta', places=2, validators=[
         validators.InputRequired(message='Precio requerido'),
         validators.NumberRange(min=0, message='Precio debe ser >= 0')
     ])
-
-   
 
     stock_minimo_alerta = IntegerField('Stock mínimo', validators=[
         validators.Optional(),  

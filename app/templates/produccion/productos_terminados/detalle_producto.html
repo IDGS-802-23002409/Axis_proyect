@@ -21,6 +21,16 @@
       <p class="text-lg font-bold">{{ explosion.nombre_receta }}</p>
       <p class="text-sm text-muted-foreground mt-1">{{ explosion.talla }} • {{ explosion.categoria.nombre if explosion.categoria else 'Sin categoría'
         }}</p>
+
+                <div class="col-span-1">
+                {% if producto.imagen_url %}
+                <img src="{{ producto.imagen_url }}" class="w-full h-auto rounded-lg object-cover border" alt="img">
+                {% else %}
+                <div class="w-full aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
+                    <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
+                </div>
+                {% endif %}
+            </div>
     </div>
 
     <div class="bg-card border border-border rounded-lg p-4 shadow-sm">

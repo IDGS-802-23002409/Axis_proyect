@@ -8,7 +8,7 @@
   <div class="max-w-2xl mx-auto bg-card border border-border rounded-lg p-8">
     <h2 class="text-xl font-bold mb-4">Nuevo Producto</h2>
 
-    <form method="post" class="space-y-4" novalidate>
+    <form method="post" enctype="multipart/form-data" class="space-y-4" novalidate>
       {{ form.hidden_tag() }}
       {% import "produccion/usuarios/_macros.html" as macros %}
 
@@ -25,6 +25,17 @@
 
       {{ macros.fieldUser(form.precio_venta, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
       {{ macros.fieldUser(form.stock_minimo_alerta, "w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+      <div>
+                <label class="block text-sm font-medium mb-1">{{ form.imagen.label }}</label>
+                {{ form.imagen(class="w-full border border-border bg-input px-3 py-2 rounded-md text-sm") }}
+                <p class="text-xs text-muted-foreground mt-1">
+                    Formatos JPG, JPEG, PNG, WEBP permitidos.
+                </p>
+                {% for error in form.imagen.errors %}
+                <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+                {% endfor %}
+            </div>
+
 
       <div class="flex justify-end gap-3 pt-4">
         <a href="{{ url_for('productos_bp.index') }}" 

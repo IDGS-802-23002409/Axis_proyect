@@ -13,6 +13,8 @@ class ProductoTerminado(db.Model):
     stock_fisico_actual = Column(Integer, default=0)
     stock_minimo_alerta = Column(Integer, default=0)
     active = Column(Boolean(), default=True)
+    usuario_creacion = Column(String(36), nullable=True)
+    usuario_actualizacion = Column(String(36), nullable=True)
     fecha_creacion = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

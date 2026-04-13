@@ -1,10 +1,21 @@
-from flask import flash, redirect, render_template, request, url_for
+import os
+import uuid as uuid_lib
+from flask import current_app, flash, redirect, render_template, request, url_for
+from sqlalchemy import or_
+from werkzeug.utils import secure_filename
 from app.blueprints.productos_terminados import productos_bp
 from app.blueprints.productos_terminados.form import ProductoTerminadoForm
 from app.models.modelos_productos import ProductoTerminado
 from app.models.explosion_materiales import ExplosionMaterialesCabecera
 from app.utils.database_connection import db
 from flask_security import login_required, roles_accepted
+
+def get_upload_folder():
+    """Garantiza la existencia y retorna la ruta local de las fotos de modelos."""
+    upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'modelos')
+    os.makedirs(upload_folder, exist_ok=True)
+    return upload_folder
+
 
 @productos_bp.route('/')
 @login_required
@@ -36,7 +47,10 @@ def index():
     if sku:
         productos = productos.filter(ProductoTerminado.sku_especifico.ilike(f"%{sku}%"))
 
-    productos = productos.order_by(ProductoTerminado.fecha_actualizacion.desc()).all()
+    productos = productos.order_by(
+    ExplosionMaterialesCabecera.nombre_receta,
+    ExplosionMaterialesCabecera.talla
+).all()
     
     # Calcular stats ANTES de aplicar filtros de stock
     todos_productos_activos = ProductoTerminado.query.filter_by(active=True).all()
@@ -72,9 +86,16 @@ def index():
 @roles_accepted('admin', 'produccion')
 def registro_producto():
     form = ProductoTerminadoForm()
+    subquery = db.session.query(ProductoTerminado.uuid_explosion)
 
-    
-    explosiones = ExplosionMaterialesCabecera.query.filter_by(estatus='ACTIVO').all()
+    explosiones = ExplosionMaterialesCabecera.query.filter(
+        ExplosionMaterialesCabecera.estatus == 'ACTIVO',
+        ~ExplosionMaterialesCabecera.uuid_explosion.in_(subquery)
+    ).all()
+    form.explosion.choices = [
+        (str(e.uuid_explosion), f"{e.nombre_receta} Talla {e.talla}")
+        for e in explosiones
+    ]
 
     data_explosiones = []
     for e in explosiones:
@@ -105,6 +126,17 @@ def registro_producto():
                     form=form,
                     explosiones_data=data_explosiones
                 )
+                
+            imagen_url = "/static/images/default/default-image.png"
+        
+            # Procesamiento de la imagen
+            if form.imagen.data:
+                file = form.imagen.data
+                filename = secure_filename(f"{uuid_lib.uuid4().hex}_{file.filename}")
+                filepath = os.path.join(get_upload_folder(), filename)
+                file.save(filepath)
+                # Guardar la url parcial estática esperada por el navegador
+                imagen_url = f"/static/uploads/modelos/{filename}"
 
             producto = ProductoTerminado(
                 uuid_explosion=form.explosion.data,
@@ -112,7 +144,8 @@ def registro_producto():
                 precio_venta=float(form.precio_venta.data),
                 stock_fisico_actual=0,
                 stock_minimo_alerta=form.stock_minimo_alerta.data or 0,
-                active=bool(form.active.data)
+                active=bool(form.active.data),
+                imagen_url=imagen_url
             )
 
             db.session.add(producto)
@@ -140,7 +173,21 @@ def editar_producto(uuid):
     form = ProductoTerminadoForm(obj=producto)
 
     # Cargar explosiones para el script de previsualización
-    explosiones = ExplosionMaterialesCabecera.query.filter_by(estatus='ACTIVO').all()
+    subquery = db.session.query(ProductoTerminado.uuid_explosion).filter(
+    ProductoTerminado.uuid_producto != producto.uuid_producto
+)
+
+    explosiones = ExplosionMaterialesCabecera.query.filter(
+    ExplosionMaterialesCabecera.estatus == 'ACTIVO',
+    or_(
+        ExplosionMaterialesCabecera.uuid_explosion == producto.uuid_explosion,
+        ~ExplosionMaterialesCabecera.uuid_explosion.in_(subquery)
+    )
+).all()
+    form.explosion.choices = [
+    (str(e.uuid_explosion), f"{e.nombre_receta} Talla {e.talla}")
+    for e in explosiones
+]
     data_explosiones = []
     for e in explosiones:
         detalles = []
@@ -193,12 +240,20 @@ def editar_producto(uuid):
         producto.uuid_explosion = form.explosion.data
         producto.sku_especifico = nuevo_sku
         producto.precio_venta = form.precio_venta.data
-        producto.active = bool(form.active.data)
+        producto.active = True if form.active.data == 1 else False
 
         # Solo mínimo alerta (opcional)
         if form.stock_minimo_alerta.data is not None:
             producto.stock_minimo_alerta = form.stock_minimo_alerta.data
-
+        file = request.files.get('imagen')
+        if file and file.filename:
+            if file.filename != '':
+                filename = secure_filename(f"{uuid_lib.uuid4().hex}_{file.filename}")
+                filepath = os.path.join(get_upload_folder(), filename)
+                file.save(filepath)
+                    # Opcionalmente podrías borrar el fichero local antiguo
+                producto.imagen_url = f"/static/uploads/modelos/{filename}"
+        
         db.session.commit()
 
         flash('Producto terminado actualizado correctamente', 'success')

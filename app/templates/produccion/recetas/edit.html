@@ -28,11 +28,11 @@
                     <!-- NOMBRE DE LA RECETA -->
                     <div>
                         <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
-                            {{ form.nombre_receta.label }} *
+                            {{ form.nombre_producto .label }} *
                         </label>
-                        {{ form.nombre_receta(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm") }}
-                        {% if form.nombre_receta.errors %}
-                        <p class="text-red-500 text-xs mt-1">{{ form.nombre_receta.errors[0] }}</p>
+                        {{ form.nombre_producto (class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm") }}
+                        {% if form.nombre_producto .errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.nombre_producto .errors[0] }}</p>
                         {% endif %}
                     </div>
 
