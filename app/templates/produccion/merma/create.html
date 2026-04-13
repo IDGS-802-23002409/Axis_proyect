@@ -17,24 +17,21 @@
     <form method="POST">
       {{ form.hidden_tag() }}
 
-      <!-- TIPO MERMA -->
-      <div class="mb-4">
-        <label class="block text-sm font-semibold mb-1">Tipo de Merma</label>
-        {{ form.tipo_merma(class="w-full border rounded px-3 py-2") }}
-      </div>
+      <!-- ELIMINADO TIPO MERMA, ya se asigna dinámicamente -->
 
       <!-- PROCESO -->
       <div class="mb-4">
         <label class="block text-sm font-semibold mb-1">Proceso</label>
 
-        {% set proceso_actual = orden.estado %}
+        {% set proceso_actual = proceso_sugerido|default('CORTE') %}
 
-<input type="text"
-       value="{{ proceso_actual }}"
-       class="w-full border rounded px-3 py-2 bg-gray-100"
-       disabled>
-
-<input type="hidden" name="proceso" value="{{ proceso_actual }}">
+        <div class="flex items-center gap-2">
+            <span class="px-3 py-2 bg-neutral-100 border rounded text-sm font-bold uppercase transition-all">
+                {{ proceso_actual }}
+            </span>
+            <input type="hidden" name="proceso" value="{{ proceso_actual }}">
+            <p class="text-xs text-neutral-400 italic">Identificado automáticamente por el estado de la orden.</p>
+        </div>
       </div>
 
       <!-- EVENTO -->
@@ -107,8 +104,7 @@
                        name="cantidad[]"
                        step="0.0001"
                        placeholder="Merma"
-                       class="border rounded px-3 py-2 w-full"
-                       required>
+                       class="border rounded px-3 py-2 w-full">
 
                 {% if i.tipo == "ROLLO" %}
                   <p class="text-xs text-gray-400 mt-1">
@@ -134,6 +130,29 @@
 
         {% endif %}
 
+      </div>
+
+      <!-- PRODUCTO -->
+      <div class="mb-6">
+        <label class="block text-sm font-semibold mb-2">
+          Merma de Prenda Completa (Producto Terminado)
+        </label>
+        <div class="grid grid-cols-12 gap-3 mb-3 p-3 border rounded bg-orange-50 border-orange-200">
+            <div class="col-span-8">
+                <div class="w-full px-3 py-2 border rounded bg-white font-bold">
+                    PRENDA: {{ orden.producto.explosion.nombre_receta }} - {{ orden.producto.sku_especifico }}
+                </div>
+                <p class="text-xs text-orange-600 mt-1">Registra aquí si una prenda completa se arruinó o perdió.</p>
+            </div>
+            <div class="col-span-4">
+                <input type="number"
+                       name="cantidad_producto"
+                       step="1"
+                       min="0"
+                       placeholder="Cant. prendas mermadas"
+                       class="border rounded px-3 py-2 w-full">
+            </div>
+        </div>
       </div>
 
       <!-- OBSERVACIONES -->

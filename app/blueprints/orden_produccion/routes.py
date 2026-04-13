@@ -254,7 +254,9 @@ def ver(uuid_op):
     # Obtener ejecuciones de corte asociadas con carga ansiosa de relaciones
     cortes = (
         EjecucionCorte.query.options(
-            joinedload(EjecucionCorte.rollo_usado).joinedload(RolloInventario.insumo)
+            joinedload(EjecucionCorte.rollos_usados)
+            .joinedload(EjecucionCorteRollo.rollo)
+            .joinedload(RolloInventario.insumo)
         )
         .filter_by(uuid_op=uuid_op)
         .all()
@@ -532,7 +534,7 @@ def avanzar_estado(uuid_op):
                         "requiere_merma": True,
                         "message": "Debes registrar la merma antes de terminar la orden",
                         "redirect": url_for(
-                            "merma_bp.create_merma",
+                            "merma_bp.registrar_merma_op",
                             uuid_op=uuid_op
                         )
                     })
@@ -557,7 +559,7 @@ def avanzar_estado(uuid_op):
             # ─────────────────────────
             else:
 
-                detalle = orden.ventas_detalle
+                detalle = orden.venta_detalle
 
                 if detalle:
                     venta = detalle.venta

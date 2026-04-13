@@ -95,6 +95,10 @@ class EjecucionCorteRollo(db.Model):
 
     fecha_creacion = Column(DateTime, server_default=func.now())
 
+    # RELACIONES
+    rollo = db.relationship("RolloInventario", backref="usos_en_corte")
+    insumo = db.relationship("Insumo", backref="usos_en_corte")
+
 
 
 

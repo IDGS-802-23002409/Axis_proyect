@@ -51,6 +51,7 @@ class Merma(db.Model):
     uuid_corte = Column(String(36), ForeignKey("ejecucion_corte.uuid_corte"), nullable=True)
 
     uuid_insumo = Column(String(36), ForeignKey("insumos.uuid_insumo"), nullable=True)
+    uuid_rollo = Column(String(36), ForeignKey("rollos_inventario.uuid_rollo"), nullable=True)
     uuid_producto = Column(String(36), ForeignKey("productos_terminados.uuid_producto"), nullable=True)
 
     # ─────────────────────────────
@@ -105,6 +106,14 @@ class Merma(db.Model):
             """,
             name="check_producto_requerido",
         ),
+
+        # Coherencia: Tela requiere obligatoriamente rollo de origen
+        CheckConstraint(
+            """
+            (tipo_merma != 'TELA') OR (uuid_rollo IS NOT NULL)
+            """,
+            name="check_tela_requiere_rollo",
+        ),
     )
 
     # ─────────────────────────────
@@ -113,6 +122,7 @@ class Merma(db.Model):
     orden_produccion = db.relationship("OrdenProduccion", backref="mermas")
     corte = db.relationship("EjecucionCorte", backref="mermas")
     insumo = db.relationship("Insumo", backref="mermas")
+    rollo = db.relationship("RolloInventario", backref="mermas")
     producto = db.relationship("ProductoTerminado", backref="mermas")
 
     def __repr__(self):
