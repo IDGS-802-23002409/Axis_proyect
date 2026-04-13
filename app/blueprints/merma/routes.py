@@ -484,3 +484,192 @@ def eliminar_retazo(uuid_retazo):
 
 
 '''
+from flask import render_template, request, redirect, url_for, flash
+from flask_security.decorators import login_required, roles_accepted
+from flask_security import current_user
+from app.blueprints.merma.form import MermaForm
+from app.blueprints.merma import merma_bp
+from app.utils.database_connection import db
+
+from app.models.mermas import Merma
+from app.models.produccion import OrdenProduccion
+
+import logging
+
+import logging
+from flask import render_template, redirect, url_for, flash
+from flask_security.decorators import login_required, roles_accepted
+from flask_security import current_user
+
+from app.blueprints.merma.form import MermaForm
+from app.blueprints.merma import merma_bp
+from app.utils.database_connection import db
+from app.models.insumos import Insumo
+from app.models.inventario import RolloInventario
+from app.models.mermas import Merma
+from app.models.produccion import OrdenProduccion, EjecucionCorte, EjecucionCorteRollo
+from app.models.explosion_materiales import ExplosionMaterialesCabecera, ExplosionMaterialesDetalle
+from app.models.modelos_productos import ProductoTerminado
+from app.models.insumos import Insumo
+import logging
+from flask import render_template, redirect, url_for, flash
+from flask_security.decorators import login_required, roles_accepted
+from flask_security import current_user
+
+from app.blueprints.merma.form import MermaForm
+from app.blueprints.merma import merma_bp
+from app.utils.database_connection import db
+
+from app.models.mermas import Merma
+from app.models.produccion import OrdenProduccion
+from decimal import Decimal
+from flask import render_template, request, redirect, url_for, flash
+from flask_security.decorators import login_required, roles_accepted
+from flask_security import current_user
+import logging
+
+from app.utils.database_connection import db
+
+from app.models.mermas import Merma
+from app.models.produccion import OrdenProduccion
+from app.models.produccion import EjecucionCorte, EjecucionCorteRollo
+
+from app.models.insumos import Insumo
+from sqlalchemy.orm import aliased
+@merma_bp.route('/create/<uuid_op>', methods=['GET', 'POST'])
+@login_required
+@roles_accepted('admin', 'gerente', 'produccion')
+def create_merma(uuid_op):
+
+    orden = OrdenProduccion.query.get_or_404(uuid_op)
+    form = MermaForm()
+
+    insumos = []
+    uuid_corte = None
+    consumo_real = {}
+
+    try:
+
+        # ─────────────────────────────
+        # PROCESO AUTOMÁTICO DESDE ORDEN
+        # ─────────────────────────────
+        proceso = orden.estado   # 👈 AQUÍ SE TOMA AUTOMÁTICO
+
+        # ─────────────────────────────
+        # 1. RECETA
+        # ─────────────────────────────
+        explosion = orden.producto.explosion
+
+        if not explosion:
+            flash("La orden no tiene receta activa", "danger")
+            return render_template(
+                'produccion/merma/create.html',
+                form=form,
+                orden=orden,
+                insumos=[]
+            )
+
+        for d in explosion.detalles:
+
+            insumo = d.insumo
+
+            consumo_real[insumo.uuid_insumo] = {
+                "uuid_insumo": insumo.uuid_insumo,
+                "nombre": insumo.nombre,
+                "unidad": insumo.unidad_medida,
+                "teorico": float(d.consumo_teorico_unitario) * float(orden.cantidad_a_producir),
+                "usado": 0,
+                "tipo": insumo.unidad_medida
+            }
+
+        # ─────────────────────────────
+        # 2. CORTE REAL
+        # ─────────────────────────────
+        corte = (
+            EjecucionCorte.query
+            .filter_by(uuid_op=uuid_op)
+            .order_by(EjecucionCorte.fecha_proceso.desc())
+            .first()
+        )
+
+        if corte:
+            uuid_corte = corte.uuid_corte
+
+            rollos = (
+                EjecucionCorteRollo.query
+                .filter_by(uuid_corte=uuid_corte)
+                .all()
+            )
+
+            for r in rollos:
+                if r.uuid_insumo in consumo_real:
+                    consumo_real[r.uuid_insumo]["usado"] += float(r.metros_usados or 0)
+
+        insumos = list(consumo_real.values())
+
+        # ─────────────────────────────
+        # 3. VALIDACIÓN FORM
+        # ─────────────────────────────
+        if form.validate_on_submit():
+
+            insumos_ids = request.form.getlist("insumo[]")
+            rollos_ids = request.form.getlist("rollo[]")
+            cantidades = request.form.getlist("cantidad[]")
+
+            for insumo_id, rollo_id, cantidad in zip(insumos_ids, rollos_ids, cantidades):
+
+                if not insumo_id or not cantidad:
+                    continue
+
+                cantidad = float(cantidad)
+
+                maximo = consumo_real.get(insumo_id, {}).get("usado", 0)
+
+                # 🔥 VALIDACIÓN REAL
+                if maximo > 0 and cantidad > maximo:
+                    raise Exception(
+                        f"No puedes registrar {cantidad}. "
+                        f"Máximo permitido: {maximo}"
+                    )
+
+                db.session.add(Merma(
+                    tipo_merma="ROLLO",
+                    proceso=proceso,   # 👈 AUTOMÁTICO DESDE ORDEN
+                    tipo_evento=form.tipo_evento.data,
+                    motivo=form.motivo.data,
+                    cantidad=Decimal(cantidad),
+
+                    uuid_op=uuid_op,
+                    uuid_corte=uuid_corte,
+
+                    uuid_insumo=insumo_id,
+                    uuid_rollo=rollo_id,
+
+                    observaciones=form.observaciones.data,
+                    usuario_creacion=current_user.id,
+                    usuario_responsable=current_user.id
+                ))
+
+            db.session.commit()
+
+            flash("Merma registrada correctamente", "success")
+            return redirect(url_for('orden_bp.index'))
+
+        return render_template(
+            'produccion/merma/create.html',
+            form=form,
+            orden=orden,
+            insumos=insumos,
+            proceso=proceso   # 
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        flash(str(e), "danger")
+
+        return render_template(
+            'produccion/merma/create.html',
+            form=form,
+            orden=orden,
+            insumos=insumos
+        )
