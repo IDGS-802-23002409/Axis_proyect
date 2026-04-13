@@ -17,3 +17,4 @@ from app.blueprints.modelo import modelo_aux_bp
 from app.blueprints.costo_utilidad import costo_utilidad_bp
 from app.blueprints.merma import merma_bp
 from app.blueprints.orden_produccion import orden_bp
+from app.blueprints.respaldos import respaldos_bp

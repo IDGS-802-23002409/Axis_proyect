@@ -122,8 +122,8 @@ def create_app():
     mail.init_app(application)
     Migrate(application, db)
 
-    from app.utils.db_hooks import init_stored_procedures
-    init_stored_procedures(application)
+    from app.utils.db_hooks import init_db_objects
+    init_db_objects(application)
 
     from app.blueprints.dashboard_administrativo import dashboard_bp
     application.register_blueprint(dashboard_bp, url_prefix='/dashboard_administrativo')
@@ -158,6 +158,23 @@ def create_app():
     @user_authenticated.connect_via(application)
     def on_user_authenticated(sender, user, **kwargs):
         logger.info(f'[LOGIN] Login exitoso para: {user.email} | confirmed_at={user.confirmed_at}')
+
+    from flask import g
+    @application.before_request
+    def set_db_role_g():
+        """Mapea el rol de Flask-Security al rol de base de datos en g.db_role."""
+        if current_user.is_authenticated:
+            if current_user.has_role('admin'):
+                g.db_role = 'admin_rol'
+            elif current_user.has_role('gerente'):
+                g.db_role = 'gerente_rol'
+            elif current_user.has_role('produccion'):
+                g.db_role = 'produccion_rol'
+            else:
+                g.db_role = 'cliente_rol'
+        else:
+            # Usuarios anónimos usan el rol de cliente (público)
+            g.db_role = 'cliente_rol'
 
     @application.before_request
     def ensure_roles():
@@ -203,6 +220,7 @@ def create_app():
     application.register_blueprint(bp.orden_bp, url_prefix='/orden_produccion')
     application.register_blueprint(bp.security_bp, url_prefix='/security')
     application.register_blueprint(bp.merma_bp, url_prefix='/merma')
+    application.register_blueprint(bp.respaldos_bp, url_prefix='/respaldos')
 
     # ── CSRF Exemptions (rutas públicas del carrito) ──────────────
     # El carrito es una función pública del ecommerce: cualquier usuario
