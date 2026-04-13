@@ -63,7 +63,7 @@ def registrar_merma_op(uuid_op):
             if rollo:
                 insumos_data.append({
                     'uuid_insumo': rollo.uuid_insumo,
-                    'nombre': rollo.insumo.nombre,
+                    'nombre': rollo.insumo.nombre if rollo.insumo else "Sin Nombre de Insumo",
                     'tipo': 'ROLLO',
                     'usado': float(ecr.metros_usados),
                     'uuid_rollo': rollo.uuid_rollo

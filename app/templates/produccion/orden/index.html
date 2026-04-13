@@ -107,7 +107,7 @@
                                 {% if orden.estado != 'Terminado' %}
                                 <button type="button"
                                     class="text-green-600 hover:underline font-bold"
-                                    onclick="confirmarAvance('{{ orden.uuid_op }}')">
+                                    onclick="confirmarAvance('{{ orden.uuid_op }}', '{{ orden.estado }}')">
                                     Avanzar Estado
                                 </button>
                                 {% endif %}
@@ -136,18 +136,10 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-function confirmarAvance(uuid_op) {
+function confirmarAvance(uuid_op, estadoActual) {
 
-    Swal.fire({
-        title: '¿Hubo mermas en este proceso?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, hubo merma',
-        cancelButtonText: 'No, continuar',
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6'
-    }).then((result) => {
-
+    // Función auxiliar para llamar a la API y avanzar verdaderamente
+    const hacerLlamadaAvanzar = () => {
         fetch(`/orden_produccion/avanzar_estado/${uuid_op}`, {
             method: "POST",
             headers: {
@@ -155,12 +147,11 @@ function confirmarAvance(uuid_op) {
                 "X-CSRFToken": "{{ csrf_token() }}"
             },
             body: JSON.stringify({
-                con_merma: result.isConfirmed
+                con_merma: false
             })
         })
         .then(res => res.json())
         .then(data => {
-
             if (data.redirect) {
                 window.location.href = data.redirect;
             } else if (data.ok) {
@@ -168,8 +159,32 @@ function confirmarAvance(uuid_op) {
             } else {
                 Swal.fire("Error", data.error || "Error desconocido", "error");
             }
-
         });
+    };
+
+    // Si es pendiente, avanzamos nativamente sin preguntar merma.
+    if (estadoActual === 'Pendiente') {
+        hacerLlamadaAvanzar();
+        return;
+    }
+
+    Swal.fire({
+        title: '¿Hubo mermas en este proceso?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, hubo merma',
+        cancelButtonText: 'No, continuar',
+        confirmButtonColor: '#000000',
+        cancelButtonColor: '#9ca3af'
+    }).then((result) => {
+
+        if (result.isConfirmed) {
+            // Si el usuario dice SÍ, se va al form directamente (sin llamar a la api de avanzar)
+            window.location.href = `/merma/registrar/${uuid_op}`;
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+            // Si el usuario dice NO, llamamos a la API para avanzar de estado
+            hacerLlamadaAvanzar();
+        }
 
     });
 
