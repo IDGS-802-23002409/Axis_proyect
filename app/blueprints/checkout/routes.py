@@ -309,7 +309,7 @@ def procesar_checkout():
                 
                 for det_receta in receta.detalles:
                     consumo_unitario = Decimal(det_receta.consumo_teorico_unitario)
-                    cantidad_total_necesaria = consumo_unitario * Decimal(cantidad_op_final)
+                    cantidad_total_necesaria = consumo_unitario * Decimal(cantidad_op_base)
                     insumo = Insumo.query.get(det_receta.uuid_insumo)
                     
                     if insumo.stock_total_acumulado < cantidad_total_necesaria:
@@ -319,7 +319,7 @@ def procesar_checkout():
                     insumo.stock_total_acumulado -= cantidad_total_necesaria
 
                     if insumo.unidad_medida == "ROLLO":
-                        prendas_restantes = cantidad_op_final
+                        prendas_restantes = cantidad_op_base
                         rollos = RolloInventario.query.filter(
                             RolloInventario.uuid_insumo == det_receta.uuid_insumo,
                             RolloInventario.metraje_continuo_actual > 0
