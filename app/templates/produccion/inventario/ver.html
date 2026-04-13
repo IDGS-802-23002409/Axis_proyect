@@ -131,7 +131,6 @@
                     <th class="px-4 py-3">Fecha</th>
                     <th class="px-4 py-3">Referencia</th>
                     <th class="px-4 py-3">Cantidad Usada</th>
-                    <th class="px-4 py-3">Merma</th>
                 </tr>
             </thead>
 
@@ -156,13 +155,7 @@
                         {% endif %}
                     </td>
 
-                    <td class="px-4 py-3 text-red-600">
-                        {% if insumo.unidad_medida == 'ROLLO' %}
-                            {{ e.merma_real_calculada }} m
-                        {% else %}
-                            {{ e.merma_real_calculada }} {{ insumo.contenido_unidad_medida }}
-                        {% endif %}
-                    </td>
+                   
                 </tr>
                 {% endfor %}
             </tbody>

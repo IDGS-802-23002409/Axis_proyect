@@ -194,17 +194,30 @@ def checkout_view():
 @checkout_bp.route('/checkout/procesar', methods=['POST'])
 @login_required
 def procesar_checkout():
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.warning(f">>> [CHECKOUT] email={current_user.email}")
+    logger.warning(f">>> [CHECKOUT] cliente={current_user.cliente}")
+    logger.warning(f">>> [CHECKOUT] roles={[r.name for r in current_user.roles]}")
+    
     if not current_user.cliente:
+        logger.warning(">>> [CHECKOUT] REDIRIGE: sin cliente")
         flash('Por favor completa tu perfil primero', 'error')
         return redirect(url_for('checkout.completar_perfil'))
+    logger.warning(f">>> [CHECKOUT] telefono={current_user.cliente.telefono}")
+    logger.warning(f">>> [CHECKOUT] direccion={current_user.cliente.direccion_completa}")
 
     # REGLA: Datos obligatorios (Teléfono y Dirección)
     if not current_user.cliente.telefono or not current_user.cliente.direccion_completa:
+        logger.warning(">>> [CHECKOUT] REDIRIGE: sin telefono/direccion")
         flash('Por favor actualiza tu teléfono y dirección en tu perfil antes de comprar.', 'warning')
         return redirect(url_for('checkout.mi_cuenta'))
 
     cart = load_cart()
+    logger.warning(f">>> [CHECKOUT] cart={cart}")
     if not cart:
+        logger.warning(">>> [CHECKOUT] REDIRIGE: carrito vacío")
         flash('El carrito está vacío', 'error')
         return redirect(url_for('checkout.checkout_view'))
 
@@ -279,14 +292,11 @@ def procesar_checkout():
                     )
                     cantidad_op_base = cantidad_pedida
 
-                import math
-                cantidad_op_final = math.ceil(cantidad_op_base / 10.0) * 10
-
                 nueva_op = OrdenProduccion(
                     uuid_op=str(uuid.uuid4()),
                     uuid_producto=producto.uuid_producto,
                     uuid_venta_detalle=detalle.uuid_detalle,
-                    cantidad_a_producir=cantidad_op_final,
+                    cantidad_a_producir=cantidad_op_base,
                     estado='Pendiente'
                 )
                 db.session.add(nueva_op)
@@ -335,8 +345,7 @@ def procesar_checkout():
                                 uuid_rollo_used=rollo.uuid_rollo,
                                 metros_teoricos_requeridos=metros_a_descontar,
                                 metros_sacados_bodega=metros_a_descontar,
-                                prendas_reales_logradas=prendas_a_usar,
-                                merma_real_calculada=Decimal('0.0000')
+                                prendas_reales_logradas=prendas_a_usar
                             )
                             db.session.add(corte)
 
@@ -367,6 +376,7 @@ def procesar_checkout():
     except Exception as e:
         db.session.rollback()
         import traceback
+        logger.error(f">>> [CHECKOUT] ERROR COMPLETO:\n{traceback.format_exc()}")
         print(traceback.format_exc()) # Log para consola
         flash(f'Error al procesar el pedido (DB): {str(e)}', 'error')
         return redirect(url_for('checkout.checkout_view'))
