@@ -4,7 +4,7 @@ from datetime import datetime
 from flask import render_template, current_app, redirect, url_for, flash, send_from_directory, request
 from flask_security import roles_accepted, login_required
 from . import respaldos_bp
-from app.utils.config import DB_USER, DB_PASSWORD, DB_HOST, DB_NAME, DB_PORT
+from app.utils.config import DB_HOST, DB_NAME, DB_PORT, BACKUP_USER, BACKUP_PASSWORD
 
 def get_respaldos_dir():
     root_dir = os.path.abspath(os.path.join(current_app.root_path, '..'))
@@ -53,13 +53,13 @@ def generar_respaldo():
     
     try:
         env = os.environ.copy()
-        env['MYSQL_PWD'] = DB_PASSWORD
+        env['MYSQL_PWD'] = BACKUP_PASSWORD
         
         cmd = [
             'mysqldump',
             f'--host={DB_HOST}',
             f'--port={DB_PORT}',
-            f'--user={DB_USER}',
+            f'--user={BACKUP_USER}',
             DB_NAME
         ]
         
@@ -97,13 +97,13 @@ def restaurar_respaldo(filename):
         
     try:
         env = os.environ.copy()
-        env['MYSQL_PWD'] = DB_PASSWORD
+        env['MYSQL_PWD'] = BACKUP_PASSWORD
         
         cmd = [
             'mysql',
             f'--host={DB_HOST}',
             f'--port={DB_PORT}',
-            f'--user={DB_USER}',
+            f'--user={BACKUP_USER}',
             DB_NAME
         ]
         

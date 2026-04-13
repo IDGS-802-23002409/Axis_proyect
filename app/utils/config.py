@@ -11,6 +11,10 @@ DB_HOST = os.getenv('DB_HOST', 'localhost')
 DB_PORT = os.getenv('DB_PORT', '3306')
 DB_NAME = os.getenv('DB_NAME', 'flask_db')
 
+# ── Credenciales de Respaldo ──────────────────
+BACKUP_USER = os.getenv('BACKUP_USER', 'backup_user')
+BACKUP_PASSWORD = os.getenv('BACKUP_PASSWORD', 'backup_password')
+
 # ── Base de Datos Staging (Incremental Backup) ─
 STAGING_DB_USER = os.getenv('STAGING_DB_USER', DB_USER)
 STAGING_DB_PASSWORD = os.getenv('STAGING_DB_PASSWORD', DB_PASSWORD)
