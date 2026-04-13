@@ -148,7 +148,7 @@ function confirmarAvance(uuid_op) {
         cancelButtonColor: '#3085d6'
     }).then((result) => {
 
-        fetch(`/produccion/avanzar_estado/${uuid_op}`, {
+        fetch(`/orden_produccion/avanzar_estado/${uuid_op}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

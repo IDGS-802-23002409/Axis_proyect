@@ -32,7 +32,7 @@ MotivoMermaEnum = Enum(
 # MERMA PRINCIPAL
 # ─────────────────────────────────────────────
 class Merma(db.Model):
-    __tablename__ = 'mermas'
+    __tablename__ = "mermas"
 
     uuid_merma = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
 
@@ -45,20 +45,19 @@ class Merma(db.Model):
     motivo = Column(MotivoMermaEnum, nullable=True)
 
     # ─────────────────────────────
-    # RELACIONES CONTEXTO
+    # CONTEXTO DE PRODUCCIÓN
     # ─────────────────────────────
-    uuid_op = Column(String(36), ForeignKey('ordenes_produccion.uuid_op'), nullable=True)
-    uuid_corte = Column(String(36), ForeignKey('ejecucion_corte.uuid_corte'), nullable=True)
+    uuid_op = Column(String(36), ForeignKey("ordenes_produccion.uuid_op"), nullable=True)
+    uuid_corte = Column(String(36), ForeignKey("ejecucion_corte.uuid_corte"), nullable=True)
 
-    uuid_insumo = Column(String(36), ForeignKey('insumos.uuid_insumo'), nullable=True)
-    uuid_producto = Column(String(36), ForeignKey('productos_terminados.uuid_producto'), nullable=True)
+    uuid_insumo = Column(String(36), ForeignKey("insumos.uuid_insumo"), nullable=True)
+    uuid_producto = Column(String(36), ForeignKey("productos_terminados.uuid_producto"), nullable=True)
 
     # ─────────────────────────────
-    # DATO REAL
+    # DATOS
     # ─────────────────────────────
     cantidad = Column(Numeric(12, 4), nullable=False)
     es_total = Column(Boolean, default=True)
-
     observaciones = Column(Text, nullable=True)
 
     # ─────────────────────────────
@@ -67,41 +66,54 @@ class Merma(db.Model):
     fecha_creacion = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, onupdate=func.now())
 
-    usuario_creacion = Column(String(36), nullable=True)
-    usuario_actualizacion = Column(String(36), nullable=True)
-    usuario_responsable = Column(String(36), nullable=True)
+    usuario_creacion = Column(String(36))
+    usuario_actualizacion = Column(String(36))
+    usuario_responsable = Column(String(36))
 
     activo = Column(Boolean, default=True)
 
     # ─────────────────────────────
-    # VALIDACIONES
+    # VALIDACIONES REALES
     # ─────────────────────────────
     __table_args__ = (
-        CheckConstraint('cantidad >= 0', name='check_cantidad_no_negativa'),
+        CheckConstraint("cantidad >= 0", name="check_cantidad_no_negativa"),
 
+        # Debe tener al menos una fuente real
         CheckConstraint(
-            "(uuid_insumo IS NOT NULL) OR (uuid_producto IS NOT NULL)",
-            name='check_merma_tiene_origen'
+            """
+            (
+                uuid_op IS NOT NULL OR
+                uuid_insumo IS NOT NULL OR
+                uuid_producto IS NOT NULL
+            )
+            """,
+            name="check_merma_tiene_origen",
         ),
 
+        # Corte siempre debe venir de orden
         CheckConstraint(
-            "(tipo_merma != 'PRODUCTO') OR (uuid_producto IS NOT NULL)",
-            name='check_producto_requerido'
+            """
+            (uuid_corte IS NULL) OR (uuid_op IS NOT NULL)
+            """,
+            name="check_corte_requiere_op",
         ),
 
+        # Coherencia: producto normalmente viene de orden o proceso terminado
         CheckConstraint(
-            "(uuid_corte IS NULL) OR (uuid_op IS NOT NULL)",
-            name='check_corte_op'
+            """
+            (tipo_merma != 'PRODUCTO') OR (uuid_producto IS NOT NULL)
+            """,
+            name="check_producto_requerido",
         ),
     )
 
     # ─────────────────────────────
     # RELACIONES
     # ─────────────────────────────
-    orden_produccion = db.relationship('OrdenProduccion', backref='mermas')
-    corte = db.relationship('EjecucionCorte', backref='mermas')
-    insumo = db.relationship('Insumo', backref='mermas')
-    producto = db.relationship('ProductoTerminado', backref='mermas')
+    orden_produccion = db.relationship("OrdenProduccion", backref="mermas")
+    corte = db.relationship("EjecucionCorte", backref="mermas")
+    insumo = db.relationship("Insumo", backref="mermas")
+    producto = db.relationship("ProductoTerminado", backref="mermas")
 
     def __repr__(self):
-        return f'<Merma tipo={self.tipo_merma} proceso={self.proceso} cantidad={self.cantidad}>'
+        return f"<Merma tipo={self.tipo_merma} proceso={self.proceso} cantidad={self.cantidad}>"

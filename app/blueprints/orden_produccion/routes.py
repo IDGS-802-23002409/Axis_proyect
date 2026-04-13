@@ -10,7 +10,7 @@ from decimal import Decimal
 from app.models.explosion_materiales import ExplosionMaterialesDetalle, ExplosionMaterialesCabecera
 from app.models.inventario import RolloInventario
 from app.models.insumos import Insumo
-from app.models.produccion import OrdenProduccion, EjecucionCorte
+from app.models.produccion import OrdenProduccion, EjecucionCorte, EjecucionCorteRollo
 from app.models.ventas import VentaEncabezado, VentaDetalle
 from app.utils.database_connection import db
 from .forms import OrdenProduccionForm
@@ -20,6 +20,7 @@ from sqlalchemy.orm import joinedload
 from app.utils.database_connection import db
 from app.models import OrdenProduccion, Insumo, RolloInventario, EjecucionCorte
 from flask import request, jsonify, url_for
+from app.models.mermas import Merma
 
 
 @orden_bp.route("/")
@@ -267,6 +268,7 @@ from decimal import Decimal
 from sqlalchemy.orm import joinedload
 
 def iniciar_corte(uuid_op, uuid_usuario):
+
     try:
 
         op = (
@@ -295,98 +297,82 @@ def iniciar_corte(uuid_op, uuid_usuario):
         cantidad = Decimal(op.cantidad_a_producir)
 
         # ─────────────────────────────
-        # 1. AGRUPAR CONSUMO
+        # 1. CALCULAR CONSUMO REAL DESDE RECETA
         # ─────────────────────────────
         consumo_insumos = {}
 
-        for detalle in explosion.detalles:
-            insumo = detalle.insumo
-            requerido = Decimal(detalle.consumo_teorico_unitario) * cantidad
+        for d in explosion.detalles:
 
-            if insumo.uuid_insumo not in consumo_insumos:
-                consumo_insumos[insumo.uuid_insumo] = {
-                    "insumo": insumo,
-                    "cantidad": Decimal(0)
-                }
+            insumo = d.insumo
+            requerido = Decimal(d.consumo_teorico_unitario) * cantidad
 
-            consumo_insumos[insumo.uuid_insumo]["cantidad"] += requerido
+            consumo_insumos[insumo.uuid_insumo] = {
+                "insumo": insumo,
+                "requerido": requerido,
+                "unidad": insumo.unidad_medida
+            }
+
+        total_metros = Decimal(0)
 
         # ─────────────────────────────
         # 2. VALIDAR PIEZAS
         # ─────────────────────────────
         for data in consumo_insumos.values():
-            insumo = data["insumo"]
-            requerido = data["cantidad"]
 
-            if insumo.unidad_medida == "PIEZA":
+            if data["unidad"] == "PIEZA":
 
                 db_insumo = (
                     Insumo.query
-                    .filter_by(uuid_insumo=insumo.uuid_insumo)
+                    .filter_by(uuid_insumo=data["insumo"].uuid_insumo)
                     .with_for_update()
                     .first()
                 )
 
-                if not db_insumo:
-                    raise Exception(f"Insumo no encontrado: {insumo.nombre}")
-
-                if (db_insumo.stock_total_acumulado or 0) < requerido:
+                if (db_insumo.stock_total_acumulado or 0) < data["requerido"]:
                     raise Exception(f"Stock insuficiente de {db_insumo.nombre}")
 
         # ─────────────────────────────
         # 3. DESCONTAR PIEZAS
         # ─────────────────────────────
         for data in consumo_insumos.values():
-            insumo = data["insumo"]
-            requerido = data["cantidad"]
 
-            if insumo.unidad_medida == "PIEZA":
+            if data["unidad"] == "PIEZA":
 
                 db_insumo = (
                     Insumo.query
-                    .filter_by(uuid_insumo=insumo.uuid_insumo)
+                    .filter_by(uuid_insumo=data["insumo"].uuid_insumo)
                     .with_for_update()
                     .first()
                 )
 
-                db_insumo.stock_total_acumulado -= requerido
+                db_insumo.stock_total_acumulado -= data["requerido"]
 
         # ─────────────────────────────
-        # 4. PROCESAR ROLLOS (CORREGIDO Y ROBUSTO)
+        # 4. DESCONTAR ROLLOS + CAPTURAR METROS REALES
         # ─────────────────────────────
+        ejecucion_rollos = []
+
         for data in consumo_insumos.values():
-            insumo = data["insumo"]
-            requerido = Decimal(data["cantidad"])
 
-            if insumo.unidad_medida == "ROLLO":
+            if data["unidad"] == "ROLLO":
+
+                requerido = data["requerido"]
 
                 rollos = (
                     RolloInventario.query
-                    .filter(RolloInventario.uuid_insumo == insumo.uuid_insumo)
+                    .filter_by(uuid_insumo=data["insumo"].uuid_insumo)
                     .with_for_update()
                     .order_by(RolloInventario.metraje_continuo_actual.desc())
                     .all()
                 )
 
                 if not rollos:
-                    raise Exception(
-                        f"No existe inventario en rollos para {insumo.nombre}"
-                    )
-
-                total_disponible = sum(
-                    Decimal(r.metraje_continuo_actual or 0)
-                    for r in rollos
-                )
-
-                if total_disponible < requerido:
-                    raise Exception(
-                        f"No hay suficiente metraje para {insumo.nombre}. "
-                        f"Disponible: {total_disponible}, requerido: {requerido}"
-                    )
+                    raise Exception(f"No hay rollos para {data['insumo'].nombre}")
 
                 restante = requerido
 
                 for rollo in rollos:
+
                     if restante <= 0:
                         break
 
@@ -395,29 +381,51 @@ def iniciar_corte(uuid_op, uuid_usuario):
                     if disponible <= 0:
                         continue
 
-                    if disponible >= restante:
-                        rollo.metraje_continuo_actual -= restante
-                        restante = 0
-                    else:
-                        rollo.metraje_continuo_actual = 0
-                        restante -= disponible
+                    usado = min(disponible, restante)
+
+                    rollo.metraje_continuo_actual -= usado
+                    restante -= usado
+
+                    total_metros += usado
+
+                    ejecucion_rollos.append({
+                        "rollo": rollo,
+                        "metros": usado
+                    })
+
+                if restante > 0:
+                    raise Exception("No hay suficiente metraje en inventario")
 
         # ─────────────────────────────
-        # 5. CREAR EJECUCIÓN
+        # 5. CREAR EJECUCIÓN CON DATOS REALES
         # ─────────────────────────────
         ejecucion = EjecucionCorte(
             uuid_op=op.uuid_op,
-           
-            metros_teoricos_requeridos=0,
-            metros_sacados_bodega=0,
-            prendas_reales_logradas=0,
-            usuario_corto_uuid=uuid_usuario,
+
+            metros_teoricos_requeridos=total_metros,
+            metros_sacados_bodega=total_metros,
+
+            prendas_reales_logradas=int(op.cantidad_a_producir),
+
+            usuario_corto_uuid=uuid_usuario
         )
 
         db.session.add(ejecucion)
+        db.session.flush()  # obtener uuid_corte
 
         # ─────────────────────────────
-        # 6. CAMBIAR ESTADO
+        # 6. GUARDAR ROLLOS USADOS
+        # ─────────────────────────────
+        for r in ejecucion_rollos:
+
+            db.session.add(EjecucionCorteRollo(
+                uuid_corte=ejecucion.uuid_corte,
+                uuid_rollo=r["rollo"].uuid_rollo,
+                metros_usados=r["metros"]
+            ))
+
+        # ─────────────────────────────
+        # 7. CAMBIAR ESTADO
         # ─────────────────────────────
         op.estado = "En Corte"
 
@@ -431,8 +439,10 @@ def iniciar_corte(uuid_op, uuid_usuario):
     except Exception as e:
         db.session.rollback()
         return {"ok": False, "error": str(e)}
-    
 
+
+from flask import request, jsonify, url_for
+from flask_login import current_user
 
 @orden_bp.route("/avanzar_estado/<uuid_op>", methods=["POST"])
 @login_required
@@ -457,9 +467,10 @@ def avanzar_estado(uuid_op):
         nuevo_estado = estados[idx_actual + 1]
 
         # ─────────────────────────────
-        # CASO: ENTRAR A CORTE
+        # CORTE
         # ─────────────────────────────
         if nuevo_estado == "En Corte":
+
             resultado = iniciar_corte(uuid_op, current_user.id)
 
             if not resultado["ok"]:
@@ -477,26 +488,52 @@ def avanzar_estado(uuid_op):
             })
 
         # ─────────────────────────────
-        # CASO: CONFECCIÓN + MERMA
+        # CONFECCIÓN
         # ─────────────────────────────
-        if nuevo_estado == "Confección" and con_merma:
+        if nuevo_estado == "Confección":
+
+            merma_existe = Merma.query.filter_by(
+                uuid_op=uuid_op,
+                activo=True
+            ).first()
+
+            # 🔥 SI EL SISTEMA REQUIERE MERMA Y NO EXISTE → ABRIR FORMULARIO
+            if con_merma and not merma_existe:
+                return jsonify({
+                    "ok": False,
+                    "requiere_merma": True,
+                    "message": "Debes registrar la merma antes de continuar",
+                    "redirect": url_for(
+                        "merma_bp.create_merma",
+                        uuid_op=uuid_op
+                    )
+                })
+
+            orden.estado = nuevo_estado
+            db.session.commit()
+
             return jsonify({
                 "ok": True,
-                "redirect": url_for("orden_bp.merma_form", uuid_op=uuid_op)
+                "message": "Estado actualizado a Confección"
             })
 
         # ─────────────────────────────
-        # FLUJO NORMAL
+        # TERMINADO
         # ─────────────────────────────
         orden.estado = nuevo_estado
 
         if nuevo_estado == "Terminado":
+
             if orden.uuid_venta_detalle:
                 message = "Orden terminada. Lista para surtir la venta."
             else:
                 producto = orden.producto
-                producto.stock_fisico_actual = (producto.stock_fisico_actual or 0) + orden.cantidad_a_producir
+                producto.stock_fisico_actual = (
+                    producto.stock_fisico_actual or 0
+                ) + orden.cantidad_a_producir
+
                 message = f"{orden.cantidad_a_producir} unidades agregadas al stock."
+
         else:
             message = f"Estado actualizado a {nuevo_estado}"
 
@@ -506,12 +543,6 @@ def avanzar_estado(uuid_op):
             "ok": True,
             "message": message
         })
-
-    except ValueError:
-        return jsonify({
-            "ok": False,
-            "error": "Estado actual inválido"
-        }), 400
 
     except Exception as e:
         db.session.rollback()
