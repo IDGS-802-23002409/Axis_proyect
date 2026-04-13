@@ -85,25 +85,15 @@ class EjecucionCorteRollo(db.Model):
 
     uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
 
-    uuid_corte = Column(
-        String(36),
-        ForeignKey('ejecucion_corte.uuid_corte'),
-        nullable=False
-    )
+    uuid_corte = Column(String(36), ForeignKey('ejecucion_corte.uuid_corte'), nullable=False)
+    uuid_rollo = Column(String(36), ForeignKey('rollos_inventario.uuid_rollo'), nullable=False)
 
-    uuid_rollo = Column(
-        String(36),
-        ForeignKey('rollos_inventario.uuid_rollo'),
-        nullable=False
-    )
+    # 🔥 NUEVO (CLAVE PARA TRAZABILIDAD)
+    uuid_insumo = Column(String(36), ForeignKey('insumos.uuid_insumo'), nullable=True)
 
     metros_usados = Column(Numeric(12, 4), nullable=False)
 
     fecha_creacion = Column(DateTime, server_default=func.now())
-
-    def __repr__(self):
-        return f'<EjecucionCorteRollo {self.uuid}>'
-
 
 
 

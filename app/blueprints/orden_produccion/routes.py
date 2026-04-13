@@ -297,7 +297,7 @@ def iniciar_corte(uuid_op, uuid_usuario):
         cantidad = Decimal(op.cantidad_a_producir)
 
         # ─────────────────────────────
-        # 1. CALCULAR CONSUMO REAL DESDE RECETA
+        # 1. CALCULAR CONSUMO TEÓRICO
         # ─────────────────────────────
         consumo_insumos = {}
 
@@ -311,8 +311,6 @@ def iniciar_corte(uuid_op, uuid_usuario):
                 "requerido": requerido,
                 "unidad": insumo.unidad_medida
             }
-
-        total_metros = Decimal(0)
 
         # ─────────────────────────────
         # 2. VALIDAR PIEZAS
@@ -348,9 +346,10 @@ def iniciar_corte(uuid_op, uuid_usuario):
                 db_insumo.stock_total_acumulado -= data["requerido"]
 
         # ─────────────────────────────
-        # 4. DESCONTAR ROLLOS + CAPTURAR METROS REALES
+        # 4. DESCONTAR ROLLOS (REAL)
         # ─────────────────────────────
         ejecucion_rollos = []
+        metros_reales_usados = Decimal(0)
 
         for data in consumo_insumos.values():
 
@@ -386,7 +385,7 @@ def iniciar_corte(uuid_op, uuid_usuario):
                     rollo.metraje_continuo_actual -= usado
                     restante -= usado
 
-                    total_metros += usado
+                    metros_reales_usados += usado
 
                     ejecucion_rollos.append({
                         "rollo": rollo,
@@ -397,13 +396,17 @@ def iniciar_corte(uuid_op, uuid_usuario):
                     raise Exception("No hay suficiente metraje en inventario")
 
         # ─────────────────────────────
-        # 5. CREAR EJECUCIÓN CON DATOS REALES
+        # 5. CREAR EJECUCIÓN (CORRECTA)
         # ─────────────────────────────
+        metros_teoricos = sum(
+            data["requerido"] for data in consumo_insumos.values()
+        )
+
         ejecucion = EjecucionCorte(
             uuid_op=op.uuid_op,
 
-            metros_teoricos_requeridos=total_metros,
-            metros_sacados_bodega=total_metros,
+            metros_teoricos_requeridos=metros_teoricos,
+            metros_sacados_bodega=metros_reales_usados,
 
             prendas_reales_logradas=int(op.cantidad_a_producir),
 
@@ -411,18 +414,31 @@ def iniciar_corte(uuid_op, uuid_usuario):
         )
 
         db.session.add(ejecucion)
-        db.session.flush()  # obtener uuid_corte
+        db.session.flush()
 
         # ─────────────────────────────
-        # 6. GUARDAR ROLLOS USADOS
+        # 6. GUARDAR ROLLOS USADOS (CON INSUMO)
         # ─────────────────────────────
-        for r in ejecucion_rollos:
+        for data in consumo_insumos.values():
 
-            db.session.add(EjecucionCorteRollo(
-                uuid_corte=ejecucion.uuid_corte,
-                uuid_rollo=r["rollo"].uuid_rollo,
-                metros_usados=r["metros"]
-            ))
+            if data["unidad"] == "ROLLO":
+
+                rollos = (
+                    RolloInventario.query
+                    .filter_by(uuid_insumo=data["insumo"].uuid_insumo)
+                    .all()
+                )
+
+                for r in ejecucion_rollos:
+
+                    db.session.add(EjecucionCorteRollo(
+                        uuid_corte=ejecucion.uuid_corte,
+                        uuid_rollo=r["rollo"].uuid_rollo,
+                        uuid_insumo=r["rollo"].uuid_insumo,  # 🔥 CLAVE
+                        metros_usados=r["metros"]
+                    ))
+
+                break
 
         # ─────────────────────────────
         # 7. CAMBIAR ESTADO
@@ -440,10 +456,8 @@ def iniciar_corte(uuid_op, uuid_usuario):
         db.session.rollback()
         return {"ok": False, "error": str(e)}
 
-
 from flask import request, jsonify, url_for
 from flask_login import current_user
-
 @orden_bp.route("/avanzar_estado/<uuid_op>", methods=["POST"])
 @login_required
 @roles_accepted("admin", "gerente", "produccion")
@@ -456,14 +470,14 @@ def avanzar_estado(uuid_op):
         data = request.get_json() or {}
         con_merma = data.get("con_merma", False)
 
-        idx_actual = estados.index(orden.estado)
-
-        if idx_actual >= len(estados) - 1:
+        # Si ya está terminada
+        if orden.estado == "Terminado":
             return jsonify({
                 "ok": True,
                 "message": "La orden ya está en estado Terminado"
             })
 
+        idx_actual = estados.index(orden.estado)
         nuevo_estado = estados[idx_actual + 1]
 
         # ─────────────────────────────
@@ -492,23 +506,6 @@ def avanzar_estado(uuid_op):
         # ─────────────────────────────
         if nuevo_estado == "Confección":
 
-            merma_existe = Merma.query.filter_by(
-                uuid_op=uuid_op,
-                activo=True
-            ).first()
-
-            # 🔥 SI EL SISTEMA REQUIERE MERMA Y NO EXISTE → ABRIR FORMULARIO
-            if con_merma and not merma_existe:
-                return jsonify({
-                    "ok": False,
-                    "requiere_merma": True,
-                    "message": "Debes registrar la merma antes de continuar",
-                    "redirect": url_for(
-                        "merma_bp.create_merma",
-                        uuid_op=uuid_op
-                    )
-                })
-
             orden.estado = nuevo_estado
             db.session.commit()
 
@@ -520,13 +517,34 @@ def avanzar_estado(uuid_op):
         # ─────────────────────────────
         # TERMINADO
         # ─────────────────────────────
-        orden.estado = nuevo_estado
-
         if nuevo_estado == "Terminado":
 
-            if orden.uuid_venta_detalle:
-                message = "Orden terminada. Lista para surtir la venta."
-            else:
+            # Validar merma solo si el usuario lo solicita
+            if con_merma:
+                merma_existe = Merma.query.filter_by(
+                    uuid_op=uuid_op,
+                    activo=True
+                ).first()
+
+                if not merma_existe:
+                    return jsonify({
+                        "ok": False,
+                        "requiere_merma": True,
+                        "message": "Debes registrar la merma antes de terminar la orden",
+                        "redirect": url_for(
+                            "merma_bp.create_merma",
+                            uuid_op=uuid_op
+                        )
+                    })
+
+            # Cambiar estado
+            orden.estado = nuevo_estado
+
+            # ─────────────────────────
+            # PRODUCCIÓN NORMAL
+            # ─────────────────────────
+            if not orden.uuid_venta_detalle:
+
                 producto = orden.producto
                 producto.stock_fisico_actual = (
                     producto.stock_fisico_actual or 0
@@ -534,15 +552,25 @@ def avanzar_estado(uuid_op):
 
                 message = f"{orden.cantidad_a_producir} unidades agregadas al stock."
 
-        else:
-            message = f"Estado actualizado a {nuevo_estado}"
+            # ─────────────────────────
+            # PRODUCCIÓN POR VENTA
+            # ─────────────────────────
+            else:
 
-        db.session.commit()
+                detalle = orden.ventas_detalle
 
-        return jsonify({
-            "ok": True,
-            "message": message
-        })
+                if detalle:
+                    venta = detalle.venta
+                    venta.estatus_envio = "Enviado"
+
+                message = "Orden terminada. Venta marcada como completada."
+
+            db.session.commit()
+
+            return jsonify({
+                "ok": True,
+                "message": message
+            })
 
     except Exception as e:
         db.session.rollback()

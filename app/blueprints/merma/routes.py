@@ -536,117 +536,105 @@ from app.models.produccion import EjecucionCorte, EjecucionCorteRollo
 
 from app.models.insumos import Insumo
 from sqlalchemy.orm import aliased
-@merma_bp.route('/create/<uuid_op>', defaults={'uuid_corte': None}, methods=['GET', 'POST'])
-@merma_bp.route('/create/<uuid_op>/<uuid_corte>', methods=['GET', 'POST'])
+@merma_bp.route('/create/<uuid_op>', methods=['GET', 'POST'])
 @login_required
 @roles_accepted('admin', 'gerente', 'produccion')
-def create_merma(uuid_op, uuid_corte):
+def create_merma(uuid_op):
 
     orden = OrdenProduccion.query.get_or_404(uuid_op)
     form = MermaForm()
 
     insumos = []
+    uuid_corte = None
+    consumo_real = {}
 
     try:
 
         # ─────────────────────────────
-        # INSUMOS REALES DEL CORTE
+        # PROCESO AUTOMÁTICO DESDE ORDEN
         # ─────────────────────────────
-        if uuid_corte:
+        proceso = orden.estado   # 👈 AQUÍ SE TOMA AUTOMÁTICO
 
-            resultados = (
-                db.session.query(
-                    EjecucionCorteRollo.uuid_rollo,
-                    RolloInventario.uuid_insumo,
-                    Insumo.nombre,
-                    EjecucionCorteRollo.metros_usados
-                )
-                .join(
-                    EjecucionCorte,
-                    EjecucionCorte.uuid_corte == EjecucionCorteRollo.uuid_corte
-                )
-                .outerjoin(
-                    RolloInventario,
-                    RolloInventario.uuid_rollo == EjecucionCorteRollo.uuid_rollo
-                )
-                .outerjoin(
-                    Insumo,
-                    Insumo.uuid_insumo == RolloInventario.uuid_insumo
-                )
-                .filter(
-                    EjecucionCorteRollo.uuid_corte == uuid_corte
-                )
+        # ─────────────────────────────
+        # 1. RECETA
+        # ─────────────────────────────
+        explosion = orden.producto.explosion
+
+        if not explosion:
+            flash("La orden no tiene receta activa", "danger")
+            return render_template(
+                'produccion/merma/create.html',
+                form=form,
+                orden=orden,
+                insumos=[]
+            )
+
+        for d in explosion.detalles:
+
+            insumo = d.insumo
+
+            consumo_real[insumo.uuid_insumo] = {
+                "uuid_insumo": insumo.uuid_insumo,
+                "nombre": insumo.nombre,
+                "unidad": insumo.unidad_medida,
+                "teorico": float(d.consumo_teorico_unitario) * float(orden.cantidad_a_producir),
+                "usado": 0,
+                "tipo": insumo.unidad_medida
+            }
+
+        # ─────────────────────────────
+        # 2. CORTE REAL
+        # ─────────────────────────────
+        corte = (
+            EjecucionCorte.query
+            .filter_by(uuid_op=uuid_op)
+            .order_by(EjecucionCorte.fecha_proceso.desc())
+            .first()
+        )
+
+        if corte:
+            uuid_corte = corte.uuid_corte
+
+            rollos = (
+                EjecucionCorteRollo.query
+                .filter_by(uuid_corte=uuid_corte)
                 .all()
             )
 
-            # ─────────────────────────────
-            # AGRUPAR INSUMOS (EVITA DUPLICADOS)
-            # ─────────────────────────────
-            agrupados = {}
+            for r in rollos:
+                if r.uuid_insumo in consumo_real:
+                    consumo_real[r.uuid_insumo]["usado"] += float(r.metros_usados or 0)
 
-            for r in resultados:
-
-                if not r.uuid_insumo:
-                    continue
-
-                if r.uuid_insumo not in agrupados:
-                    agrupados[r.uuid_insumo] = {
-                        "uuid_insumo": r.uuid_insumo,
-                        "nombre": r.nombre or "Insumo desconocido",
-                        "metros_usados": float(r.metros_usados or 0)
-                    }
-                else:
-                    agrupados[r.uuid_insumo]["metros_usados"] += float(r.metros_usados or 0)
-
-            insumos = list(agrupados.values())
+        insumos = list(consumo_real.values())
 
         # ─────────────────────────────
-        # VALIDACIÓN FORM
+        # 3. VALIDACIÓN FORM
         # ─────────────────────────────
         if form.validate_on_submit():
 
-            proceso = form.proceso.data
-
-            proceso_valido_por_estado = {
-                "Pendiente": [],
-                "En Corte": ["CORTE"],
-                "Confección": ["CORTE", "CONFECCION"],
-                "Terminado": ["CORTE", "CONFECCION", "ACABADO"]
-            }
-
-            permitido = proceso_valido_por_estado.get(orden.estado, [])
-
-            if proceso not in permitido:
-                flash(f"No puedes registrar merma en {proceso}", "danger")
-                return render_template(
-                    'produccion/merma/create.html',
-                    form=form,
-                    orden=orden,
-                    uuid_corte=uuid_corte,
-                    insumos=insumos
-                )
-
-            if proceso == "CORTE" and form.tipo_merma.data != "ROLLO":
-                flash("En CORTE solo puedes registrar merma de ROLLO.", "danger")
-                return render_template(
-                    'produccion/merma/create.html',
-                    form=form,
-                    orden=orden,
-                    uuid_corte=uuid_corte,
-                    insumos=insumos
-                )
-
             insumos_ids = request.form.getlist("insumo[]")
+            rollos_ids = request.form.getlist("rollo[]")
             cantidades = request.form.getlist("cantidad[]")
 
-            for insumo_id, cantidad in zip(insumos_ids, cantidades):
+            for insumo_id, rollo_id, cantidad in zip(insumos_ids, rollos_ids, cantidades):
 
                 if not insumo_id or not cantidad:
                     continue
 
+                cantidad = float(cantidad)
+
+                maximo = consumo_real.get(insumo_id, {}).get("usado", 0)
+
+                # 🔥 VALIDACIÓN REAL
+                if maximo > 0 and cantidad > maximo:
+                    raise Exception(
+                        f"No puedes registrar {cantidad}. "
+                        f"Máximo permitido: {maximo}"
+                    )
+
                 db.session.add(Merma(
                     tipo_merma="ROLLO",
-                    proceso=proceso,
+                    proceso=proceso,   # 👈 AUTOMÁTICO DESDE ORDEN
                     tipo_evento=form.tipo_evento.data,
                     motivo=form.motivo.data,
                     cantidad=Decimal(cantidad),
@@ -655,6 +643,7 @@ def create_merma(uuid_op, uuid_corte):
                     uuid_corte=uuid_corte,
 
                     uuid_insumo=insumo_id,
+                    uuid_rollo=rollo_id,
 
                     observaciones=form.observaciones.data,
                     usuario_creacion=current_user.id,
@@ -670,20 +659,17 @@ def create_merma(uuid_op, uuid_corte):
             'produccion/merma/create.html',
             form=form,
             orden=orden,
-            uuid_corte=uuid_corte,
-            insumos=insumos
+            insumos=insumos,
+            proceso=proceso   # 
         )
 
     except Exception as e:
         db.session.rollback()
-        logging.exception(e)
-
-        flash("Error al registrar la merma", "danger")
+        flash(str(e), "danger")
 
         return render_template(
             'produccion/merma/create.html',
             form=form,
             orden=orden,
-            uuid_corte=uuid_corte,
             insumos=insumos
         )
