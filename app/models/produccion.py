@@ -14,6 +14,7 @@ class OrdenProduccion(db.Model):
     cantidad_a_producir = Column(Integer, nullable=False)
     estado = Column(Enum('Pendiente', 'En Corte', 'Confección', 'Terminado'), default='Pendiente')
     fecha_solicitud = Column(DateTime, server_default=func.now())
+    fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
     
     producto = db.relationship('ProductoTerminado', backref=db.backref('ordenes_produccion', lazy=True))
     venta_detalle = db.relationship('VentaDetalle', backref=db.backref('orden_produccion', uselist=False))
@@ -40,6 +41,7 @@ class EjecucionCorte(db.Model):
     prendas_reales_logradas = Column(Integer, nullable=False)
     merma_real_calculada = Column(Numeric(12, 4), nullable=False)
     fecha_proceso = Column(DateTime, server_default=func.now())
+    fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
     usuario_corto_uuid = Column(String(36))
     orden_produccion = db.relationship('OrdenProduccion', backref=db.backref('ejecuciones_corte', lazy=True))
     rollo_usado = db.relationship('RolloInventario', backref=db.backref('ejecuciones_corte', lazy=True))
@@ -85,6 +87,7 @@ class MermaPiezas(db.Model):
     motivo = Column(motivo_merma_pieza_enum, nullable=True)
     observaciones = Column(Text, nullable=True)
     fecha_registro = Column(DateTime, server_default=func.now())
+    fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
     usuario_registro_uuid = Column(String(36), nullable=True)
     orden_produccion = db.relationship(
         'OrdenProduccion',

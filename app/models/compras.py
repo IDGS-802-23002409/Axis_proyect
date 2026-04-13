@@ -23,6 +23,7 @@ class CompraEncabezado(db.Model):
     uuid_pedido = Column(String(36), ForeignKey('pedidos_proveedor_encabezado.uuid_pedido'), nullable=True)
     
     fecha_compra = Column(DateTime, server_default=func.now())
+    fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     # estado de la compra
     estatus = Column(estatus_compra_enum, default='PENDIENTE')
@@ -51,6 +52,8 @@ class CompraDetalle(db.Model):
     # datos de compra
     cantidad_comprada = Column(Numeric(12, 4), nullable=False)
     costo_unitario_compra = Column(Numeric(12, 2), nullable=False)
+    fecha_creacion = Column(DateTime, server_default=func.now())
+    fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     # relaciones
     compra = db.relationship('CompraEncabezado', backref=db.backref('detalles', lazy=True))

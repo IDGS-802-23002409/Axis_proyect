@@ -34,6 +34,8 @@ class PedidoClienteDetalle(db.Model):
     cantidad = Column(Integer, nullable=False)
     precio_unitario_historico = Column(Numeric(12, 2), nullable=False)
     estatus_item = Column(Enum('Pendiente', 'En Producción', 'Terminado'), default='Pendiente')
+    fecha_creacion = Column(DateTime, server_default=func.now())
+    fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     pedido = db.relationship('PedidoClienteEncabezado', backref=db.backref('detalles', lazy=True, cascade="all, delete-orphan"))
     producto = db.relationship('ProductoTerminado', backref=db.backref('pedidos_detalle', lazy=True))

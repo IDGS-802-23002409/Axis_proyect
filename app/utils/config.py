@@ -10,6 +10,14 @@ DB_PASSWORD = os.getenv('DB_PASSWORD', 'flask_password')
 DB_HOST = os.getenv('DB_HOST', 'localhost')
 DB_PORT = os.getenv('DB_PORT', '3306')
 DB_NAME = os.getenv('DB_NAME', 'flask_db')
+
+# ── Base de Datos Staging (Incremental Backup) ─
+STAGING_DB_USER = os.getenv('STAGING_DB_USER', DB_USER)
+STAGING_DB_PASSWORD = os.getenv('STAGING_DB_PASSWORD', DB_PASSWORD)
+STAGING_DB_HOST = os.getenv('STAGING_DB_HOST', DB_HOST)
+STAGING_DB_PORT = os.getenv('STAGING_DB_PORT', DB_PORT)
+STAGING_DB_NAME = os.getenv('STAGING_DB_NAME', 'flask_db_staging')
+
 SECRET_KEY = os.getenv('clave_secreta_axis')
 
 # ── Mail ─────────────────────────────────────

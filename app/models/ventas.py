@@ -32,6 +32,8 @@ class VentaDetalle(db.Model):
     uuid_producto = Column(String(36), ForeignKey('productos_terminados.uuid_producto'), nullable=False)
     cantidad = Column(Integer, nullable=False)
     precio_unitario_historico = Column(Numeric(12, 2), nullable=False)
+    fecha_creacion = Column(DateTime, server_default=func.now())
+    fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     venta = db.relationship('VentaEncabezado', backref=db.backref('detalles', lazy=True))
     producto = db.relationship('ProductoTerminado', backref=db.backref('ventas_detalle', lazy=True))

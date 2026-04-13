@@ -122,6 +122,12 @@ def create_app():
     mail.init_app(application)
     Migrate(application, db)
 
+    from app.utils.audit_listeners import register_audit_listeners
+    register_audit_listeners()
+
+    from app.utils.backup_commands import init_backup_cli
+    init_backup_cli(application)
+
     from app.utils.db_hooks import init_db_objects
     init_db_objects(application)
 
