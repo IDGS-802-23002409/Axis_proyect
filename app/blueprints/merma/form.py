@@ -66,6 +66,13 @@ class MermaForm(FlaskForm):
     )
 
     # ─────────────────────────────
+    # RELACIONES (Para CRUD manual)
+    # ─────────────────────────────
+    uuid_insumo = SelectField("Insumo", choices=[], validators=[Optional()])
+    uuid_rollo = SelectField("Rollo", choices=[], validators=[Optional()])
+    uuid_producto = SelectField("Producto Terminado", choices=[], validators=[Optional()])
+
+    # ─────────────────────────────
     # DATO REAL (Usado para registros individuales)
     # ─────────────────────────────
     cantidad = DecimalField(

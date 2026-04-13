@@ -14,7 +14,13 @@ from decimal import Decimal
 @login_required
 @roles_accepted('admin', 'gerente', 'produccion')
 def index():
-    mermas = Merma.query.order_by(Merma.fecha_creacion.desc()).all()
+    mermas = db.session.query(Merma).options(
+        db.joinedload(Merma.orden_produccion),
+        db.joinedload(Merma.insumo),
+        db.joinedload(Merma.rollo).joinedload(RolloInventario.insumo),
+        db.joinedload(Merma.producto).joinedload(ProductoTerminado.explosion)
+    ).order_by(Merma.fecha_creacion.desc()).all()
+    
     return render_template('produccion/merma/index.html', mermas=mermas)
 
 @merma_bp.route('/registrar/<uuid_op>', methods=['GET', 'POST'])
@@ -165,3 +171,135 @@ def registrar_merma_op(uuid_op):
         insumos=insumos_data,
         proceso_sugerido=proceso_sugerido
     )
+
+@merma_bp.route('/crear_manual', methods=['GET', 'POST'])
+@login_required
+@roles_accepted('admin', 'gerente', 'produccion')
+def crear_manual():
+    form = MermaForm()
+    
+    insumos = Insumo.query.filter_by(unidad_medida='PIEZA').all()
+    form.uuid_insumo.choices = [('', 'Seleccione un Insumo...')] + [(i.uuid_insumo, i.nombre) for i in insumos]
+    
+    rollos = RolloInventario.query.filter(RolloInventario.metraje_continuo_actual > 0).all()
+    form.uuid_rollo.choices = [('', 'Seleccione un Rollo...')] + [(r.uuid_rollo, f"{r.insumo.nombre if r.insumo else ''} (Rollo {r.uuid_rollo[:6]}) - {r.metraje_continuo_actual}m") for r in rollos]
+    
+    productos = ProductoTerminado.query.filter_by(active=True).all()
+    form.uuid_producto.choices = [('', 'Seleccione un Producto...')] + [(p.uuid_producto, f"{p.sku_especifico} - {p.explosion.nombre_receta if p.explosion else 'Sin Receta'}") for p in productos]
+
+    if form.validate_on_submit():
+        tipo_merma = form.tipo_merma.data
+        cantidad = Decimal(form.cantidad.data or 0)
+        
+        exito = False
+        nueva_merma = Merma(
+            tipo_merma=tipo_merma,
+            proceso=form.proceso.data,
+            tipo_evento=form.tipo_evento.data,
+            motivo=form.motivo.data,
+            cantidad=cantidad,
+            observaciones=form.observaciones.data,
+            es_total=form.es_total.data,
+            usuario_creacion=current_user.id,
+            usuario_responsable=current_user.id
+        )
+
+        try:
+            if tipo_merma == 'TELA':
+                uuid_rollo = request.form.get('uuid_rollo')
+                if not uuid_rollo:
+                    raise Exception('Debe seleccionar un rollo de tela.')
+                rollo = RolloInventario.query.get(uuid_rollo)
+                if not rollo or Decimal(str(rollo.metraje_continuo_actual or 0)) < cantidad:
+                    raise Exception('Metraje insuficiente o rollo no encontrado.')
+                rollo.metraje_continuo_actual = Decimal(str(rollo.metraje_continuo_actual)) - cantidad
+                if rollo.insumo:
+                    rollo.insumo.stock_total_acumulado = Decimal(str(rollo.insumo.stock_total_acumulado or 0)) - cantidad
+                nueva_merma.uuid_rollo = uuid_rollo
+                nueva_merma.uuid_insumo = rollo.uuid_insumo
+                exito = True
+                
+            elif tipo_merma == 'INSUMO':
+                uuid_insumo = request.form.get('uuid_insumo')
+                if not uuid_insumo:
+                    raise Exception('Debe seleccionar un insumo.')
+                insumo = Insumo.query.get(uuid_insumo)
+                if not insumo or Decimal(str(insumo.stock_total_acumulado or 0)) < cantidad:
+                    raise Exception('Stock insuficiente del insumo.')
+                insumo.stock_total_acumulado = Decimal(str(insumo.stock_total_acumulado)) - cantidad
+                nueva_merma.uuid_insumo = uuid_insumo
+                exito = True
+
+            elif tipo_merma == 'PRODUCTO':
+                uuid_producto = request.form.get('uuid_producto')
+                if not uuid_producto:
+                    raise Exception('Debe seleccionar un producto terminado.')
+                producto = ProductoTerminado.query.get(uuid_producto)
+                if not producto or Decimal(str(producto.stock_fisico_actual or 0)) < cantidad:
+                    raise Exception('Stock físico insuficiente del producto terminado.')
+                producto.stock_fisico_actual = int(producto.stock_fisico_actual or 0) - int(cantidad)
+                nueva_merma.uuid_producto = uuid_producto
+                exito = True
+
+            if exito:
+                db.session.add(nueva_merma)
+                db.session.commit()
+                flash('Merma manual registrada correctamente.', 'success')
+                return redirect(url_for('merma_bp.index'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al registrar merma: {str(e)}', 'danger')
+
+    return render_template('produccion/merma/create_manual.html', form=form)
+
+@merma_bp.route('/ver/<uuid_merma>')
+@login_required
+@roles_accepted('admin', 'gerente', 'produccion')
+def ver(uuid_merma):
+    merma = db.session.query(Merma).options(
+        db.joinedload(Merma.orden_produccion),
+        db.joinedload(Merma.insumo),
+        db.joinedload(Merma.rollo).joinedload(RolloInventario.insumo),
+        db.joinedload(Merma.producto).joinedload(ProductoTerminado.explosion)
+    ).get_or_404(uuid_merma)
+    
+    return render_template('produccion/merma/ver.html', merma=merma)
+
+@merma_bp.route('/anular/<uuid_merma>', methods=['POST'])
+@login_required
+@roles_accepted('admin', 'gerente')
+def anular(uuid_merma):
+    merma = Merma.query.get_or_404(uuid_merma)
+    
+    if not merma.activo:
+        flash('La merma ya está anulada', 'warning')
+        return redirect(url_for('merma_bp.ver', uuid_merma=uuid_merma))
+        
+    try:
+        tipo = merma.tipo_merma.name if hasattr(merma.tipo_merma, 'name') else merma.tipo_merma
+        if tipo == 'TELA':
+            if merma.rollo:
+                merma.rollo.metraje_continuo_actual = Decimal(str(merma.rollo.metraje_continuo_actual or 0)) + merma.cantidad
+            if merma.insumo:
+                merma.insumo.stock_total_acumulado = Decimal(str(merma.insumo.stock_total_acumulado or 0)) + merma.cantidad
+        elif tipo == 'INSUMO':
+            if merma.insumo:
+                merma.insumo.stock_total_acumulado = Decimal(str(merma.insumo.stock_total_acumulado or 0)) + merma.cantidad
+        elif tipo == 'PRODUCTO':
+            if merma.producto:
+                if not merma.uuid_op:
+                    merma.producto.stock_fisico_actual = int(merma.producto.stock_fisico_actual or 0) + int(merma.cantidad)
+                else: 
+                    if merma.orden_produccion and merma.orden_produccion.estado != 'Terminado':
+                        merma.orden_produccion.cantidad_a_producir += int(merma.cantidad)
+                    
+        merma.activo = False
+        merma.usuario_actualizacion = current_user.id
+        db.session.commit()
+        flash('Merma anulada y stock retornado exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al anular la merma: {str(e)}', 'danger')
+
+    return redirect(url_for('merma_bp.ver', uuid_merma=uuid_merma))
