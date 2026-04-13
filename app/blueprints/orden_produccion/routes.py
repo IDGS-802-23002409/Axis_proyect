@@ -82,10 +82,6 @@ def create():
         else:
             tipo = 'STOCK'
 
-        # REGLA: Las recetas se manejan por lotes (1 lote = 10 unidades).
-        if cantidad % 10 != 0:
-            flash(f"La cantidad a producir debe ser en lotes de 10 (ej: 10, 20, 30...). Cantidad ingresada: {cantidad}", "warning")
-            return render_template('produccion/orden/create.html', form=form)
 
         try:
             # Crear orden en estado PENDIENTE

@@ -100,8 +100,7 @@ proc: BEGIN
             INSERT INTO pedidos_cliente_detalle (uuid_detalle_pedido, uuid_pedido, uuid_producto, cantidad, precio_unitario_historico, estatus_item)
             VALUES (v_uuid_detalle_pedido, v_uuid_pedido, v_uuid_item, v_cantidad_pedido, v_precio, 'Pendiente');
 
-            -- LÓGICA DE PRODUCCIÓN COMPLETA
-            SET v_cantidad_op = CEIL(v_cantidad_pedido / 10.0) * 10;
+            SET v_cantidad_op = v_cantidad_pedido;
             SET v_uuid_op = UUID();
             
             INSERT INTO ordenes_produccion (uuid_op, uuid_producto, uuid_pedido_detalle, cantidad_a_producir, estado, fecha_solicitud)
