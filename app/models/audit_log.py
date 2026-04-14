@@ -9,6 +9,7 @@ class SecurityAuditLog(db.Model):
     uuid_usuario = Column(String(36), index=True, nullable=True) 
     nombre_usuario = Column(String(150), nullable=True)
     rol_usuario = Column(String(80), nullable=True) 
+    usuario_bd = Column(String(80), nullable=True) # El usuario/rol de la base de datos
     
     accion = Column(String(20), nullable=False) 
     tabla = Column(String(100), nullable=False, index=True)

@@ -30,6 +30,13 @@ def get_current_user_info():
     
     return 'Anonimo', 'Anonimo', 'Anonimo'
 
+def get_db_user_info():
+    """Obtiene el rol de base de datos activo en g.db_role."""
+    from flask import g
+    if has_request_context() and hasattr(g, 'db_role'):
+        return g.db_role
+    return 'default'
+
 def get_remote_addr():
     if has_request_context():
         return request.remote_addr
@@ -43,6 +50,7 @@ def capture_audit_log(session, flush_context, instances):
         return
 
     user_uuid, user_name, user_role = get_current_user_info()
+    db_user = get_db_user_info()
     ip = get_remote_addr()
 
     for obj in session.new:
@@ -58,6 +66,7 @@ def capture_audit_log(session, flush_context, instances):
             uuid_usuario=user_uuid,
             nombre_usuario=user_name,
             rol_usuario=user_role,
+            usuario_bd=db_user,
             accion='INSERT',
             tabla=obj.__tablename__,
             registro_uuid=str(reg_uuid) if reg_uuid else 'N/A',
@@ -74,6 +83,10 @@ def capture_audit_log(session, flush_context, instances):
         changes_new = {}
         
         for attr in state.attrs:
+            # Solo procesar atributos que son columnas reales, no relaciones
+            if attr.key not in obj.__table__.columns:
+                continue
+
             hist = attr.load_history()
             if not hist.has_changes():
                 continue
@@ -81,13 +94,14 @@ def capture_audit_log(session, flush_context, instances):
             old_val = hist.deleted[0] if hist.deleted else None
             new_val = hist.added[0] if hist.added else None
             
-            if isinstance(old_val, Decimal): old_val = float(old_val)
-            if isinstance(new_val, Decimal): new_val = float(new_val)
-            if isinstance(old_val, datetime): old_val = old_val.isoformat()
-            if isinstance(new_val, datetime): new_val = new_val.isoformat()
-            
-            changes_old[attr.key] = old_val
-            changes_new[attr.key] = new_val
+            def serialize(val):
+                if isinstance(val, Decimal): return float(val)
+                if isinstance(val, datetime): return val.isoformat()
+                if hasattr(val, '__table__'): return str(val)
+                return val
+
+            changes_old[attr.key] = serialize(old_val)
+            changes_new[attr.key] = serialize(new_val)
 
         if not changes_new: continue
 
@@ -101,6 +115,7 @@ def capture_audit_log(session, flush_context, instances):
             uuid_usuario=user_uuid,
             nombre_usuario=user_name,
             rol_usuario=user_role,
+            usuario_bd=db_user,
             accion='UPDATE',
             tabla=obj.__tablename__,
             registro_uuid=str(reg_uuid) if reg_uuid else 'N/A',
@@ -123,6 +138,7 @@ def capture_audit_log(session, flush_context, instances):
             uuid_usuario=user_uuid,
             nombre_usuario=user_name,
             rol_usuario=user_role,
+            usuario_bd=db_user,
             accion='DELETE',
             tabla=obj.__tablename__,
             registro_uuid=str(reg_uuid) if reg_uuid else 'N/A',

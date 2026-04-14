@@ -8,6 +8,11 @@ from flask_security import Security, SQLAlchemyUserDatastore, current_user
 from app.blueprints.security.forms import ExtendedRegisterForm
 from app.utils.config import (
     DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME,
+    ADMIN_DB_USER, ADMIN_DB_PASSWORD,
+    GERENTE_DB_USER, GERENTE_DB_PASSWORD,
+    PRODUCCION_DB_USER, PRODUCCION_DB_PASSWORD,
+    CLIENTE_DB_USER, CLIENTE_DB_PASSWORD,
+    BACKUP_DB_USER, BACKUP_DB_PASSWORD,
     MAIL_SERVER, MAIL_PORT, MAIL_USE_TLS, MAIL_USERNAME, MAIL_PASSWORD,
     MAIL_DEFAULT_SENDER, SECURITY_TOTP_SECRETS
 )
@@ -33,6 +38,13 @@ def create_app():
     application.config['SQLALCHEMY_DATABASE_URI'] = (
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
+    application.config['SQLALCHEMY_BINDS'] = {
+        'admin_rol': f"mysql+pymysql://{ADMIN_DB_USER}:{ADMIN_DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        'gerente_rol': f"mysql+pymysql://{GERENTE_DB_USER}:{GERENTE_DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        'produccion_rol': f"mysql+pymysql://{PRODUCCION_DB_USER}:{PRODUCCION_DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        'cliente_rol': f"mysql+pymysql://{CLIENTE_DB_USER}:{CLIENTE_DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        'backup_rol': f"mysql+pymysql://{BACKUP_DB_USER}:{BACKUP_DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+    }
     application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # ── Mail ──────────────────────────────────────────────────
@@ -183,6 +195,20 @@ def create_app():
             g.db_role = 'cliente_rol'
 
     @application.before_request
+    def set_db_bind():
+        """Cambia el engine de la sesión según el rol en g.db_role."""
+        if hasattr(g, 'db_role'):
+            # Lista de roles que tienen su propio bind (ahora todos)
+            roles_with_binds = ['admin_rol', 'gerente_rol', 'produccion_rol', 'cliente_rol', 'backup_rol']
+            
+            if g.db_role in roles_with_binds:
+                # Cambiamos el engine de la sesión para este request
+                engine = application.extensions['sqlalchemy'].get_engine(bind=g.db_role)
+                db.session.bind = engine
+            else:
+                # Volver al default (flask_user con ALL PRIVILEGES)
+                engine = application.extensions['sqlalchemy'].get_engine()
+                db.session.bind = engine
     def ensure_roles():
         """Asegura que los roles básicos existan en la base de datos."""
         # Esta es una forma rápida de inicializar roles si no existen
