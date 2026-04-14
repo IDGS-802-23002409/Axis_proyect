@@ -242,40 +242,40 @@
     </aside>
 
     <!-- MAIN -->
-    <main class="flex-1 flex flex-col">
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
 
       <!-- TOPBAR -->
-      <div class="h-20 px-10 flex items-center justify-between border-b border-border sticky top-0 bg-white z-40">
-        <div>
+      <div class="min-h-20 py-4 px-6 md:px-10 flex flex-wrap items-center justify-between gap-4 border-b border-border sticky top-0 bg-white z-40">
+        <div class="min-w-[200px]">
           <h2 class="uppercase font-bold text-lg">{% block header %}{% endblock %}</h2>
           <p class="text-xs text-muted-foreground uppercase tracking-wider">{% block subheader %}{% endblock %}</p>
         </div>
 
-        <div class="flex items-center gap-6">
+        <div class="flex items-center flex-wrap gap-4 md:gap-6">
           {% if current_user.has_role('admin') %}
           <a href="{{ url_for('checkout.perfil') }}"
-            class="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors border border-border hover:bg-secondary rounded-md">
+            class="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors border border-border hover:bg-secondary rounded-md whitespace-nowrap">
             <i data-lucide="user-cog" class="w-4 h-4"></i>
             Mi Perfil
           </a>
           {% endif %}
 
-          <div class="flex items-center gap-3 bg-card border border-border px-4 py-1.5 rounded-full">
-            <div class="text-right text-xs">
-              <p class="font-semibold text-foreground">
+          <div class="flex items-center gap-3 bg-card border border-border px-3 py-1 md:px-4 md:py-1.5 rounded-full shrink-0">
+            <div class="text-right text-[10px] md:text-xs">
+              <p class="font-semibold text-foreground truncate max-w-[100px] md:max-w-none">
                 {{ current_user.nombre_completo if current_user.is_authenticated else 'Admin' }}
               </p>
-              <p class="text-muted-foreground uppercase tracking-tighter font-bold text-[10px]">
+              <p class="text-muted-foreground uppercase tracking-tighter font-bold text-[8px] md:text-[10px]">
                 {% for role in current_user.roles %}{{ role.name }}{% if not loop.last %} | {% endif %}{% endfor %}
               </p>
             </div>
-            <div class="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold">
+            <div class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-black text-white flex items-center justify-center text-[10px] md:text-xs font-bold">
               {{ current_user.nombre_completo[0].upper() if current_user.is_authenticated else 'A' }}
             </div>
           </div>
 
           <a href="{{ url_for('security.logout') }}"
-            class="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest text-destructive hover:bg-red-50 rounded-md transition-colors border border-transparent hover:border-red-100">
+            class="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 text-[10px] md:text-xs font-bold uppercase tracking-widest text-destructive hover:bg-red-50 rounded-md transition-colors border border-transparent hover:border-red-100 whitespace-nowrap">
             <i data-lucide="log-out" class="w-4 h-4"></i>
             Salir
           </a>
