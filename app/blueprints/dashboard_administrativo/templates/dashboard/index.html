@@ -3,6 +3,34 @@
 
 {% block content %}
 
+{# ══ Estilos de Impresión AXIS ══════════════════════════════════════════════════ #}
+<style>
+    @media print {
+        .print-header { display: block !important; margin-bottom: 2rem; border-bottom: 2px solid black; padding-bottom: 1rem; }
+        .grid { display: grid !important; gap: 1rem !important; }
+        .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+        .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+        .bg-white { border: 1px solid #e5e7eb !important; box-shadow: none !important; }
+        canvas { max-width: 100% !important; height: auto !important; }
+        .rounded-2xl, .rounded-xl { border-radius: 8px !important; }
+        body { padding: 1cm !important; }
+    }
+    .print-header { display: none; }
+</style>
+
+<div class="print-header">
+    <div class="flex justify-between items-end">
+        <div>
+            <h1 class="text-4xl font-black italic uppercase tracking-tighter">AXIS — Reporte de Operaciones</h1>
+            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">Urban Apparel Store Ops · Dashboard Administrativo</p>
+        </div>
+        <div class="text-right">
+            <p class="text-[10px] font-black uppercase">Fecha de Generación</p>
+            <p class="text-sm font-bold">{{ now.strftime('%d/%m/%Y %H:%M') if now else '' }}</p>
+        </div>
+    </div>
+</div>
+
 {# ══ Encabezado ══════════════════════════════════════════════════════════════ #}
 <div class="flex justify-between items-center mb-10 print:hidden">
     <div>
@@ -10,15 +38,11 @@
         <p class="text-gray-500 text-sm font-medium mt-1">Análisis de rendimiento y control de inventarios.</p>
     </div>
     <div class="flex gap-4">
-        <button onclick="actualizarDashboard()" id="btn-actualizar"
-            class="bg-white border border-gray-200 text-gray-600 px-5 py-2.5 rounded-xl text-xs font-bold
-                   hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm">
+        <button onclick="actualizarDashboard()" id="btn-actualizar" class="bg-white border border-gray-200 text-gray-600 px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm">
             <i data-lucide="rotate-cw" class="w-4 h-4" id="icon-refresh"></i>
             ACTUALIZAR
         </button>
-        <button onclick="generarReporte()"
-            class="bg-black text-white border border-black px-6 py-2.5 rounded-xl text-xs font-black
-                   hover:bg-gray-800 transition-all flex items-center gap-2 shadow-sm">
+        <button onclick="generarReporte()" class="bg-black text-white border border-black px-6 py-2.5 rounded-xl text-xs font-black hover:bg-gray-800 transition-all flex items-center gap-2 shadow-sm">
             <i data-lucide="file-down" class="w-4 h-4"></i>
             GENERAR REPORTE
         </button>
@@ -56,12 +80,8 @@
 
 {# ══ KPIs de Productos (Los 4 Cuadros Completos) ════════════════════════════ #}
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-
-    {# TOP Unidades #}
     <div class="bg-white border border-gray-200 rounded-2xl p-6 flex items-center gap-6 relative overflow-hidden shadow-sm">
-        <div class="absolute top-0 right-0 bg-green-50 text-green-600 px-3 py-1 rounded-bl-xl text-[9px] font-black uppercase tracking-widest italic border-l border-b border-green-100">
-            Top Unidades
-        </div>
+        <div class="absolute top-0 right-0 bg-green-50 text-green-600 px-3 py-1 rounded-bl-xl text-[9px] font-black uppercase tracking-widest italic border-l border-b border-green-100">Top Unidades</div>
         <div class="w-16 h-16 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-center flex-shrink-0">
             <i data-lucide="crown" class="w-7 h-7 text-amber-500"></i>
         </div>
@@ -81,11 +101,8 @@
         </div>
     </div>
 
-    {# TOP Ingresos #}
     <div class="bg-white border border-gray-200 rounded-2xl p-6 flex items-center gap-6 relative overflow-hidden shadow-sm">
-        <div class="absolute top-0 right-0 bg-blue-50 text-blue-600 px-3 py-1 rounded-bl-xl text-[9px] font-black uppercase tracking-widest italic border-l border-b border-blue-100">
-            Top Ingresos
-        </div>
+        <div class="absolute top-0 right-0 bg-blue-50 text-blue-600 px-3 py-1 rounded-bl-xl text-[9px] font-black uppercase tracking-widest italic border-l border-b border-blue-100">Top Ingresos</div>
         <div class="w-16 h-16 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-center flex-shrink-0">
             <i data-lucide="trending-up" class="w-7 h-7 text-blue-500"></i>
         </div>
@@ -105,11 +122,8 @@
         </div>
     </div>
 
-    {# BOTTOM Unidades (Baja Rotación) #}
     <div class="bg-white border border-gray-200 rounded-2xl p-6 flex items-center gap-6 relative overflow-hidden shadow-sm">
-        <div class="absolute top-0 right-0 bg-red-50 text-red-600 px-3 py-1 rounded-bl-xl text-[9px] font-black uppercase tracking-widest italic border-l border-b border-red-100">
-            Baja Rotación
-        </div>
+        <div class="absolute top-0 right-0 bg-red-50 text-red-600 px-3 py-1 rounded-bl-xl text-[9px] font-black uppercase tracking-widest italic border-l border-b border-red-100">Baja Rotación</div>
         <div class="w-16 h-16 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-center flex-shrink-0">
             <i data-lucide="trending-down" class="w-7 h-7 text-red-400"></i>
         </div>
@@ -129,11 +143,8 @@
         </div>
     </div>
 
-    {# BOTTOM Ingresos #}
     <div class="bg-white border border-gray-200 rounded-2xl p-6 flex items-center gap-6 relative overflow-hidden shadow-sm">
-        <div class="absolute top-0 right-0 bg-orange-50 text-orange-600 px-3 py-1 rounded-bl-xl text-[9px] font-black uppercase tracking-widest italic border-l border-b border-orange-100">
-            Menor Ingreso
-        </div>
+        <div class="absolute top-0 right-0 bg-orange-50 text-orange-600 px-3 py-1 rounded-bl-xl text-[9px] font-black uppercase tracking-widest italic border-l border-b border-orange-100">Menor Ingreso</div>
         <div class="w-16 h-16 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-center flex-shrink-0">
             <i data-lucide="arrow-down-circle" class="w-7 h-7 text-orange-400"></i>
         </div>
@@ -186,9 +197,9 @@ document.addEventListener('DOMContentLoaded', function() {
     lucide.createIcons();
 
     // Datos traídos desde el servidor (Flask)
-    const labels      = {{ chart_labels    | tojson }};
-    const dataActual  = {{ chart_data_act  | tojson }};
-    const dataAnterior= {{ chart_data_ant  | tojson }};
+    const labels = {{ chart_labels | tojson }};
+    const dataActual = {{ chart_data_act | tojson }};
+    const dataAnterior = {{ chart_data_ant | tojson }};
 
     const ctx = document.getElementById('salesChart').getContext('2d');
     new Chart(ctx, {
@@ -202,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     borderColor: '#000000',      // Línea AXIS Negra
                     backgroundColor: 'transparent',
                     borderWidth: 3,
-                    fill: true,             
+                    fill: true,
                     tension: 0.15,               // Líneas más rectas/técnicas
                     pointRadius: 5,              // Puntos circulares
                     pointBackgroundColor: '#000000',
@@ -239,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     bodyFont: { size: 12 },
                     padding: 12,
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return ` ${context.dataset.label}: $${context.parsed.y.toLocaleString('es-MX')}`;
                         }
                     }

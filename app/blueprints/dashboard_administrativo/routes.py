@@ -174,6 +174,7 @@ def index():
             chart_labels     = chart_labels,
             chart_data_act   = chart_data_act,
             chart_data_ant   = chart_data_ant,
+            now              = datetime.now(),
         )
 
     except Exception as e:
