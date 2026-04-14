@@ -7,6 +7,10 @@ from app.models.inventario import RolloInventario
 from app.models.insumos import Insumo
 from app.models.produccion import EjecucionCorte, OrdenProduccion
 from app.models.explosion_materiales import ExplosionMaterialesDetalle
+from app.models.produccion import OrdenProduccion, EjecucionCorte, EjecucionCorteRollo
+from app.models.insumos import Insumo
+from app.models.inventario import RolloInventario
+from app.models.modelos_productos import ProductoTerminado
 from app.models.mermas import Merma
 
 
@@ -68,7 +72,6 @@ def index():
         merma_tela_global=float(merma_tela_global or 0),
     )
 
-
 @inventario_bp.route('/<uuid>')
 @login_required
 @roles_accepted('admin', 'gerente', 'produccion')
@@ -86,33 +89,46 @@ def ver_insumo(uuid):
 
         rollos = RolloInventario.query.filter_by(uuid_insumo=uuid).all()
 
-        total_metros_iniciales = sum(float(r.metraje_inicial or 0)        for r in rollos)
+        total_metros_iniciales = sum(float(r.metraje_inicial or 0) for r in rollos)
         total_metros_actual    = sum(float(r.metraje_continuo_actual or 0) for r in rollos)
 
+        #  JOIN CORRECTO (usando tabla puente)
         ejecuciones = (
-            EjecucionCorte.query
-            .join(RolloInventario)
+            db.session.query(EjecucionCorte)
+            .join(EjecucionCorteRollo, EjecucionCorte.uuid_corte == EjecucionCorteRollo.uuid_corte)
+            .join(RolloInventario, EjecucionCorteRollo.uuid_rollo == RolloInventario.uuid_rollo)
             .filter(RolloInventario.uuid_insumo == uuid)
             .all()
         )
 
-        total_metros_usados = sum(float(e.metros_sacados_bodega or 0) for e in ejecuciones)
+        #  TOTAL REAL USADO (desde tabla puente)
+        total_metros_usados = (
+            db.session.query(func.sum(EjecucionCorteRollo.metros_usados))
+            .join(RolloInventario, EjecucionCorteRollo.uuid_rollo == RolloInventario.uuid_rollo)
+            .filter(RolloInventario.uuid_insumo == uuid)
+            .scalar()
+        ) or 0
 
-        # Mermas de tela registradas para los rollos de este insumo
+        #  Mermas
         uuid_rollos = [r.uuid_rollo for r in rollos]
-        mermas = (
-            Merma.query
-            .filter(
-                Merma.tipo_merma == 'TELA',
-                Merma.uuid_rollo.in_(uuid_rollos),
-                Merma.activo == True
+
+        if uuid_rollos:
+            mermas = (
+                Merma.query
+                .filter(
+                    Merma.tipo_merma == 'TELA',
+                    Merma.uuid_rollo.in_(uuid_rollos),
+                    Merma.activo == True
+                )
+                .order_by(Merma.fecha_creacion.desc())
+                .all()
             )
-            .order_by(Merma.fecha_creacion.desc())
-            .all()
-        )
+        else:
+            mermas = []
 
         total_merma = sum(float(m.cantidad or 0) for m in mermas)
 
+        #  Detalle por rollo
         for r in rollos:
             detalle_rollos.append({
                 "uuid":    r.uuid_rollo,
@@ -124,7 +140,7 @@ def ver_insumo(uuid):
         resumen = {
             "total_rollos": len(rollos),
             "entrada":      total_metros_iniciales,
-            "salida":       total_metros_usados,
+            "salida":       float(total_metros_usados),
             "stock":        total_metros_actual,
             "merma":        total_merma,
         }
@@ -154,7 +170,7 @@ def ver_insumo(uuid):
                         "fecha":    op.fecha_solicitud,
                     })
 
-        # Mermas de insumo registradas para esta pieza
+        #  Mermas de insumo
         mermas = (
             Merma.query
             .filter(

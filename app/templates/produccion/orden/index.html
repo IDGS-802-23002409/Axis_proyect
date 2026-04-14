@@ -138,8 +138,7 @@
 <script>
 function confirmarAvance(uuid_op, estadoActual) {
 
-    // Función auxiliar para llamar a la API y avanzar verdaderamente
-    const hacerLlamadaAvanzar = () => {
+    const hacerLlamadaAvanzar = (conMerma = false) => {
         fetch(`/orden_produccion/avanzar_estado/${uuid_op}`, {
             method: "POST",
             headers: {
@@ -147,7 +146,7 @@ function confirmarAvance(uuid_op, estadoActual) {
                 "X-CSRFToken": "{{ csrf_token() }}"
             },
             body: JSON.stringify({
-                con_merma: false
+                con_merma: conMerma
             })
         })
         .then(res => res.json())
@@ -162,29 +161,44 @@ function confirmarAvance(uuid_op, estadoActual) {
         });
     };
 
-    // Si es pendiente, avanzamos nativamente sin preguntar merma.
-    if (estadoActual === 'Pendiente') {
-        hacerLlamadaAvanzar();
-        return;
-    }
-
+    //  PRIMERA CONFIRMACIÓN
     Swal.fire({
-        title: '¿Hubo mermas en este proceso?',
-        icon: 'question',
+        title: '¿Estás seguro de continuar?',
+        text: 'Se avanzará al siguiente proceso',
+        icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Sí, hubo merma',
-        cancelButtonText: 'No, continuar',
+        confirmButtonText: 'Sí, continuar',
+        cancelButtonText: 'Cancelar',
         confirmButtonColor: '#000000',
         cancelButtonColor: '#9ca3af'
-    }).then((result) => {
+    }).then((confirmacion) => {
 
-        if (result.isConfirmed) {
-            // Si el usuario dice SÍ, se va al form directamente (sin llamar a la api de avanzar)
-            window.location.href = `/merma/registrar/${uuid_op}`;
-        } else if (result.dismiss === Swal.DismissReason.cancel) {
-            // Si el usuario dice NO, llamamos a la API para avanzar de estado
-            hacerLlamadaAvanzar();
+        if (!confirmacion.isConfirmed) return;
+
+        // 🔹 Si viene de Pendiente → NO preguntar merma
+        if (estadoActual === 'Pendiente') {
+            hacerLlamadaAvanzar(false);
+            return;
         }
+
+        //  SEGUNDA CONFIRMACIÓN (MERMA)
+        Swal.fire({
+            title: '¿Hubo mermas en este proceso?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, hubo merma',
+            cancelButtonText: 'No, continuar',
+            confirmButtonColor: '#000000',
+            cancelButtonColor: '#9ca3af'
+        }).then((result) => {
+
+            if (result.isConfirmed) {
+                window.location.href = `/merma/registrar/${uuid_op}`;
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                hacerLlamadaAvanzar(false);
+            }
+
+        });
 
     });
 

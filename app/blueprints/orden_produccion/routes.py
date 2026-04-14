@@ -460,6 +460,8 @@ def iniciar_corte(uuid_op, uuid_usuario):
 
 from flask import request, jsonify, url_for
 from flask_login import current_user
+
+
 @orden_bp.route("/avanzar_estado/<uuid_op>", methods=["POST"])
 @login_required
 @roles_accepted("admin", "gerente", "produccion")
@@ -470,7 +472,11 @@ def avanzar_estado(uuid_op):
 
     try:
         data = request.get_json() or {}
-        con_merma = data.get("con_merma", False)
+
+        # Solo considerar merma si NO viene de Pendiente
+        con_merma = False
+        if orden.estado != "Pendiente":
+            con_merma = data.get("con_merma", False)
 
         # Si ya está terminada
         if orden.estado == "Terminado":
@@ -483,7 +489,7 @@ def avanzar_estado(uuid_op):
         nuevo_estado = estados[idx_actual + 1]
 
         # ─────────────────────────────
-        # CORTE
+        # CORTE (NO preguntar merma)
         # ─────────────────────────────
         if nuevo_estado == "En Corte":
 
@@ -504,9 +510,26 @@ def avanzar_estado(uuid_op):
             })
 
         # ─────────────────────────────
-        # CONFECCIÓN
+        # CONFECCIÓN (SÍ preguntar merma)
         # ─────────────────────────────
         if nuevo_estado == "Confección":
+
+            if con_merma:
+                merma_existe = Merma.query.filter_by(
+                    uuid_op=uuid_op,
+                    activo=True
+                ).first()
+
+                if not merma_existe:
+                    return jsonify({
+                        "ok": False,
+                        "requiere_merma": True,
+                        "message": "Debes registrar la merma antes de avanzar a Confección",
+                        "redirect": url_for(
+                            "merma_bp.registrar_merma_op",
+                            uuid_op=uuid_op
+                        )
+                    })
 
             orden.estado = nuevo_estado
             db.session.commit()
@@ -517,11 +540,10 @@ def avanzar_estado(uuid_op):
             })
 
         # ─────────────────────────────
-        # TERMINADO
+        # TERMINADO (SÍ preguntar merma)
         # ─────────────────────────────
         if nuevo_estado == "Terminado":
 
-            # Validar merma solo si el usuario lo solicita
             if con_merma:
                 merma_existe = Merma.query.filter_by(
                     uuid_op=uuid_op,

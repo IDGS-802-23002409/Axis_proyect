@@ -7,6 +7,7 @@ from app.models.produccion import OrdenProduccion, EjecucionCorte, EjecucionCort
 from app.models.insumos import Insumo
 from app.models.inventario import RolloInventario
 from app.models.modelos_productos import ProductoTerminado
+from app.models.usuarios import Usuario
 from app.utils.database_connection import db
 from decimal import Decimal
 
@@ -178,18 +179,32 @@ def registrar_merma_op(uuid_op):
 def crear_manual():
     form = MermaForm()
     
-    insumos = Insumo.query.filter_by(unidad_medida='PIEZA').all()
-    form.uuid_insumo.choices = [('', 'Seleccione un Insumo...')] + [(i.uuid_insumo, i.nombre) for i in insumos]
+    #  Traer TODOS los insumos (no solo PIEZA)
+    insumos = Insumo.query.all()
+    form.uuid_insumo.choices = [('', 'Seleccione un Insumo...')] + [
+        (i.uuid_insumo, f"{i.nombre} ({i.unidad_medida})") for i in insumos
+    ]
     
     rollos = RolloInventario.query.filter(RolloInventario.metraje_continuo_actual > 0).all()
-    form.uuid_rollo.choices = [('', 'Seleccione un Rollo...')] + [(r.uuid_rollo, f"{r.insumo.nombre if r.insumo else ''} (Rollo {r.uuid_rollo[:6]}) - {r.metraje_continuo_actual}m") for r in rollos]
+    form.uuid_rollo.choices = [('', 'Seleccione un Rollo...')] + [
+        (r.uuid_rollo, f"{r.insumo.nombre if r.insumo else ''} (Rollo {r.uuid_rollo[:6]}) - {r.metraje_continuo_actual}m")
+        for r in rollos
+    ]
     
     productos = ProductoTerminado.query.filter_by(active=True).all()
-    form.uuid_producto.choices = [('', 'Seleccione un Producto...')] + [(p.uuid_producto, f"{p.sku_especifico} - {p.explosion.nombre_receta if p.explosion else 'Sin Receta'}") for p in productos]
+    form.uuid_producto.choices = [('', 'Seleccione un Producto...')] + [
+        (p.uuid_producto, f"{p.sku_especifico} - {p.explosion.nombre_receta if p.explosion else 'Sin Receta'}")
+        for p in productos
+    ]
 
     if form.validate_on_submit():
         tipo_merma = form.tipo_merma.data
         cantidad = Decimal(form.cantidad.data or 0)
+
+        #  VALIDACIÓN GLOBAL
+        if cantidad <= 0:
+            flash('La cantidad debe ser mayor a 0.', 'danger')
+            return redirect(request.url)
         
         exito = False
         nueva_merma = Merma(
@@ -205,39 +220,74 @@ def crear_manual():
         )
 
         try:
+            # ─────────────────────────────
+            # TELA (permite decimales)
+            # ─────────────────────────────
             if tipo_merma == 'TELA':
                 uuid_rollo = request.form.get('uuid_rollo')
                 if not uuid_rollo:
                     raise Exception('Debe seleccionar un rollo de tela.')
+
                 rollo = RolloInventario.query.get(uuid_rollo)
+
                 if not rollo or Decimal(str(rollo.metraje_continuo_actual or 0)) < cantidad:
                     raise Exception('Metraje insuficiente o rollo no encontrado.')
+
                 rollo.metraje_continuo_actual = Decimal(str(rollo.metraje_continuo_actual)) - cantidad
+
                 if rollo.insumo:
                     rollo.insumo.stock_total_acumulado = Decimal(str(rollo.insumo.stock_total_acumulado or 0)) - cantidad
+
                 nueva_merma.uuid_rollo = uuid_rollo
                 nueva_merma.uuid_insumo = rollo.uuid_insumo
                 exito = True
-                
+
+            # ─────────────────────────────
+            # INSUMO (validar PIEZA vs DECIMAL)
+            # ─────────────────────────────
             elif tipo_merma == 'INSUMO':
                 uuid_insumo = request.form.get('uuid_insumo')
                 if not uuid_insumo:
                     raise Exception('Debe seleccionar un insumo.')
+
                 insumo = Insumo.query.get(uuid_insumo)
-                if not insumo or Decimal(str(insumo.stock_total_acumulado or 0)) < cantidad:
+                if not insumo:
+                    raise Exception('Insumo no encontrado.')
+
+                #  VALIDACIÓN CLAVE
+                if insumo.unidad_medida == 'PIEZA':
+                    if cantidad % 1 != 0:
+                        raise Exception('Las piezas deben ser números enteros.')
+
+                if Decimal(str(insumo.stock_total_acumulado or 0)) < cantidad:
                     raise Exception('Stock insuficiente del insumo.')
+
                 insumo.stock_total_acumulado = Decimal(str(insumo.stock_total_acumulado)) - cantidad
+
                 nueva_merma.uuid_insumo = uuid_insumo
                 exito = True
 
+            # ─────────────────────────────
+            # PRODUCTO (siempre entero)
+            # ─────────────────────────────
             elif tipo_merma == 'PRODUCTO':
                 uuid_producto = request.form.get('uuid_producto')
                 if not uuid_producto:
                     raise Exception('Debe seleccionar un producto terminado.')
+
                 producto = ProductoTerminado.query.get(uuid_producto)
-                if not producto or Decimal(str(producto.stock_fisico_actual or 0)) < cantidad:
+                if not producto:
+                    raise Exception('Producto no encontrado.')
+
+                #  VALIDACIÓN: productos siempre enteros
+                if cantidad % 1 != 0:
+                    raise Exception('Los productos deben ser cantidades enteras.')
+
+                if Decimal(str(producto.stock_fisico_actual or 0)) < cantidad:
                     raise Exception('Stock físico insuficiente del producto terminado.')
+
                 producto.stock_fisico_actual = int(producto.stock_fisico_actual or 0) - int(cantidad)
+
                 nueva_merma.uuid_producto = uuid_producto
                 exito = True
 
@@ -257,14 +307,33 @@ def crear_manual():
 @login_required
 @roles_accepted('admin', 'gerente', 'produccion')
 def ver(uuid_merma):
+
+    # Traer la merma con relaciones
     merma = db.session.query(Merma).options(
         db.joinedload(Merma.orden_produccion),
         db.joinedload(Merma.insumo),
         db.joinedload(Merma.rollo).joinedload(RolloInventario.insumo),
         db.joinedload(Merma.producto).joinedload(ProductoTerminado.explosion)
     ).get_or_404(uuid_merma)
-    
-    return render_template('produccion/merma/ver.html', merma=merma)
+
+    # ─────────────────────────────
+    # BUSCAR USUARIO POR UUID
+    # ─────────────────────────────
+    nombre_usuario = None
+
+    if merma.usuario_creacion:
+        usuario = db.session.query(Usuario).filter(
+            Usuario.id == merma.usuario_creacion
+        ).first()
+
+        if usuario:
+            nombre_usuario = usuario.nombre_completo
+
+    return render_template(
+        'produccion/merma/ver.html',
+        merma=merma,
+        nombre_usuario=nombre_usuario
+    )
 
 @merma_bp.route('/anular/<uuid_merma>', methods=['POST'])
 @login_required
