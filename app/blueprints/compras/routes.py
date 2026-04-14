@@ -9,7 +9,7 @@ from app.models.inventario import RolloInventario
 from .forms import CompraEncabezadoForm
 from flask import render_template, redirect, url_for, flash, request
 from sqlalchemy import or_, func
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from sqlalchemy.orm import joinedload
 
 
@@ -154,7 +154,7 @@ def create():
     )
 
 
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from sqlalchemy.orm import joinedload
 
 @compras_bp.route("/<uuid_compra>")
@@ -289,7 +289,15 @@ def recibir(uuid_compra):
             if compra.uuid_pedido:
                 pedido = PedidoProveedorEncabezado.query.get(compra.uuid_pedido)
                 if pedido:
-                    pedido.estatus = "Completado"
+                    # Se marca como completado si ya se recibió al menos lo solicitado en todos los renglones
+                    # o si el usuario decide que esta entrega (aunque parcial) cierra el proceso.
+                    # Para mayor flexibilidad, lo cerramos si el estatus de todos los detalles es satisfactorio.
+                    completado = all(
+                        (d.cantidad_recibida or 0) >= d.cantidad_pedida 
+                        for d in pedido.detalles
+                    )
+                    if completado:
+                        pedido.estatus = "Completado"
 
             db.session.commit()
 
