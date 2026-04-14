@@ -38,14 +38,14 @@ Gestión de Clientes y Agenda
         </div>
 
         <!-- Table -->
-        <table class="w-full text-sm">
-            <thead class="bg-secondary text-muted-foreground uppercase text-xs">
+        <table class="w-full axis-table">
+            <thead>
                 <tr>
-                    <th class="text-left px-6 py-4">Usuario base</th>
-                    <th class="text-left px-6 py-4">Teléfono</th>
-                    <th class="text-left px-6 py-4">Dirección Domicilio</th>
-                    <th class="text-left px-6 py-4">F. Registro</th>
-                    <th class="text-right px-6 py-4">Acciones</th>
+                    <th class="text-left">Usuario base</th>
+                    <th class="text-left">Teléfono</th>
+                    <th class="text-left">Dirección Domicilio</th>
+                    <th class="text-left">F. Registro</th>
+                    <th class="text-right">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -70,11 +70,12 @@ Gestión de Clientes y Agenda
                             <a href="{{ url_for('clientes.update_cliente', uuid_cliente=cli.uuid_cliente) }}">
                                 <i data-lucide="pencil" class="w-4 h-4 hover:text-primary"></i>
                             </a>
-                            <form method="POST"
+                            <form method="POST" id="del-cli-{{ cli.uuid_cliente }}"
                                 action="{{ url_for('clientes.delete_cliente', uuid_cliente=cli.uuid_cliente) }}"
                                 style="display:inline;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" onclick="return confirm('¿Seguro de desvincular este cliente?');">
+                                <button type="button"
+                                    onclick="axisConfirmForm('del-cli-{{ cli.uuid_cliente }}', {title:'¿Desvincular cliente?', text:'El cliente perderá su acceso al sistema.', danger:true, confirmText:'Sí, desvincular'})">
                                     <i data-lucide="trash-2" class="w-4 h-4 text-red-500 hover:text-red-700"></i>
                                 </button>
                             </form>

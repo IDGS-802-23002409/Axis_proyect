@@ -61,16 +61,14 @@
 
         <!-- TABLA -->
         <div class="w-full overflow-x-auto">
-            <table class="w-full text-left">
-
+            <table class="w-full text-left axis-table">
                 <thead>
-                    <tr class="text-[10px] uppercase tracking-[0.2em] text-neutral-400 border-b">
-                        <th class="px-4 py-6 font-bold">Folio</th>
-                        <th class="px-4 py-6 font-bold">Proveedor</th>
-
-                        <th class="px-4 py-6 font-bold">Fecha</th>
-                        <th class="px-4 py-6 font-bold text-center">Estatus</th>
-                        <th class="px-4 py-6 font-bold text-right">Acciones</th>
+                    <tr>
+                        <th>Folio</th>
+                        <th>Proveedor</th>
+                        <th>Fecha</th>
+                        <th class="text-center">Estatus</th>
+                        <th class="text-right">Acciones</th>
                     </tr>
                 </thead>
 
@@ -132,14 +130,14 @@
                                 {% endif %}
 
                                 {% if compra.estatus == 'PENDIENTE' %}
-                                <form method="POST"
+                                <form method="POST" id="cancel-compra-{{ compra.uuid_compra }}"
                                     action="{{ url_for('compras_bp.cancelar', uuid_compra=compra.uuid_compra) }}"
-                                    class="inline"
-                                    onsubmit="return confirm('¿Seguro que deseas cancelar esta compra?');">
+                                    class="inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit"
-                                        class="flex items-center gap-2 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 rounded-lg text-[10px] font-bold tracking-wider border border-red-200 transition-all">
-                                        <i class="fas fa-trash text-[10px]"></i>
+                                    <button type="button"
+                                        onclick="axisConfirmForm('cancel-compra-{{ compra.uuid_compra }}', {title:'¿Cancelar compra?', text:'Esta acción no se puede deshacer.', danger:true, confirmText:'Sí, cancelar'})"
+                                        class="flex items-center gap-2 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 rounded-lg text-sm font-bold tracking-wider border border-red-200 transition-all">
+                                        <i class="fas fa-trash"></i>
                                         Cancelar
                                     </button>
                                 </form>

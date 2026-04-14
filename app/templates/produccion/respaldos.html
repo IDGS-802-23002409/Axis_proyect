@@ -8,7 +8,8 @@
 <div class="space-y-8">
     <!-- Resumen y Acción Principal -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="md:col-span-2 bg-card border border-border p-6 rounded-xl shadow-sm flex items-center justify-between">
+        <div
+            class="md:col-span-2 bg-card border border-border p-6 rounded-xl shadow-sm flex items-center justify-between">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
                     <i data-lucide="database" class="w-6 h-6"></i>
@@ -20,7 +21,8 @@
             </div>
             <form action="{{ url_for('respaldos.generar_respaldo') }}" method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="bg-black text-white px-6 py-2.5 rounded-lg flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:bg-zinc-800 transition-all shadow-sm">
+                <button type="submit"
+                    class="bg-black text-white px-6 py-2.5 rounded-lg flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:bg-zinc-800 transition-all shadow-sm">
                     <i data-lucide="plus-circle" class="w-4 h-4"></i>
                     Generar Nuevo Respaldo
                 </button>
@@ -37,17 +39,26 @@
     <div class="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
         <div class="p-6 border-b border-border bg-sidebar/50">
             <h3 class="font-bold uppercase tracking-wider text-sm">Historial de Respaldos (Git Local)</h3>
-            <p class="text-xs text-muted-foreground">Todos los archivos se almacenan en la carpeta <code class="bg-muted px-1 rounded">respaldos/</code> del proyecto.</p>
+            <p class="text-xs text-muted-foreground">Todos los archivos se almacenan en la carpeta <code
+                    class="bg-muted px-1 rounded">respaldos/</code> del proyecto.</p>
         </div>
-        
+
         <div class="overflow-x-auto">
             <table class="w-full text-left">
-                <thead class="bg-muted text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
-                    <tr>
-                        <th class="px-6 py-4">Nombre del Archivo</th>
-                        <th class="px-6 py-4">Tamaño</th>
-                        <th class="px-6 py-4">Fecha de Creación</th>
-                        <th class="px-6 py-4 text-right">Acciones</th>
+                <thead class="axis-table-head">
+                    <tr style="background:#111;color:#fff;">
+                        <th
+                            style="padding:14px 24px;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">
+                            Nombre del Archivo</th>
+                        <th
+                            style="padding:14px 24px;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">
+                            Tamaño</th>
+                        <th
+                            style="padding:14px 24px;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">
+                            Fecha de Creación</th>
+                        <th
+                            style="padding:14px 24px;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-align:right;">
+                            Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-border">
@@ -74,21 +85,24 @@
                         </td>
                         <td class="px-6 py-4 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <a href="{{ url_for('respaldos.descargar_respaldo', filename=file.name) }}" 
-                                   class="p-2 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors" 
-                                   title="Descargar">
+                                <a href="{{ url_for('respaldos.descargar_respaldo', filename=file.name) }}"
+                                    class="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+                                    title="Descargar">
                                     <i data-lucide="download" class="w-4 h-4"></i>
+                                    Descargar
                                 </a>
-                                
-                                <button onclick="confirmRestore('{{ file.name }}')" 
-                                        class="p-2 hover:bg-blue-50 rounded-md text-blue-600 transition-colors"
-                                        title="Restaurar Base de Datos">
-                                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                                </button>
-                                
-                                <form id="restore-form-{{ loop.index }}" action="{{ url_for('respaldos.restaurar_respaldo', filename=file.name) }}" method="POST" class="hidden">
+
+                                <form id="restore-form-{{ loop.index }}"
+                                    action="{{ url_for('respaldos.restaurar_respaldo', filename=file.name) }}"
+                                    method="POST" class="hidden">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 </form>
+                                <button type="button" onclick="confirmRestoreAxis('{{ file.name }}', {{ loop.index }})"
+                                    class="inline-flex items-center gap-1.5 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm font-bold text-red-700 hover:bg-red-100 transition-colors"
+                                    title="Restaurar Base de Datos">
+                                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                                    Restaurar
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -104,27 +118,57 @@
         <div>
             <h4 class="font-bold text-blue-900 text-sm uppercase tracking-wider mb-1">Nota sobre seguridad</h4>
             <p class="text-sm text-blue-800 leading-relaxed">
-                Los respaldos generados deben ser subidos manualmente a GitHub mediante comandos de Git para asegurar su persistencia remota. 
-                Recuerda que restaurar un respaldo **borrará todos los datos actuales** y los reemplazará con la versión seleccionada.
+                Los respaldos generados deben ser subidos manualmente a GitHub mediante comandos de Git para asegurar su
+                persistencia remota.
+                Recuerda que restaurar un respaldo **borrará todos los datos actuales** y los reemplazará con la versión
+                seleccionada.
             </p>
         </div>
     </div>
 </div>
 
-<!-- Modal / Confirm JS -->
+<!-- Modal / Confirm JS con SweetAlert2 -->
 <script>
-    function confirmRestore(filename) {
-        if (confirm(`¿Estás COMPLETAMENTE seguro de restaurar la base de datos desde el archivo ${filename}?\n\n¡Todos los datos actuales serán sobreescritos!`)) {
-            // Buscar el formulario que corresponda (en este caso el index coincide con el loop)
-            // Para ser más precisos lo buscamos por el action
-            const forms = document.querySelectorAll('form[action*="restaurar"]');
-            for (let form of forms) {
-                if (form.getAttribute('action').includes(filename)) {
-                    form.submit();
-                    break;
+    function confirmRestoreAxis(filename, loopIndex) {
+        Swal.fire({
+            title: '⚠️ Restaurar Base de Datos',
+            html: `<p class="text-left text-sm">Estás a punto de restaurar desde:<br><strong>${filename}</strong></p>
+                   <p class="text-left text-sm text-red-600 mt-3 font-bold">¡TODOS los datos actuales serán sobreescritos e irrecuperables!</p>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, restaurar ahora',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            focusCancel: true,
+            customClass: { popup: 'rounded-xl shadow-2xl' }
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            // Segunda confirmación de seguridad
+            Swal.fire({
+                title: 'ÚLTIMA CONFIRMACIÓN',
+                text: '¿Estás absolutamente seguro? Esta acción no se puede deshacer.',
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, RESTAURAR',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                focusCancel: true,
+                customClass: { popup: 'rounded-xl shadow-2xl' }
+            }).then(result2 => {
+                if (result2.isConfirmed) {
+                    const forms = document.querySelectorAll('form[action*="restaurar"]');
+                    for (let form of forms) {
+                        if (form.getAttribute('action').includes(encodeURIComponent(filename)) ||
+                            form.id === `restore-form-${loopIndex}`) {
+                            form.submit();
+                            break;
+                        }
+                    }
                 }
-            }
-        }
+            });
+        });
     }
 </script>
 {% endblock %}

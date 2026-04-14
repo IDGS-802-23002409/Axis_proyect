@@ -12,18 +12,20 @@
 
     {% if pedido.estatus == 'Pendiente' %}
     <div class="flex gap-3">
-        <form action="{{ url_for('pedidos_proveedor_bp.rechazar', uuid_pedido=pedido.uuid_pedido) }}" method="POST"
-            onsubmit="return confirm('¿Seguro que deseas cancelar este pedido?');">
+        <form id="form-rechazar-{{ pedido.uuid_pedido }}"
+            action="{{ url_for('pedidos_proveedor_bp.rechazar', uuid_pedido=pedido.uuid_pedido) }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit"
+            <button type="button"
+                onclick="axisConfirmForm('form-rechazar-{{ pedido.uuid_pedido }}', {title:'¿Cancelar pedido?', text:'El pedido quedará cancelado.', icon:'warning', danger:true, confirmText:'Sí, cancelar'})"
                 class="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-bold text-xs uppercase hover:bg-red-100 transition-colors">
                 Cancelar
             </button>
         </form>
-        <form action="{{ url_for('pedidos_proveedor_bp.aprobar', uuid_pedido=pedido.uuid_pedido) }}" method="POST"
-            onsubmit="return confirm('¿Seguro que deseas aprobar este pedido? Se generará la compra para Recibir.');">
+        <form id="form-aprobar-{{ pedido.uuid_pedido }}"
+            action="{{ url_for('pedidos_proveedor_bp.aprobar', uuid_pedido=pedido.uuid_pedido) }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit"
+            <button type="button"
+                onclick="axisConfirmForm('form-aprobar-{{ pedido.uuid_pedido }}', {title:'¿Aprobar pedido?', text:'Se generará la compra para recibir.', icon:'question', danger:false, confirmText:'Sí, aprobar'})"
                 class="bg-green-600 text-white border border-green-700 px-4 py-2 rounded-lg font-bold text-xs uppercase hover:bg-green-700 transition-colors">
                 Aprobar Pedido
             </button>
@@ -31,10 +33,11 @@
     </div>
     {% elif pedido.estatus == 'Aprobado' %}
     <div class="flex gap-3">
-        <form action="{{ url_for('pedidos_proveedor_bp.completar', uuid_pedido=pedido.uuid_pedido) }}" method="POST"
-            onsubmit="return confirm('¿Seguro que deseas marcar este pedido como COMPLETADO manualmente?');">
+        <form id="form-completar-{{ pedido.uuid_pedido }}"
+            action="{{ url_for('pedidos_proveedor_bp.completar', uuid_pedido=pedido.uuid_pedido) }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit"
+            <button type="button"
+                onclick="axisConfirmForm('form-completar-{{ pedido.uuid_pedido }}', {title:'¿Marcar como Completado?', text:'Esta acción registrará el pedido como completado manualmente.', icon:'question', danger:false, confirmText:'Sí, completar'})"
                 class="bg-purple-600 text-white border border-purple-700 px-4 py-2 rounded-lg font-bold text-xs uppercase hover:bg-purple-700 transition-colors">
                 Marcar como Completado
             </button>
@@ -111,14 +114,14 @@
         <h3 class="font-bold text-foreground">Insumos Solicitados</h3>
     </div>
     <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left">
-            <thead class="text-xs text-muted-foreground tracking-wider uppercase bg-muted/5 border-b border-border">
+        <table class="w-full text-sm text-left axis-table">
+            <thead>
                 <tr>
-                    <th class="px-6 py-4 font-semibold">Insumo</th>
-                    <th class="px-6 py-4 font-semibold text-center">Unidad</th>
-                    <th class="px-6 py-4 font-semibold text-right">Cant. Esperada</th>
-                    <th class="px-6 py-4 font-semibold text-right">Costo Est. Unitario</th>
-                    <th class="px-6 py-4 font-semibold text-right">Subtotal Estimado</th>
+                    <th>Insumo</th>
+                    <th class="text-center">Unidad</th>
+                    <th class="text-right">Cant. Esperada</th>
+                    <th class="text-right">Costo Est. Unitario</th>
+                    <th class="text-right">Subtotal Estimado</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-border">

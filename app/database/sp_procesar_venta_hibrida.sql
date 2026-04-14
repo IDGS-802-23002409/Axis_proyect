@@ -112,8 +112,8 @@ proc: BEGIN
             -- Orden de Producción
             SET v_cantidad_op = v_cantidad_pedido;
             SET v_uuid_op = UUID();
-            INSERT INTO ordenes_produccion (uuid_op, uuid_producto, uuid_pedido_detalle, cantidad_a_producir, estado, fecha_solicitud)
-            VALUES (v_uuid_op, v_uuid_item, v_uuid_detalle_pedido, v_cantidad_op, 'Pendiente', NOW());
+            INSERT INTO ordenes_produccion (uuid_op, uuid_venta, uuid_producto, uuid_pedido_detalle, cantidad_a_producir, estado, fecha_solicitud)
+            VALUES (v_uuid_op, p_uuid_venta, v_uuid_item, v_uuid_detalle_pedido, v_cantidad_op, 'Pendiente', NOW());
 
         END IF;
 

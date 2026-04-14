@@ -14,6 +14,7 @@ class OrdenProduccion(db.Model):
 
     uuid_op = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     uuid_producto = Column(String(36), ForeignKey('productos_terminados.uuid_producto'), nullable=False)
+    uuid_venta = Column(String(36), ForeignKey('ventas_encabezado.uuid_venta'), nullable=True)
     uuid_venta_detalle = Column(String(36), ForeignKey('ventas_detalle.uuid_detalle'), nullable=True)
     uuid_pedido_detalle = Column(String(36), ForeignKey('pedidos_cliente_detalle.uuid_detalle_pedido'), nullable=True)
     cantidad_a_producir = Column(Integer, nullable=False)
@@ -22,6 +23,7 @@ class OrdenProduccion(db.Model):
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     producto = db.relationship('ProductoTerminado', backref=db.backref('ordenes_produccion', lazy=True))
+    venta = db.relationship('VentaEncabezado', backref=db.backref('ordenes_produccion', lazy=True))
     venta_detalle = db.relationship('VentaDetalle', backref=db.backref('orden_produccion', uselist=False))
     pedido_detalle = db.relationship('PedidoClienteDetalle', backref=db.backref('orden_produccion', uselist=False))
 

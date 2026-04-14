@@ -44,15 +44,15 @@ Gestión de Empleados
     <!-- TABLE CARD -->
     <div class="bg-card border border-border rounded-lg overflow-hidden">
         <!-- Table -->
-        <table class="w-full text-sm">
-            <thead class="bg-secondary text-muted-foreground uppercase text-xs">
+        <table class="w-full axis-table">
+            <thead>
                 <tr>
-                    <th class="text-left px-6 py-4">Usuario base</th>
-                    <th class="text-left px-6 py-4">No. Empleado</th>
-                    <th class="text-left px-6 py-4">Puesto y Depto</th>
-                    <th class="text-left px-6 py-4">F. Ingreso</th>
-                    <th class="text-left px-6 py-4 text-center">Estado</th>
-                    <th class="text-right px-6 py-4">Acciones</th>
+                    <th class="text-left">Usuario base</th>
+                    <th class="text-left">No. Empleado</th>
+                    <th class="text-left">Puesto y Depto</th>
+                    <th class="text-left">F. Ingreso</th>
+                    <th class="text-left text-center">Estado</th>
+                    <th class="text-right">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -91,11 +91,12 @@ Gestión de Empleados
                             <!-- Eliminar/Desactivar: solo si no es admin y está activo -->
                             {% set emp_roles = emp.usuario.roles | map(attribute='name') | list %}
                             {% if emp.activo and 'admin' not in emp_roles %}
-                            <form method="POST"
+                            <form method="POST" id="del-emp-{{ emp.uuid_empleado }}"
                                 action="{{ url_for('empleados.delete_empleado', uuid_empleado=emp.uuid_empleado) }}"
                                 style="display:inline;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" onclick="return confirm('¿Desactivar este empleado?');">
+                                <button type="button"
+                                    onclick="axisConfirmForm('del-emp-{{ emp.uuid_empleado }}', {title:'¿Desactivar empleado?', text:'El empleado ya no podrá iniciar sesión.', danger:true, confirmText:'Sí, desactivar'})">
                                     <i data-lucide="user-x" class="w-4 h-4 text-red-500 hover:text-red-700"></i>
                                 </button>
                             </form>
