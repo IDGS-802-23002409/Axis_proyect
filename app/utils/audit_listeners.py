@@ -5,7 +5,7 @@ from app.models.audit_log import SecurityAuditLog
 from app.utils.database_connection import db
 import json
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, date
 
 def object_to_dict(obj):
     """Convierte un objeto SQLAlchemy a un diccionario serializable."""
@@ -15,6 +15,8 @@ def object_to_dict(obj):
         if isinstance(val, Decimal):
             val = float(val)
         elif isinstance(val, datetime):
+            val = val.isoformat()
+        elif isinstance(val, date):
             val = val.isoformat()
         d[column.name] = val
     return d
@@ -97,6 +99,7 @@ def capture_audit_log(session, flush_context, instances):
             def serialize(val):
                 if isinstance(val, Decimal): return float(val)
                 if isinstance(val, datetime): return val.isoformat()
+                if isinstance(val, date): return val.isoformat()
                 if hasattr(val, '__table__'): return str(val)
                 return val
 
