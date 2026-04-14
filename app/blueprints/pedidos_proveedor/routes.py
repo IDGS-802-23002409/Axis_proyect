@@ -221,6 +221,12 @@ def completar(uuid_pedido):
         flash('Solo se pueden completar pedidos aprobados.', 'error')
         return redirect(url_for('pedidos_proveedor_bp.ver', uuid_pedido=uuid_pedido))
     
+    # Validar que no haya compras pendientes vinculadas
+    compras_pendientes = [c for c in pedido.compras if c.estatus == 'PENDIENTE']
+    if compras_pendientes:
+        flash(f'No se puede completar el pedido porque tiene {len(compras_pendientes)} recepciones de mercancía (compras) pendientes.', 'error')
+        return redirect(url_for('pedidos_proveedor_bp.ver', uuid_pedido=uuid_pedido))
+
     pedido.estatus = 'Completado'
     db.session.commit()
     flash('Pedido marcado como completado manualmente.', 'success')
