@@ -28,11 +28,12 @@
                     <!-- NOMBRE DE LA RECETA -->
                     <div>
                         <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
-                            {{ form.nombre_producto .label }} *
+                            {{ form.nombre_receta.label }} *
                         </label>
-                        {{ form.nombre_producto (class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm") }}
-                        {% if form.nombre_producto .errors %}
-                        <p class="text-red-500 text-xs mt-1">{{ form.nombre_producto .errors[0] }}</p>
+                        {{ form.nombre_receta(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200
+                        rounded-xl text-sm") }}
+                        {% if form.nombre_receta.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.nombre_receta.errors[0] }}</p>
                         {% endif %}
                     </div>
 
@@ -41,7 +42,8 @@
                         <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
                             {{ form.talla.label }} *
                         </label>
-                        {{ form.talla(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm") }}
+                        {{ form.talla(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl
+                        text-sm") }}
                         {% if form.talla.errors %}
                         <p class="text-red-500 text-xs mt-1">{{ form.talla.errors[0] }}</p>
                         {% endif %}
@@ -52,7 +54,8 @@
                         <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
                             {{ form.uuid_categoria.label }} *
                         </label>
-                        {{ form.uuid_categoria(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm") }}
+                        {{ form.uuid_categoria(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200
+                        rounded-xl text-sm") }}
                         {% if form.uuid_categoria.errors %}
                         <p class="text-red-500 text-xs mt-1">{{ form.uuid_categoria.errors[0] }}</p>
                         {% endif %}
@@ -63,7 +66,8 @@
                         <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
                             {{ form.instrucciones_proceso.label }} *
                         </label>
-                        {{ form.instrucciones_proceso(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm", rows="4") }}
+                        {{ form.instrucciones_proceso(class="w-full mt-2 px-4 py-3 bg-neutral-50 border
+                        border-neutral-200 rounded-xl text-sm", rows="4") }}
                         {% if form.instrucciones_proceso.errors %}
                         <p class="text-red-500 text-xs mt-1">{{ form.instrucciones_proceso.errors[0] }}</p>
                         {% endif %}

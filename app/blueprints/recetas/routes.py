@@ -23,8 +23,9 @@ def index():
     query = ExplosionMaterialesCabecera.query.filter_by(estatus='ACTIVO')
 
     if search_query:
-        # Buscar por instrucciones o uuid_explosion
+        # Buscar por nombre de receta, instrucciones o uuid_explosion
         query = query.filter(
+            ExplosionMaterialesCabecera.nombre_receta.ilike(f'%{search_query}%') |
             ExplosionMaterialesCabecera.instrucciones_proceso.ilike(f'%{search_query}%') |
             ExplosionMaterialesCabecera.uuid_explosion.ilike(f'%{search_query}%')
         )
@@ -305,8 +306,13 @@ def delete(uuid_explosion):
         flash("La receta ya está inactiva", "warning")
         return redirect(url_for('recetas_bp.index'))
 
-    # Validación: Verificar que no haya órdenes en curso
-    # La receta tiene productos, y los productos tienen órdenes
+    # Validación 1: Verificar que no haya productos activos asociados
+    for producto in receta.productos:
+        if producto.active:
+            flash(f"No se puede desactivar: la receta tiene un producto activo asociado '{producto.sku_especifico}'. Desactiva el producto primero.", "error")
+            return redirect(url_for('recetas_bp.index'))
+
+    # Validación 2: Verificar que no haya órdenes en curso
     for producto in receta.productos:
         for orden in producto.ordenes_produccion:
             if orden.estado in ['Pendiente', 'En Corte', 'Confección']:
