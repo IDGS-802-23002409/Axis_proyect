@@ -29,7 +29,7 @@
                 <table class="w-full text-sm text-left">
                     <thead class="text-[10px] uppercase text-gray-400 border-b border-gray-100">
                         <tr>
-                            <th class="pb-3">Ítem / Modelo</th>
+                            <th class="pb-3">Ítem / Receta</th>
                             <th class="pb-3 text-center">Stock</th>
                             <th class="pb-3 text-right">Estado</th>
                         </tr>
@@ -37,7 +37,7 @@
                     <tbody class="divide-y divide-gray-50">
                         {% for item in alertas_stock %}
                         <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="py-4 font-medium text-gray-700">{{ item.nombre_modelo }} - <span class="text-blue-600">{{ item.talla }}</span></td>
+                            <td class="py-4 font-medium text-gray-700">{{ item.nombre_receta }} - <span class="text-blue-600">{{ item.talla }}</span></td>
                             <td class="py-4 text-center font-bold text-lg">{{ item.stock_fisico_actual }}</td>
                             <td class="py-4 text-right">
                                 {% if item.stock_fisico_actual == 0 %}

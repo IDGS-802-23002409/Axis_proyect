@@ -1,219 +1,160 @@
 {% extends "produccion/layout.html" %}
-{% block title %}Registro de Mermas{% endblock %}
-{% block header %}Registro de Mermas{% endblock %}
+{% block title %}Inventario de Mermas{% endblock %}
+{% block header %}Mermas e Incidencias{% endblock %}
 
 {% block content %}
 <div class="px-10 pb-10">
 
-  <!-- ── KPIs ── -->
-  <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-    <div class="p-4 bg-card border border-border rounded-lg">
-      <p class="text-xs text-muted-foreground">Total de Mermas</p>
-      <p class="text-2xl font-bold">{{ total_mermas }}</p>
-    </div>
-    <div class="p-4 bg-card border border-border rounded-lg">
-      <p class="text-xs text-muted-foreground">Merma Total (piezas)</p>
-      <p class="text-2xl font-bold text-rose-500">{{ merma_total | int }}</p>
-    </div>
-    <div class="p-4 bg-card border border-border rounded-lg">
-      <p class="text-xs text-muted-foreground">Ahorro Total (piezas)</p>
-      <p class="text-2xl font-bold text-green-500">{{ ahorro_total | int }}</p>
+  <!-- KPIs -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="p-4 bg-white border border-neutral-200 rounded-xl shadow-sm">
+      <p class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Total de Registros</p>
+      <p class="text-3xl font-black">{{ mermas|length }}</p>
     </div>
 
-    <!-- Acceso rápido: Nueva merma -->
-    <div class="p-4 bg-card border border-border rounded-lg flex items-end">
-      <a href="{{ url_for('merma.registro_merma') }}"
-        class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm w-full justify-center">
-        <i data-lucide="plus" class="w-4 h-4"></i>
-        Nueva Merma
-      </a>
+    <div class="p-4 bg-white border border-neutral-200 rounded-xl shadow-sm">
+      <p class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Mermas Activas</p>
+      <p class="text-3xl font-black text-rose-600">
+        {{ mermas|selectattr("activo", "equalto", true)|list|length }}
+      </p>
     </div>
 
-    <!-- Acceso rápido: Retazos de tela -->
-    <div class="p-4 bg-card border border-border rounded-lg flex items-end">
-      <a href="{{ url_for('merma.index_retazos') }}"
-        class="flex items-center gap-2 bg-white border border-border text-black px-4 py-2 rounded-md text-sm w-full justify-center hover:bg-secondary">
-        <i data-lucide="scissors" class="w-4 h-4"></i>
-        Retazos de Tela
+    <div class="p-4 bg-white border border-neutral-200 rounded-xl flex items-center justify-center shadow-sm">
+      <a href="{{ url_for('merma_bp.crear_manual') }}"
+        class="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-lg text-xs font-black uppercase hover:bg-neutral-800 w-full justify-center">
+        + Registro Manual
       </a>
     </div>
   </div>
 
-  <!-- ── Tabla mermas de piezas ── -->
-  <div class="bg-card border border-border rounded-lg overflow-hidden">
-    <div class="flex justify-between items-center p-4 border-b border-border">
-      <div>
-        <h3 class="font-semibold">Historial de Mermas — Insumos tipo Pieza</h3>
-        <p class="text-xs text-muted-foreground mt-0.5">Botones, agujas, cierres y similares</p>
-      </div>
-      <button id="filterToggle" type="button"
-        class="h-9 w-9 p-2 bg-card border border-border rounded-md text-muted-foreground hover:bg-secondary"
-        title="Mostrar/Ocultar filtros">
-        <i data-lucide="filter" class="w-4 h-4"></i>
-      </button>
+  <!-- TABLA -->
+  <div class="bg-white border rounded-2xl shadow-sm overflow-hidden">
+
+    <div class="p-6 border-b border-neutral-100">
+      <h3 class="text-xs font-black uppercase tracking-widest text-neutral-800">
+        Historial de Mermas
+      </h3>
+      <p class="text-xs text-neutral-500 mt-1">
+        Registro completo de pérdidas en producción
+      </p>
     </div>
 
-    <!-- Filtros -->
-    <div id="filterPanel" class="p-4 border-b border-border bg-surface hidden">
-      <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div>
-          <label class="text-xs text-muted-foreground" for="op">Orden de Producción</label>
-          <select name="op" id="op" class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm">
-            <option value="">Todas</option>
-            {% for o in ordenes %}
-            <option value="{{ o.uuid_op }}" {% if filtro_op==o.uuid_op %}selected{% endif %}>
-              OP {{ o.uuid_op[:8] }}… · {{ o.estado }}
-            </option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div>
-          <label class="text-xs text-muted-foreground" for="insumo">Insumo</label>
-          <select name="insumo" id="insumo" class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm">
-            <option value="">Todos</option>
-            {% for i in insumos %}
-            <option value="{{ i.uuid_insumo }}" {% if filtro_insumo==i.uuid_insumo %}selected{% endif %}>
-              {{ i.nombre }}
-            </option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div>
-          <label class="text-xs text-muted-foreground" for="motivo">Motivo</label>
-          <select name="motivo" id="motivo" class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm">
-            <option value="">Todos</option>
-            <option value="DEFECTO_PROVEEDOR" {% if filtro_motivo=='DEFECTO_PROVEEDOR' %}selected{% endif %}>Defecto
-              Proveedor</option>
-            <option value="DAÑO_EN_PROCESO" {% if filtro_motivo=='DAÑO_EN_PROCESO' %}selected{% endif %}>Daño en Proceso
-            </option>
-            <option value="ERROR_OPERARIO" {% if filtro_motivo=='ERROR_OPERARIO' %}selected{% endif %}>Error Operario
-            </option>
-            <option value="MUESTRA_PRUEBA" {% if filtro_motivo=='MUESTRA_PRUEBA' %}selected{% endif %}>Muestra Prueba
-            </option>
-            <option value="OTRO" {% if filtro_motivo=='OTRO' %}selected{% endif %}>Otro</option>
-          </select>
-        </div>
-
-        <div class="flex items-end gap-2">
-          <button type="submit" class="flex-1 px-3 py-2 bg-black text-white rounded-md text-sm">Filtrar</button>
-          <a href="{{ url_for('merma.index') }}"
-            class="flex-1 px-3 py-2 border border-border rounded-md text-sm text-center">Limpiar</a>
-        </div>
-      </form>
-    </div>
-
-    <!-- Tabla -->
     {% if mermas %}
     <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="bg-secondary border-b border-border">
+      <table class="w-full text-sm text-left">
+
+        <thead class="bg-neutral-50 text-neutral-500 uppercase text-[10px] font-black tracking-widest">
           <tr>
-            <th class="px-4 py-3 text-left font-semibold">Orden Prod.</th>
-            <th class="px-4 py-3 text-left font-semibold">Insumo</th>
-            <th class="px-4 py-3 text-right font-semibold">Teórica</th>
-            <th class="px-4 py-3 text-right font-semibold">Real</th>
-            <th class="px-4 py-3 text-right font-semibold">Diferencia</th>
-            <th class="px-4 py-3 text-left font-semibold">Motivo</th>
-            <th class="px-4 py-3 text-left font-semibold">Fecha</th>
-            <th class="px-4 py-3 text-center font-semibold">Acciones</th>
+            <th class="px-6 py-4">Proceso</th>
+            <th class="px-6 py-4">Merma</th>
+            <th class="px-6 py-4">Orden</th>
+            <th class="px-6 py-4">Fecha</th>
+            <th class="px-6 py-4 text-right">Cantidad</th>
+            <th class="px-6 py-4">Evento</th>
+            <th class="px-6 py-4">Motivo</th>
+            <th class="px-6 py-4 text-center">Acción</th>
           </tr>
         </thead>
-        <tbody>
-          {% for merma in mermas %}
-          {% set diff = merma.diferencia | int %}
-          <tr class="border-b border-border hover:bg-secondary transition">
 
-            <td class="px-4 py-3 font-mono text-xs">
-              OP {{ merma.uuid_op[:8] }}…
-              <span class="ml-1 px-1.5 py-0.5 rounded text-xs
-                {% if merma.orden_produccion.estado == 'Terminado' %}bg-gray-100 text-gray-500
-                {% elif merma.orden_produccion.estado == 'Pendiente' %}bg-yellow-100 text-yellow-700
-                {% else %}bg-blue-100 text-blue-700{% endif %}">
-                {{ merma.orden_produccion.estado }}
-              </span>
-            </td>
+        <tbody class="divide-y divide-neutral-100">
 
-            <td class="px-4 py-3">{{ merma.insumo.nombre }}</td>
+        {% for merma in mermas %}
+        <tr class="hover:bg-neutral-50 {% if not merma.activo %}opacity-50{% endif %}">
 
-            <!-- Cantidades como enteros — son piezas, no metros -->
-            <td class="px-4 py-3 text-right">
-              {{ merma.cantidad_teorica | int }}
-              <span class="text-xs text-muted-foreground">pzas</span>
-            </td>
-            <td class="px-4 py-3 text-right">
-              {{ merma.cantidad_real_consumida | int }}
-              <span class="text-xs text-muted-foreground">pzas</span>
-            </td>
-            <td class="px-4 py-3 text-right font-semibold
-              {% if diff > 0 %}text-rose-500{% elif diff < 0 %}text-green-500{% endif %}">
-              {% if diff > 0 %}+{{ diff }}{% else %}{{ diff }}{% endif %}
-              <span class="text-xs font-normal text-muted-foreground">pzas</span>
-            </td>
+          <!-- PROCESO -->
+          <td class="px-6 py-4 text-xs font-bold">
+            {{ merma.proceso }}
+          </td>
 
-            <td class="px-4 py-3">
-              {% if merma.motivo == 'DEFECTO_PROVEEDOR' %}
-              <span class="px-2 py-1 bg-red-100 text-red-800 rounded-sm text-xs">Defecto Proveedor</span>
-              {% elif merma.motivo == 'DAÑO_EN_PROCESO' %}
-              <span class="px-2 py-1 bg-orange-100 text-orange-800 rounded-sm text-xs">Daño en Proceso</span>
-              {% elif merma.motivo == 'ERROR_OPERARIO' %}
-              <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-sm text-xs">Error Operario</span>
-              {% elif merma.motivo == 'MUESTRA_PRUEBA' %}
-              <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-sm text-xs">Muestra Prueba</span>
-              {% else %}
-              <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-sm text-xs">Otro</span>
-              {% endif %}
-            </td>
+          <!-- QUE SE MERMÓ -->
+          <td class="px-6 py-4 text-xs">
+            {% if merma.tipo_merma == 'INSUMO' and merma.insumo %}
+              <span class="font-bold">Insumo:</span> {{ merma.insumo.nombre }}
 
-            <td class="px-4 py-3 text-xs text-muted-foreground">
-              {{ merma.fecha_registro.strftime('%d/%m/%Y %H:%M') }}
-            </td>
+            {% elif merma.tipo_merma == 'PRODUCTO' and merma.producto %}
+              <span class="font-bold">Producto:</span> {{ merma.producto.sku_especifico }}
 
-            <td class="px-4 py-3 text-center">
-              <div class="flex items-center justify-center gap-3">
-                <a href="{{ url_for('merma.detalle_merma', uuid_merma=merma.uuid_merma) }}"
-                  class="text-primary hover:underline text-xs">Ver</a>
+            {% elif merma.tipo_merma == 'TELA' and merma.insumo %}
+              <span class="font-bold">Tela:</span> {{ merma.insumo.nombre }}
 
-                {% if merma.orden_produccion and merma.orden_produccion.estado != 'Terminado' %}
-                <form method="POST" action="{{ url_for('merma.eliminar_merma', uuid_merma=merma.uuid_merma) }}"
-                  style="display:inline;"
-                  onsubmit="return confirm('¿Eliminar esta merma?\nSe revertirán {{ merma.diferencia | int }} piezas al stock si aplica.');">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="text-rose-500 hover:underline text-xs">
-                    Eliminar
-                  </button>
-                </form>
+            {% else %}
+              <span class="italic text-neutral-400">Sin info</span>
+            {% endif %}
+          </td>
+
+          <!-- ORDEN -->
+          <td class="px-6 py-4 text-xs font-mono">
+            {% if merma.uuid_op %}
+              {{ merma.uuid_op[:8] }}
+            {% else %}
+              <span class="text-neutral-400">Manual</span>
+            {% endif %}
+          </td>
+
+          <!-- FECHA -->
+          <td class="px-6 py-4 text-xs">
+            {{ merma.fecha_creacion.strftime('%d/%m/%Y') if merma.fecha_creacion else '' }}
+          </td>
+
+          <!-- CANTIDAD CORREGIDA -->
+          <td class="px-6 py-4 text-right font-black">
+            {% if merma.tipo_merma == 'INSUMO' and merma.insumo and merma.insumo.unidad_medida == 'PIEZA' %}
+                {{ merma.cantidad|int }}
+            {% else %}
+                {{ "%.2f"|format(merma.cantidad) }}
+            {% endif %}
+
+            <span class="text-[10px] text-neutral-400">
+                {% if merma.tipo_merma == 'TELA' %}
+                    m
+                {% elif merma.tipo_merma == 'INSUMO' and merma.insumo %}
+                    {% if merma.insumo.unidad_medida == 'PIEZA' %}
+                        pzas
+                    {% else %}
+                        m
+                    {% endif %}
+                {% elif merma.tipo_merma == 'PRODUCTO' %}
+                    pzas
                 {% else %}
-                <span class="text-xs text-muted-foreground italic" title="No se puede modificar — OP terminada">
-                  Bloqueada
-                </span>
+                    -
                 {% endif %}
-              </div>
-            </td>
+            </span>
+          </td>
 
-          </tr>
-          {% endfor %}
+          <!-- EVENTO -->
+          <td class="px-6 py-4 text-xs">
+            {{ merma.tipo_evento }}
+          </td>
+
+          <!-- MOTIVO -->
+          <td class="px-6 py-4 text-xs">
+            {{ merma.motivo }}
+          </td>
+
+          <!-- ACCIÓN -->
+          <td class="px-6 py-4 text-center">
+            <a href="{{ url_for('merma_bp.ver', uuid_merma=merma.uuid_merma) }}"
+               class="text-indigo-600 text-xs font-bold hover:underline">
+              Ver
+            </a>
+          </td>
+
+        </tr>
+        {% endfor %}
+
         </tbody>
       </table>
     </div>
 
     {% else %}
-    <div class="p-8 text-center">
-      <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-4 text-muted-foreground"></i>
-      <p class="text-muted-foreground">No hay mermas de piezas registradas</p>
-      <a href="{{ url_for('merma.registro_merma') }}" class="mt-4 inline-block text-sm text-primary hover:underline">
-        Registrar la primera merma
-      </a>
+    <div class="p-10 text-center">
+      <p class="text-neutral-400 font-bold uppercase text-sm">
+        No hay mermas registradas todavía.
+      </p>
     </div>
     {% endif %}
+
   </div>
 
 </div>
-
-<script>
-  document.getElementById('filterToggle').addEventListener('click', function () {
-    document.getElementById('filterPanel').classList.toggle('hidden');
-  });
-</script>
 {% endblock %}

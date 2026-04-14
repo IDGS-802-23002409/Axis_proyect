@@ -1,0 +1,125 @@
+{% extends "produccion/layout.html" %}
+{% block title %}Registro de Merma Manual{% endblock %}
+
+{% block content %}
+<div class="px-10 pb-10 flex min-h-screen">
+  <div class="max-w-3xl w-full mx-auto bg-white border rounded-2xl p-8 shadow-sm h-fit">
+    
+    <div class="mb-8">
+        <a href="{{ url_for('merma_bp.index') }}" class="text-xs font-bold text-neutral-400 uppercase tracking-widest hover:text-black">← Volver</a>
+    </div>
+
+    <h2 class="text-2xl font-black uppercase tracking-tight mb-2">Nuevo Registro de Merma</h2>
+    <p class="text-sm text-neutral-500 mb-8">
+      Documenta material dañado, perdido o ajustado directamente en el inventario. Se restará del stock correspondiente una vez guardado.
+    </p>
+
+    <form method="POST">
+      {{ form.hidden_tag() }}
+
+      <div class="grid grid-cols-2 gap-6 mb-6">
+          <!-- TIPO MERMA -->
+          <div>
+            <label class="block text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2">Clasificación de Elemento</label>
+            {{ form.tipo_merma(class="w-full border-neutral-300 rounded-lg px-4 py-3 text-sm focus:ring-black focus:border-black", id="select-tipo") }}
+          </div>
+
+          <!-- PROCESO -->
+          <div>
+            <label class="block text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2">Ubicación / Proceso</label>
+            {{ form.proceso(class="w-full border-neutral-300 rounded-lg px-4 py-3 text-sm focus:ring-black focus:border-black") }}
+          </div>
+      </div>
+
+      <!-- SELECTORES DINÁMICOS -->
+      <div class="p-6 border rounded-xl bg-neutral-50 mb-6">
+          <label class="block text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">Elemento Afectado</label>
+          
+          <div id="div-tela" class="hidden">
+              <p class="text-xs text-neutral-500 mb-2">Selecciona un rollo de tela. Se descontará su metraje continuo.</p>
+              {{ form.uuid_rollo(class="w-full border-neutral-300 rounded-lg px-4 py-2 text-sm", id="select-rollo") }}
+          </div>
+          
+          <div id="div-insumo" class="hidden">
+              <p class="text-xs text-neutral-500 mb-2">Selecciona un insumo tipo pieza. Se descontará su stock acumulado.</p>
+              {{ form.uuid_insumo(class="w-full border-neutral-300 rounded-lg px-4 py-2 text-sm", id="select-insumo") }}
+          </div>
+          
+          <div id="div-producto" class="hidden">
+              <p class="text-xs text-neutral-500 mb-2">Selecciona el producto terminado. Se descontará su stock físico real en almacén.</p>
+              {{ form.uuid_producto(class="w-full border-neutral-300 rounded-lg px-4 py-2 text-sm", id="select-producto") }}
+          </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 mb-6">
+          <!-- CANTIDAD -->
+          <div>
+            <label class="block text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2">Cantidad Perdida</label>
+            {{ form.cantidad(class="w-full border-neutral-300 rounded-lg px-4 py-3 text-2xl font-black", step="0.0001", placeholder="0.0") }}
+          </div>
+
+          <!-- EVENTO Y MOTIVO -->
+          <div class="space-y-4">
+              <div>
+                  <label class="block text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2">Evento</label>
+                  {{ form.tipo_evento(class="w-full border-neutral-300 rounded-lg px-4 py-2 text-sm") }}
+              </div>
+              <div>
+                  <label class="block text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2">Motivo</label>
+                  {{ form.motivo(class="w-full border-neutral-300 rounded-lg px-4 py-2 text-sm") }}
+              </div>
+          </div>
+      </div>
+
+      <!-- OBSERVACIONES -->
+      <div class="mb-8">
+        <label class="block text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2">Observaciones</label>
+        {{ form.observaciones(class="w-full border-neutral-300 rounded-lg px-4 py-3 text-sm", rows="3") }}
+      </div>
+
+      <!-- BOTÓN -->
+      <div>
+        <button type="submit" class="w-full bg-black text-white px-6 py-4 rounded-xl text-xs font-black tracking-widest uppercase hover:bg-neutral-800 transition-all shadow-md">
+          Restar Stock y Guardar Registro
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const tipo = document.getElementById("select-tipo");
+    
+    const divTela = document.getElementById("div-tela");
+    const divInsumo = document.getElementById("div-insumo");
+    const divProducto = document.getElementById("div-producto");
+
+    const selectRollo = document.getElementById("select-rollo");
+    const selectInsumo = document.getElementById("select-insumo");
+    const selectProducto = document.getElementById("select-producto");
+
+    function renderDynamic() {
+        divTela.classList.add("hidden");
+        divInsumo.classList.add("hidden");
+        divProducto.classList.add("hidden");
+        
+        selectRollo.removeAttribute("required");
+        selectInsumo.removeAttribute("required");
+        selectProducto.removeAttribute("required");
+
+        if (tipo.value === "TELA") {
+            divTela.classList.remove("hidden");
+        } else if (tipo.value === "INSUMO") {
+            divInsumo.classList.remove("hidden");
+        } else if (tipo.value === "PRODUCTO") {
+            divProducto.classList.remove("hidden");
+        }
+    }
+
+    tipo.addEventListener("change", renderDynamic);
+    renderDynamic();
+});
+</script>
+{% endblock %}

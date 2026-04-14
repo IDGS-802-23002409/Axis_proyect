@@ -4,10 +4,25 @@ from werkzeug.utils import secure_filename
 from . import categorias_bp
 from flask_security import login_required, roles_required, hash_password,roles_accepted
 from app.models.categorias import Categoria
+from app.models.insumos import Insumo
+from app.models.proveedores import Proveedor
+from app.models.explosion_materiales import ExplosionMaterialesCabecera
 from .forms import CategoriaForm
 from app.utils.database_connection import db
 from flask import render_template, request, redirect, url_for, flash, current_app
 from sqlalchemy import or_, func
+
+
+def _categoria_usos(uuid_categoria):
+    """Lista de áreas donde la categoría está referenciada (no vacía si hay uso)."""
+    usos = []
+    if Insumo.query.filter_by(uuid_categoria=uuid_categoria).first():
+        usos.append("insumos")
+    if Proveedor.query.filter_by(uuid_categoria=uuid_categoria).first():
+        usos.append("proveedores")
+    if ExplosionMaterialesCabecera.query.filter_by(uuid_categoria=uuid_categoria).first():
+        usos.append("recetas / explosión de materiales")
+    return usos
 
 
 def get_upload_folder():
@@ -55,10 +70,13 @@ def create():
     if form.validate_on_submit():
         # Verificar si ya existe una categoría con el mismo nombre (ignorando mayúsculas/minúsculas)
         nombre_lower = form.nombre.data.strip().lower()
-        categoria_existente = Categoria.query.filter(db.func.lower(Categoria.nombre) == nombre_lower).first()
+        categoria_existente = Categoria.query.filter(
+            db.func.lower(Categoria.nombre) == nombre_lower,
+            Categoria.tipo == form.tipo.data,
+        ).first()
 
         if categoria_existente:
-            flash(f'La categoría "{form.nombre.data}" ya existe.', "error")
+            flash(f'Ya existe una categoría "{form.nombre.data}" con el mismo tipo.', "error")
             return render_template("produccion/categorias/create.html", form=form, title="Registrar Categoría")
 
         # Procesar imagen
@@ -75,6 +93,7 @@ def create():
         nueva_categoria = Categoria(
             nombre=form.nombre.data.strip(),
             descripcion=form.descripcion.data.strip() if form.descripcion.data else None,
+            tipo=form.tipo.data,
             imagen_url=imagen_url,
             estatus_visible=True
         )
@@ -93,22 +112,26 @@ def create():
 def edit(uuid_categoria):
     categoria = Categoria.query.get_or_404(uuid_categoria)
     form = CategoriaForm(obj=categoria)
+    _t = categoria.tipo
+    form.tipo.data = str(getattr(_t, "value", _t)) if _t is not None else "Insumo"
 
     if form.validate_on_submit():
         nombre_lower = form.nombre.data.strip().lower()
         # Verificar si existe otra categoría con el mismo nombre
         categoria_existente = Categoria.query.filter(
             db.func.lower(Categoria.nombre) == nombre_lower,
-            Categoria.uuid_categoria != uuid_categoria
+            Categoria.tipo == form.tipo.data,
+            Categoria.uuid_categoria != uuid_categoria,
         ).first()
 
         if categoria_existente:
-            flash(f'La categoría "{form.nombre.data}" ya existe.', "error")
+            flash(f'Ya existe una categoría "{form.nombre.data}" con el mismo tipo.', "error")
             return render_template("produccion/categorias/edit.html", form=form, title="Editar Categoría", categoria=categoria)
 
         # Actualizar datos
         categoria.nombre = form.nombre.data.strip()
         categoria.descripcion = form.descripcion.data.strip() if form.descripcion.data else None
+        categoria.tipo = form.tipo.data
         categoria.estatus_visible = True
 
         # Procesar imagen nueva si se proporciona
@@ -133,6 +156,19 @@ def edit(uuid_categoria):
 @roles_accepted('admin', 'gerente')
 def delete(uuid_categoria):
     categoria = Categoria.query.get_or_404(uuid_categoria)
+
+    # Solo impedir la "baja" (desactivar) si sigue referenciada
+    if categoria.estatus_visible:
+        usos = _categoria_usos(uuid_categoria)
+        if usos:
+            flash(
+                "No se puede desactivar esta categoría porque está en uso: "
+                + ", ".join(usos)
+                + ".",
+                "error",
+            )
+            return redirect(url_for("categorias_bp.index"))
+
     categoria.estatus_visible = not categoria.estatus_visible
     db.session.commit()
 

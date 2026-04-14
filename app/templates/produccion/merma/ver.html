@@ -1,0 +1,146 @@
+{% extends "produccion/layout.html" %}
+{% block title %}Detalle de Merma{% endblock %}
+{% block header %}Detalle de Merma{% endblock %}
+
+{% block content %}
+<div class="px-10 pb-10 flex min-h-screen">
+    <div class="max-w-5xl w-full mx-auto space-y-6">
+
+        <!-- VOLVER -->
+        <div class="flex justify-between items-center">
+            <a href="{{ url_for('merma_bp.index') }}"
+                class="text-xs font-bold text-neutral-500 uppercase hover:text-neutral-800">
+                ← Volver
+            </a>
+
+            {% if merma.activo %}
+            <form method="POST" action="{{ url_for('merma_bp.anular', uuid_merma=merma.uuid_merma) }}"
+                onsubmit="return confirm('¿Deseas anular esta merma?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit"
+                    class="text-xs font-bold text-red-600 border border-red-300 px-4 py-2 rounded-lg hover:bg-red-50">
+                    Anular Merma
+                </button>
+            </form>
+            {% endif %}
+        </div>
+
+        <!-- CABECERA -->
+        <div class="bg-white border rounded-2xl p-6 shadow-sm flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-bold uppercase">Reporte de Merma</h2>
+                <p class="text-xs text-neutral-400 font-mono">{{ merma.uuid_merma }}</p>
+            </div>
+
+            <div class="text-right">
+                <p class="text-xs text-neutral-500">
+                    {{ merma.fecha_creacion.strftime('%d/%m/%Y %H:%M') if merma.fecha_creacion else '' }}
+                </p>
+
+                {% if merma.activo %}
+                <span class="text-xs font-bold text-green-600">Activo</span>
+                {% else %}
+                <span class="text-xs font-bold text-red-600">Anulado</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- INFORMACIÓN PRINCIPAL -->
+        <div class="grid grid-cols-2 gap-6">
+
+            <!-- CANTIDAD Y AFECTACIÓN -->
+            <div class="bg-white border rounded-2xl p-6 shadow-sm">
+
+                <h3 class="text-xs font-bold text-neutral-400 uppercase mb-4">Detalle de Merma</h3>
+
+                <p class="text-3xl font-bold text-rose-500">
+                    {% if merma.tipo_merma == 'INSUMO' and merma.insumo and merma.insumo.unidad_medida == 'PIEZA' %}
+                    {{ merma.cantidad|int }}
+                    {% else %}
+                    {{ "%.2f"|format(merma.cantidad) }}
+                    {% endif %}
+
+                    <span class="text-sm text-neutral-500">
+                        {% if merma.tipo_merma == 'TELA' %}
+                        m
+                        {% elif merma.tipo_merma == 'INSUMO' and merma.insumo %}
+                        {% if merma.insumo.unidad_medida == 'PIEZA' %}
+                        pzas
+                        {% else %}
+                        m
+                        {% endif %}
+                        {% elif merma.tipo_merma == 'PRODUCTO' %}
+                        pzas
+                        {% endif %}
+                    </span>
+                </p>
+
+                <div class="mt-4 text-sm">
+                    {% if merma.tipo_merma == 'TELA' %}
+                    <p><b>Tela:</b> {{ merma.insumo.nombre if merma.insumo else 'N/A' }}</p>
+                    <p class="text-xs text-neutral-400">Rollo: {{ merma.uuid_rollo[:6] if merma.uuid_rollo else 'Manual'
+                        }}</p>
+
+                    {% elif merma.tipo_merma == 'INSUMO' %}
+                    <p><b>Insumo:</b> {{ merma.insumo.nombre if merma.insumo else 'N/A' }}</p>
+
+                    {% elif merma.tipo_merma == 'PRODUCTO' %}
+                    <p><b>Producto:</b> {{ merma.producto.sku_especifico if merma.producto else 'N/A' }}</p>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- TRAZABILIDAD -->
+            <div class="bg-white border rounded-2xl p-6 shadow-sm">
+
+                <h3 class="text-xs font-bold text-neutral-400 uppercase mb-4">Trazabilidad</h3>
+
+                <div class="space-y-3 text-sm">
+
+                    <p><b>Proceso:</b> {{ merma.proceso }}</p>
+
+                    <p><b>Evento:</b> {{ merma.tipo_evento }}</p>
+
+                    <p><b>Motivo:</b> {{ merma.motivo }}</p>
+
+                    <p><b>Orden de Producción:</b>
+                        {% if merma.uuid_op %}
+                        <a href="{{ url_for('orden_bp.ver', uuid_op=merma.uuid_op) }}"
+                            class="text-indigo-600 underline">
+                            {{ merma.uuid_op[:8] }}
+                        </a>
+                        {% else %}
+                        <span class="text-neutral-400">Manual</span>
+                        {% endif %}
+                    </p>
+
+                    <p><b>Fecha:</b>
+                        {{ merma.fecha_creacion.strftime('%d/%m/%Y %H:%M') if merma.fecha_creacion else '' }}
+                    </p>
+
+                    
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- OBSERVACIONES -->
+        <div class="bg-white border rounded-2xl p-6 shadow-sm">
+            <h3 class="text-xs font-bold text-neutral-400 uppercase mb-4">Observaciones</h3>
+
+            {% if merma.observaciones %}
+            <p class="text-sm text-neutral-700 italic border-l-4 border-neutral-300 pl-4">
+                {{ merma.observaciones }}
+            </p>
+            {% else %}
+            <p class="text-sm text-neutral-400 italic">
+                Sin observaciones registradas.
+            </p>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

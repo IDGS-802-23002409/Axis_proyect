@@ -6,12 +6,10 @@ from app.models.proveedores import Proveedor  # noqa: F401
 from app.models.insumos import Insumo  # noqa: F401
 from app.models.compras import CompraEncabezado, CompraDetalle  # noqa: F401
 from app.models.pedidos_proveedor import PedidoProveedorEncabezado, PedidoProveedorDetalle  # noqa: F401
-from app.models.inventario import RolloInventario, RetazoInventario  # noqa: F401
-from app.models.modelos_productos import ModeloRopa, ProductoTerminado  # noqa: F401
+from app.models.inventario import RolloInventario  # noqa: F401
+from app.models.modelos_productos import ProductoTerminado  # noqa: F401
 from app.models.explosion_materiales import ExplosionMaterialesCabecera, ExplosionMaterialesDetalle  # noqa: F401
-from app.models.produccion import OrdenProduccion, EjecucionCorte, MermaPiezas  # noqa: F401
+from app.models.produccion import OrdenProduccion, EjecucionCorte, EjecucionCorteRollo, MermaPiezas  # noqa: F401
 from app.models.ventas import VentaEncabezado, VentaDetalle  # noqa: F401
-from app.models.pedidos_proveedor import PedidoProveedorEncabezado, PedidoProveedorDetalle  # noqa: F401
+from app.models.pedidos_cliente import PedidoClienteEncabezado, PedidoClienteDetalle  # noqa: F401
 from app.models.empleados import Empleado  # noqa: F401
-
-

@@ -1,0 +1,130 @@
+{% extends base_layout %}
+
+{% block title %}Respaldos y Seguridad{% endblock %}
+{% block header %}Respaldos y Seguridad{% endblock %}
+{% block subheader %}Gestión de copias de seguridad de la base de datos{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Resumen y Acción Principal -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-2 bg-card border border-border p-6 rounded-xl shadow-sm flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+                    <i data-lucide="database" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-muted-foreground uppercase tracking-widest font-bold">Último respaldo</p>
+                    <p class="text-xl font-bold">{{ last_backup_date }}</p>
+                </div>
+            </div>
+            <form action="{{ url_for('respaldos.generar_respaldo') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="bg-black text-white px-6 py-2.5 rounded-lg flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:bg-zinc-800 transition-all shadow-sm">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    Generar Nuevo Respaldo
+                </button>
+            </form>
+        </div>
+
+        <div class="bg-card border border-border p-6 rounded-xl shadow-sm flex flex-col justify-center">
+            <p class="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-1">Total de archivos</p>
+            <p class="text-3xl font-black">{{ files|length }}</p>
+        </div>
+    </div>
+
+    <!-- Lista de Respaldos -->
+    <div class="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-border bg-sidebar/50">
+            <h3 class="font-bold uppercase tracking-wider text-sm">Historial de Respaldos (Git Local)</h3>
+            <p class="text-xs text-muted-foreground">Todos los archivos se almacenan en la carpeta <code class="bg-muted px-1 rounded">respaldos/</code> del proyecto.</p>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-muted text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
+                    <tr>
+                        <th class="px-6 py-4">Nombre del Archivo</th>
+                        <th class="px-6 py-4">Tamaño</th>
+                        <th class="px-6 py-4">Fecha de Creación</th>
+                        <th class="px-6 py-4 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-border">
+                    {% if not files %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-10 text-center text-muted-foreground text-sm italic">
+                            No se han encontrado archivos de respaldo.
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% for file in files %}
+                    <tr class="hover:bg-sidebar transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="file-text" class="w-4 h-4 text-muted-foreground"></i>
+                                <span class="font-medium text-sm">{{ file.name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-muted-foreground">
+                            {{ file.size }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-muted-foreground">
+                            {{ file.date }}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{{ url_for('respaldos.descargar_respaldo', filename=file.name) }}" 
+                                   class="p-2 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors" 
+                                   title="Descargar">
+                                    <i data-lucide="download" class="w-4 h-4"></i>
+                                </a>
+                                
+                                <button onclick="confirmRestore('{{ file.name }}')" 
+                                        class="p-2 hover:bg-blue-50 rounded-md text-blue-600 transition-colors"
+                                        title="Restaurar Base de Datos">
+                                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                                </button>
+                                
+                                <form id="restore-form-{{ loop.index }}" action="{{ url_for('respaldos.restaurar_respaldo', filename=file.name) }}" method="POST" class="hidden">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Info de Seguridad -->
+    <div class="bg-blue-50 border border-blue-100 p-6 rounded-xl flex gap-4 items-start">
+        <i data-lucide="shield-alert" class="w-6 h-6 text-blue-600 shrink-0"></i>
+        <div>
+            <h4 class="font-bold text-blue-900 text-sm uppercase tracking-wider mb-1">Nota sobre seguridad</h4>
+            <p class="text-sm text-blue-800 leading-relaxed">
+                Los respaldos generados deben ser subidos manualmente a GitHub mediante comandos de Git para asegurar su persistencia remota. 
+                Recuerda que restaurar un respaldo **borrará todos los datos actuales** y los reemplazará con la versión seleccionada.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal / Confirm JS -->
+<script>
+    function confirmRestore(filename) {
+        if (confirm(`¿Estás COMPLETAMENTE seguro de restaurar la base de datos desde el archivo ${filename}?\n\n¡Todos los datos actuales serán sobreescritos!`)) {
+            // Buscar el formulario que corresponda (en este caso el index coincide con el loop)
+            // Para ser más precisos lo buscamos por el action
+            const forms = document.querySelectorAll('form[action*="restaurar"]');
+            for (let form of forms) {
+                if (form.getAttribute('action').includes(filename)) {
+                    form.submit();
+                    break;
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

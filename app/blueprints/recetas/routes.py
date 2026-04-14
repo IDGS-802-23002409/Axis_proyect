@@ -2,12 +2,13 @@ from . import recetas_bp
 from flask_security import login_required, roles_required, hash_password,roles_accepted,current_user
 from .forms import RecetaForm
 from flask import render_template, redirect, url_for, flash, request
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from app.utils.database_connection import db
 from app.models.insumos import Insumo
 from app.models.modelos_productos import ProductoTerminado
 from app.models.explosion_materiales import ExplosionMaterialesDetalle,ExplosionMaterialesCabecera
 from app.models.usuarios import Usuario
+from app.models.categorias import Categoria
 
 
 
@@ -42,7 +43,15 @@ def index():
 @roles_accepted('admin', 'gerente', 'produccion')
 def create():
     insumos_list = Insumo.query.filter_by(estatus='ACTIVO').all()
+    categorias_list = (
+        Categoria.query.filter_by(tipo="Prenda", estatus_visible=True)
+        .order_by(Categoria.nombre)
+        .all()
+    )
     form = RecetaForm()
+    
+    # Popular el SelectField de categorías
+    form.uuid_categoria.choices = [(c.uuid_categoria, c.nombre) for c in categorias_list]
 
     if form.validate_on_submit():
         # --- Leer insumos desde el formulario ---
@@ -103,6 +112,9 @@ def create():
 
         # --- Crear cabecera de receta ---
         nueva_receta = ExplosionMaterialesCabecera(
+            nombre_receta=form.nombre_receta.data.strip(),
+            talla=form.talla.data,
+            uuid_categoria=form.uuid_categoria.data,
             instrucciones_proceso=form.instrucciones_proceso.data.strip(),
             estatus='ACTIVO',
             uuid_usuario=current_user.uuid_usuario
@@ -133,7 +145,8 @@ def create():
     return render_template(
         'produccion/recetas/create.html',
         form=form,
-        insumos=insumos_list
+        insumos=insumos_list,
+        categorias=categorias_list
     )
 
 # ── EDITAR RECETA ──────────────────────────────
@@ -144,8 +157,22 @@ def edit(uuid_explosion):
     receta = ExplosionMaterialesCabecera.query.get_or_404(uuid_explosion)
     detalles = ExplosionMaterialesDetalle.query.filter_by(uuid_explosion=uuid_explosion).all()
     insumos_list = Insumo.query.filter_by(estatus='ACTIVO').all()
+    categorias_list = (
+        Categoria.query.filter(
+            Categoria.tipo == "Prenda",
+            or_(
+                Categoria.estatus_visible == True,
+                Categoria.uuid_categoria == receta.uuid_categoria,
+            ),
+        )
+        .order_by(Categoria.nombre)
+        .all()
+    )
     
     form = RecetaForm(obj=receta)
+    
+    # Popular el SelectField de categorías
+    form.uuid_categoria.choices = [(c.uuid_categoria, c.nombre) for c in categorias_list]
 
     if form.validate_on_submit():
         # --- Leer insumos desde el formulario ---
@@ -201,9 +228,12 @@ def edit(uuid_explosion):
         if errores:
             for e in errores:
                 flash(e, 'error')
-            return render_template('produccion/recetas/edit.html', form=form, receta=receta, detalles=detalles, insumos=insumos_list)
+            return render_template('produccion/recetas/edit.html', form=form, receta=receta, detalles=detalles, insumos=insumos_list, categorias=categorias_list)
 
         # --- Actualizar cabecera ---
+        receta.nombre_receta = form.nombre_receta.data.strip()
+        receta.talla = form.talla.data
+        receta.uuid_categoria = form.uuid_categoria.data
         receta.instrucciones_proceso = form.instrucciones_proceso.data.strip()
         
         # --- Actualizar detalles (Borrar y volver a crear para simplificar) ---
@@ -227,7 +257,8 @@ def edit(uuid_explosion):
         form=form,
         receta=receta,
         detalles=detalles,
-        insumos=insumos_list
+        insumos=insumos_list,
+        categorias=categorias_list
     )
 
 # ── VIEW ──────────────────────────────

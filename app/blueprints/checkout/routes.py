@@ -3,7 +3,9 @@ from flask_security import login_required, current_user
 from app.utils.database_connection import db
 from app.models.clientes import Cliente
 from app.models.modelos_productos import ProductoTerminado
+from app.models.explosion_materiales import ExplosionMaterialesCabecera
 from app.models.ventas import VentaEncabezado, VentaDetalle
+from app.models.pedidos_cliente import PedidoClienteEncabezado
 from datetime import datetime
 import uuid
 from decimal import Decimal
@@ -51,29 +53,26 @@ def calculate_cart_totals(cart):
 
 @checkout_bp.route('/carrito/agregar', methods=['POST'])
 def agregar_carrito():
-    uuid_modelo = request.form.get('uuid_producto')  # Del catálogo viene el ID del modelo
+    uuid_explosion = request.form.get('uuid_producto')  # Del catálogo viene el ID de la receta/explosión
     try:
         cantidad = int(request.form.get('cantidad', 1))
     except (ValueError, TypeError):
         cantidad = 1
-    talla = request.form.get('talla', 'M')
 
-    if not uuid_modelo:
+    if not uuid_explosion:
         flash('Producto no especificado', 'error')
         return redirect(request.referrer or url_for('catalog.catalog_view'))
 
-    # Intentar encontrar el producto terminado específico por modelo y talla
-    producto = ProductoTerminado.query.filter_by(uuid_modelo=uuid_modelo, talla=talla, active=True).first()
+    # Obtener la explosión para validar que existe
+    explosion = ExplosionMaterialesCabecera.query.get(uuid_explosion)
+    if not explosion or explosion.estatus != 'ACTIVO':
+        flash('Lo sentimos, este producto no está disponible en este momento.', 'error')
+        return redirect(request.referrer or url_for('catalog.catalog_view'))
+
+    # Buscar un ProductoTerminado asociado a esta explosión que esté activo
+    producto = ProductoTerminado.query.filter_by(uuid_explosion=uuid_explosion, active=True).first()
     
     if not producto:
-        # Fallback 1: Buscar cualquier talla disponible para ese modelo
-        producto = ProductoTerminado.query.filter_by(uuid_modelo=uuid_modelo, active=True).first()
-    
-    if not producto:
-        # Fallback 2: Intentar buscar por ID directo por si acaso
-        producto = ProductoTerminado.query.get(uuid_modelo)
-    
-    if not producto or not producto.active:
         flash('Lo sentimos, este producto no está disponible en este momento.', 'error')
         return redirect(request.referrer or url_for('catalog.catalog_view'))
 
@@ -108,18 +107,18 @@ def agregar_carrito():
     else:
         cart.append({
             'uuid_producto': producto.uuid_producto,
-            'uuid_modelo': producto.uuid_modelo,
-            'nombre': producto.modelo.nombre_modelo if producto.modelo else 'Producto',
-            'talla': producto.talla,
+            'uuid_explosion': producto.uuid_explosion,
+            'nombre': explosion.nombre_receta if explosion else 'Producto',
+            'talla': explosion.talla if explosion else 'Única',
             'price': float(producto.precio_venta),
-            'image': producto.modelo.imagen_url if producto.modelo else '/static/images/default/default-image.png',
+            'image': producto.imagen_url if producto.imagen_url else '/static/images/default/default-image.png',
             'quantity': cantidad,
             'stock': stock_disponible
         })
 
     save_cart(cart)
     session['open_cart'] = True  # Flag para abrir el carrito en el frontend
-    flash(f'¡{producto.modelo.nombre_modelo} añadido al carrito! ✓', 'success')
+    flash(f'¡{explosion.nombre_receta if explosion else "Producto"} añadido al carrito! ✓', 'success')
     return redirect(request.referrer or url_for('catalog.catalog_view'))
 
 
@@ -176,7 +175,30 @@ def eliminar_carrito():
 @checkout_bp.route('/carrito/vaciar', methods=['POST'])
 def vaciar_carrito():
     save_cart([])
+    session.pop('axis_discount', None)
+    session.pop('discount_code', None)
     flash('Carrito vaciado', 'success')
+    return redirect(url_for('checkout.checkout_view'))
+
+
+@checkout_bp.route('/carrito/descuento', methods=['POST'])
+def aplicar_descuento():
+    codigo = request.form.get('codigo', '').strip().upper()
+    if codigo == 'AXIS10':
+        session['axis_discount'] = 0.10
+        session['discount_code'] = codigo
+        flash('¡Cupón AXIS10 aplicado correctamente! 10% de descuento.', 'success')
+    else:
+        flash('Código de descuento inválido.', 'error')
+    
+    return redirect(url_for('checkout.checkout_view'))
+
+
+@checkout_bp.route('/carrito/quitar-descuento', methods=['POST'])
+def quitar_descuento():
+    session.pop('axis_discount', None)
+    session.pop('discount_code', None)
+    flash('Cupón eliminado.', 'info')
     return redirect(url_for('checkout.checkout_view'))
 
 
@@ -193,187 +215,144 @@ def checkout_view():
     return render_template('carrito.html', cart=cart, totals=totals)
 
 
+@checkout_bp.route('/newsletter', methods=['POST'])
+def newsletter():
+    email = request.form.get('email')
+    if not email:
+        flash('Por favor ingresa un correo válido.', 'error')
+        return redirect(request.referrer or '/')
+
+    try:
+        from app.app import mail
+        from flask_mail import Message
+        msg = Message(
+            "¡Bienvenido al Movimiento AXIS! 🎁 Tu regalo de bienvenida",
+            recipients=[email]
+        )
+        msg.html = render_template(
+            'emails/newsletter.html',
+            url_host=request.host_url.rstrip('/')
+        )
+        mail.send(msg)
+        flash('¡Gracias por unirte! Revisa tu correo, te hemos enviado un regalo. 🖤', 'success')
+    except Exception as e:
+        # Fallback si el correo falla, pero el usuario se "suscribió"
+        flash('¡Bienvenido al movimiento! (Usa el código AXIS10 para un 10% de descuento)', 'success')
+        print(f"Error newsletter mail: {e}")
+
+    return redirect(request.referrer or '/')
+
+
 @checkout_bp.route('/checkout/procesar', methods=['POST'])
 @login_required
 def procesar_checkout():
+    import logging
+    logger = logging.getLogger(__name__)
+
+    logger.warning(f">>> [CHECKOUT] email={current_user.email}")
+    logger.warning(f">>> [CHECKOUT] cliente={current_user.cliente}")
+    logger.warning(f">>> [CHECKOUT] roles={[r.name for r in current_user.roles]}")
+
     if not current_user.cliente:
+        logger.warning(">>> [CHECKOUT] REDIRIGE: sin cliente")
         flash('Por favor completa tu perfil primero', 'error')
         return redirect(url_for('checkout.completar_perfil'))
 
+    logger.warning(f">>> [CHECKOUT] telefono={current_user.cliente.telefono}")
+    logger.warning(f">>> [CHECKOUT] direccion={current_user.cliente.direccion_completa}")
+
     # REGLA: Datos obligatorios (Teléfono y Dirección)
     if not current_user.cliente.telefono or not current_user.cliente.direccion_completa:
+        logger.warning(">>> [CHECKOUT] REDIRIGE: sin telefono/direccion")
         flash('Por favor actualiza tu teléfono y dirección en tu perfil antes de comprar.', 'warning')
         return redirect(url_for('checkout.mi_cuenta'))
 
     cart = load_cart()
+    logger.warning(f">>> [CHECKOUT] cart={cart}")
     if not cart:
+        logger.warning(">>> [CHECKOUT] REDIRIGE: carrito vacío")
         flash('El carrito está vacío', 'error')
         return redirect(url_for('checkout.checkout_view'))
 
+    import json
+    from sqlalchemy import text
+
+    # Generar folio único
+    numero_pedido = f"AXIS-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
+    uuid_venta = str(uuid.uuid4())
+
+    # Preparar items para el SP
+    json_items = []
+    for item in cart:
+        json_items.append({
+            'uuid_producto': item['uuid_producto'],
+            'quantity': int(item['quantity']),
+            'price': float(item['price'])
+        })
+
     try:
-        from app.models.produccion import OrdenProduccion
-        from app.models.explosion_materiales import ExplosionMaterialesCabecera
-        
-        # Generar folio seguro (máx 25 caracteres según el modelo)
-        # AXIS (4) + DATE (8) + - (1) + UUID[:6] (6) = 19 caracteres
-        numero_pedido = f"AXIS-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
-        
-        # Determinar si el pedido completo será Pendiente o Completado
-        # Regla: Si hay stock insuficiente en AL MENOS UN producto, el pedido queda Pendiente.
-        estatus_global = 'Completado'
-        mensajes_extra = []
-        
-        venta = VentaEncabezado(
-            uuid_venta=str(uuid.uuid4()),
-            numero_pedido=numero_pedido,
-            uuid_cliente=current_user.cliente.uuid_cliente,
-            metodo_pago=request.form.get('metodo_pago', 'Transferencia'),
-            estatus_envio='Procesando' # Temporal
-        )
-        db.session.add(venta)
-        db.session.flush()
+        # ── El SP maneja TODA la lógica de negocio ACID: ──────────────────
+        # venta, descuento de stock, pedidos pendientes, órdenes de producción
+        # y reserva de materiales (ejecucion_corte + ejecucion_corte_rollo)
+        sp_query = text("CALL sp_procesar_venta_hibrida(:u_v, :n_p, :u_c, :m_p, :j_i, @resumen)")
+        db.session.execute(sp_query, {
+            'u_v': uuid_venta,
+            'n_p': numero_pedido,
+            'u_c': current_user.cliente.uuid_cliente,
+            'm_p': request.form.get('metodo_pago', 'Transferencia'),
+            'j_i': json.dumps(json_items)
+        })
 
-        for item in cart:
-            producto = ProductoTerminado.query.get(item['uuid_producto'])
-            if not producto or not producto.active:
-                flash(f'El producto {item["nombre"]} ya no está disponible', 'error')
-                db.session.rollback()
-                return redirect(url_for('checkout.checkout_view'))
+        # Leer resultado del parametro OUT del SP
+        res_row = db.session.execute(text("SELECT @resumen")).fetchone()
+        resumen = json.loads(res_row[0]) if res_row and res_row[0] else {}
 
-            cantidad_pedida = int(item['quantity'])
-            stock_actual = int(producto.stock_fisico_actual or 0)
-            
-            detalle = VentaDetalle(
-                uuid_detalle=str(uuid.uuid4()),
-                uuid_venta=venta.uuid_venta,
-                uuid_producto=item['uuid_producto'],
-                cantidad=cantidad_pedida,
-                precio_unitario_historico=Decimal(str(item['price']))
-            )
-            db.session.add(detalle)
-            db.session.flush()
-
-            # REGLA: Política de Inventario "Express"
-            # Pedidos pequeños (< 10): toman del stock disponible y crean OP por el faltante.
-            # Pedidos grandes (>= 10) que superan stock: NO toman stock, crean OP completa
-            #   para preservar inventario para ventas pequeñas.
-            if cantidad_pedida > stock_actual:
-                estatus_global = 'Pendiente'
-
-                # Validar que tenga receta antes de crear OP
-                receta = ExplosionMaterialesCabecera.query.filter_by(uuid_explosion=producto.uuid_explosion).first()
-                if not receta:
-                     flash(f"Error: El producto {producto.modelo.nombre_modelo} no tiene una receta asignada. Contacte a soporte.", "error")
-                     db.session.rollback()
-                     return redirect(url_for('checkout.checkout_view'))
-
-                if cantidad_pedida < 10 and stock_actual > 0:
-                    faltante = cantidad_pedida - stock_actual
-                    producto.stock_fisico_actual = 0
-                    mensajes_extra.append(
-                        f"{producto.modelo.nombre_modelo}: {stock_actual} uds. del stock + "
-                        f"{faltante} uds. entrarán a producción (+5 días entrega)."
-                    )
-                    cantidad_op_base = faltante
-                else:
-                    mensajes_extra.append(
-                        f"{producto.modelo.nombre_modelo} entrará a producción completa (+5 días entrega)."
-                    )
-                    cantidad_op_base = cantidad_pedida
-
-                import math
-                cantidad_op_final = math.ceil(cantidad_op_base / 10.0) * 10
-
-                nueva_op = OrdenProduccion(
-                    uuid_op=str(uuid.uuid4()),
-                    uuid_producto=producto.uuid_producto,
-                    uuid_venta_detalle=detalle.uuid_detalle,
-                    cantidad_a_producir=cantidad_op_final,
-                    estado='Pendiente'
-                )
-                db.session.add(nueva_op)
-                db.session.flush()
-
-                # Reserva de Materiales para la OP automática
-                from app.models.insumos import Insumo
-                from app.models.inventario import RolloInventario
-                from app.models.produccion import EjecucionCorte
-                
-                for det_receta in receta.detalles:
-                    consumo_unitario = Decimal(det_receta.consumo_teorico_unitario)
-                    cantidad_total_necesaria = consumo_unitario * Decimal(cantidad_op_final)
-                    insumo = Insumo.query.get(det_receta.uuid_insumo)
-                    
-                    if insumo.stock_total_acumulado < cantidad_total_necesaria:
-                        db.session.rollback()
-                        flash(f"No hay suficientes materiales en bodega (Falta {insumo.nombre}) para fabricar {producto.modelo.nombre_modelo}.", "error")
-                        return redirect(url_for('checkout.checkout_view'))
-                    
-                    insumo.stock_total_acumulado -= cantidad_total_necesaria
-
-                    if insumo.unidad_medida == "ROLLO":
-                        prendas_restantes = cantidad_op_final
-                        rollos = RolloInventario.query.filter(
-                            RolloInventario.uuid_insumo == det_receta.uuid_insumo,
-                            RolloInventario.metraje_continuo_actual > 0
-                        ).order_by(RolloInventario.fecha_creacion.asc()).all()
-
-                        for rollo in rollos:
-                            metraje_disponible = Decimal(rollo.metraje_continuo_actual)
-                            prendas_de_este_rollo = int(metraje_disponible // consumo_unitario)
-
-                            if prendas_de_este_rollo <= 0:
-                                continue
-
-                            prendas_a_usar = min(prendas_restantes, prendas_de_este_rollo)
-                            metros_a_descontar = Decimal(prendas_a_usar) * consumo_unitario
-
-                            rollo.metraje_continuo_actual -= metros_a_descontar
-
-                            if rollo.metraje_continuo_actual <= Decimal('0.0001'):
-                                rollo.metraje_continuo_actual = Decimal('0.0000')
-
-                            corte = EjecucionCorte(
-                                uuid_op=nueva_op.uuid_op,
-                                uuid_rollo_used=rollo.uuid_rollo,
-                                metros_teoricos_requeridos=metros_a_descontar,
-                                metros_sacados_bodega=metros_a_descontar,
-                                prendas_reales_logradas=prendas_a_usar,
-                                merma_real_calculada=Decimal('0.0000')
-                            )
-                            db.session.add(corte)
-
-                            prendas_restantes -= prendas_a_usar
-                            if prendas_restantes == 0:
-                                break
-
-                        if prendas_restantes > 0:
-                            db.session.rollback()
-                            flash(f"No hay suficientes rollos continuos (Falta {insumo.nombre}) para fabricar {producto.modelo.nombre_modelo}.", "error")
-                            return redirect(url_for('checkout.checkout_view'))
-
-            else:
-                # Si hay stock suficiente: Se descuenta y queda como completado (si no hay otros pendientes)
-                producto.stock_fisico_actual -= cantidad_pedida
-
-        venta.estatus_envio = estatus_global
         db.session.commit()
 
-        # Limpiar carrito
+        # Limpiar carrito y descuentos de sesión
         save_cart([])
+        session.pop('axis_discount', None)
+        session.pop('discount_code', None)
 
-        for msg in mensajes_extra:
-            flash(msg, 'info')
-            
-        flash(f'¡Pedido realizado! Número: {numero_pedido}', 'success')
+        if resumen.get('has_pedido'):
+            flash("Tu compra incluye prendas que entrarán a producción (+5 días entrega).", 'info')
+
+        flash(f"¡Compra procesada exitosamente! Folio: {numero_pedido}", 'success')
         return redirect(url_for('checkout.pedido_exito', numero_pedido=numero_pedido))
 
     except Exception as e:
         db.session.rollback()
         import traceback
-        print(traceback.format_exc()) # Log para consola
-        flash(f'Error al procesar el pedido (DB): {str(e)}', 'error')
+        logger.error(f">>> [CHECKOUT] ERROR COMPLETO:\n{traceback.format_exc()}")
+        flash(f"Error al procesar la compra (BD): {str(e)}", 'error')
         return redirect(url_for('checkout.checkout_view'))
+
+
+
+
+
+@checkout_bp.route('/mis-pedidos')
+@login_required
+def mis_pedidos():
+    if not current_user.cliente:
+        return redirect(url_for('checkout.completar_perfil'))
+    
+    ventas = VentaEncabezado.query.filter_by(uuid_cliente=current_user.cliente.uuid_cliente).order_by(VentaEncabezado.fecha_venta.desc()).all()
+    pedidos_pendientes = PedidoClienteEncabezado.query.filter_by(uuid_cliente=current_user.cliente.uuid_cliente).order_by(PedidoClienteEncabezado.fecha_pedido.desc()).all()
+    
+    for v in ventas:
+        total = 0
+        for d in v.detalles:
+            total += (d.precio_unitario_historico * d.cantidad)
+        v.total_calculado = total
+
+    for p in pedidos_pendientes:
+        total = 0
+        for d in p.detalles:
+            total += (d.precio_unitario_historico * d.cantidad)
+        p.total_calculado = total
+
+    return render_template('mis_pedidos.html', ventas=ventas, pedidos_pendientes=pedidos_pendientes)
 
 
 @checkout_bp.route('/checkout/exito/<numero_pedido>')

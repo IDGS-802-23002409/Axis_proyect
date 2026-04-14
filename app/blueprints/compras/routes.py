@@ -264,20 +264,9 @@ def recibir(uuid_compra):
                         flash(f"Metraje real inválido para {insumo.nombre}.", "error")
                         return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
 
-                    metraje_esperado = cantidad * Decimal(insumo.contenido_cantidad)
-                    # Tolerancia de +- 5cm (0.05m) por cada UNIDAD (rollo) del pedido
-                    tolerancia = cantidad * Decimal('0.05')
-
-                    # Usamos una pequeña epsilon para evitar problemas de precisión decimal en el límite exacto
-                    diff = abs(metraje_real - metraje_esperado)
-                    if diff > (tolerancia + Decimal('0.0001')):
-                        flash(
-                            f"Rechazado: {insumo.nombre} fuera de tolerancia (±5cm por rollo). "
-                            f"Esperado: {metraje_esperado}m, Recibido: {metraje_real}m. "
-                            f"Máximo permitido: {metraje_esperado + tolerancia}m, Mínimo: {metraje_esperado - tolerancia}m.", 
-                            "error"
-                        )
-                        return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
+                    # Se eliminó la validación estricta de tolerancia.
+                    # Se permite aceptar rollos con menor/mayor metraje (ej. recibir 60m cuando se esperaban 100m).
+                    # El metraje real será el que dicte la suma en el inventario.
 
                     # Si es aceptado, actualizamos stock y creamos rollos
                     metraje_por_rollo = metraje_real / cantidad

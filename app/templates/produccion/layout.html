@@ -79,8 +79,7 @@
             {{ nav_link('insumos_bp.index', 'Insumos & Stocks', 'package', 'insumos_bp') }}
             {{ nav_link('recetas_bp.index', 'Recetas', 'book-open', 'recetas_bp') }}
             {{ nav_link('inventario_bp.index', 'Inventario', 'archive', 'inventario_bp') }}
-            {{ nav_link('merma.index', 'Merma', 'trash-2', 'merma') }}
-            {{ nav_link('modelos.index', 'Modelos', 'layers', 'modelos') }}
+            
             {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
             {{ nav_link('orden_bp.index', 'Órdenes Producción', 'clipboard-list', 'orden_bp') }}
             {% endif %}
@@ -121,6 +120,7 @@
             {{ nav_link('empleados.index', 'Empleados', 'briefcase', 'empleados') }}
             {% if current_user.has_role('admin') %}
             {{ nav_link('usuarios.index', 'Usuarios', 'users', 'usuarios') }}
+            {{ nav_link('respaldos.index', 'Respaldos', 'database', 'respaldos') }}
             {% endif %}
           </div>
         </div>

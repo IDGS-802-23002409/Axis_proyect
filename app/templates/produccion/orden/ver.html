@@ -40,8 +40,8 @@
                         Producto</h2>
                     <div class="grid grid-cols-2 gap-8">
                         <div>
-                            <p class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Modelo</p>
-                            <p class="text-lg font-bold">{{ orden.producto.modelo.nombre_modelo }}</p>
+                            <p class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Receta</p>
+                            <p class="text-lg font-bold">{{ orden.producto.explosion.nombre_receta }}</p>
                         </div>
                         <div>
                             <p class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">SKU</p>
@@ -49,11 +49,11 @@
                         </div>
                         <div>
                             <p class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Talla</p>
-                            <p class="text-lg font-bold">{{ orden.producto.talla }}</p>
+                            <p class="text-lg font-bold">{{ orden.producto.explosion.talla }}</p>
                         </div>
                         <div>
                             <p class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Cantidad
-                                Solicitada</p>
+                                Solicita</p>
                             <p class="text-lg font-bold">{{ orden.cantidad_a_producir }} unidades</p>
                         </div>
                     </div>
@@ -75,12 +75,14 @@
                             </thead>
                             <tbody class="divide-y">
                                 {% for corte in cortes %}
-                                <tr>
-                                    <td class="px-4 py-4 font-mono text-xs">{{ corte.uuid_rollo_used[:8] }}...</td>
-                                    <td class="px-4 py-4">{{ corte.rollo_usado.insumo.nombre }}</td>
-                                    <td class="px-4 py-4 text-right">{{ corte.metros_teoricos_requeridos }} m</td>
-                                    <td class="px-4 py-4 text-right font-bold">{{ corte.prendas_reales_logradas }}</td>
-                                </tr>
+                                    {% for uso in corte.rollos_usados %}
+                                    <tr>
+                                        <td class="px-4 py-4 font-mono text-xs">{{ uso.uuid_rollo[:8] }}...</td>
+                                        <td class="px-4 py-4">{{ uso.rollo.insumo.nombre }}</td>
+                                        <td class="px-4 py-4 text-right">{{ uso.metros_usados }} m</td>
+                                        <td class="px-4 py-4 text-right font-bold">{{ corte.prendas_reales_logradas }}</td>
+                                    </tr>
+                                    {% endfor %}
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -115,20 +117,164 @@
                     </div>
                 </section>
 
-                {% if orden.estado != 'Terminado' %}
+                {% if orden.estado == 'Pendiente' %}
                 <section class="bg-white border rounded-2xl p-8 shadow-sm">
-                    <form method="POST" action="{{ url_for('orden_bp.avanzar_estado', uuid_op=orden.uuid_op) }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit"
-                            class="w-full bg-black text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-neutral-800 transition-all shadow-md active:scale-95"
-                            onclick="return confirm('¿Confirmar avance de estado?')">
+                    <div id="container-avanzar">
+                        <input type="hidden" id="csrf_token_avanzar" value="{{ csrf_token() }}">
+                        <button type="button"
+                            id="btn-avanzar-directo"
+                            data-url="{{ url_for('orden_bp.avanzar_estado', uuid_op=orden.uuid_op) }}"
+                            class="w-full bg-black text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-neutral-800 transition-all shadow-md active:scale-95">
+                            Comenzar Corte →
+                        </button>
+                    </div>
+                </section>
+                {% elif orden.estado != 'Terminado' %}
+                <section class="bg-white border rounded-2xl p-8 shadow-sm">
+                    <div id="container-avanzar">
+                        <input type="hidden" id="csrf_token_avanzar" value="{{ csrf_token() }}">
+                        <button type="button"
+                            id="btn-avanzar"
+                            data-url="{{ url_for('orden_bp.avanzar_estado', uuid_op=orden.uuid_op) }}"
+                            class="w-full bg-black text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-neutral-800 transition-all shadow-md active:scale-95">
                             Avanzar Siguiente Estado →
                         </button>
-                    </form>
+                    </div>
                 </section>
                 {% endif %}
             </div>
         </div>
     </main>
 </div>
+
+<!-- MODAL DE PREGUNTA MERMA -->
+<div id="modal-merma" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4 transition-all duration-300">
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl transform transition-all scale-95 opacity-0 duration-300" id="modal-content">
+        <div class="text-center">
+            <div class="mb-6 inline-flex items-center justify-center w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-black uppercase tracking-tight mb-2">¿Hubo merma en el proceso?</h3>
+            <p class="text-sm text-neutral-500 mb-8">
+                Antes de avanzar al estado <span class="font-bold text-black" id="next-state-label">...</span>, 
+                es importante registrar cualquier pérdida de material o defectos detectados en la fase de 
+                <span class="font-bold text-black uppercase tracking-widest italic">{{ orden.estado }}</span>.
+            </p>
+            
+            <div class="grid grid-cols-1 gap-3">
+                <a href="{{ url_for('merma_bp.registrar_merma_op', uuid_op=orden.uuid_op) }}" id="confirm-yes-merma" 
+                    class="w-full bg-black text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-neutral-800 transition-all shadow-lg flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    Sí, registrar merma
+                </a>
+                
+                <button type="button" id="confirm-no-merma"
+                    class="w-full bg-neutral-100 text-neutral-900 py-4 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-neutral-200 transition-all border border-neutral-200">
+                    No hubo merma, avanzar
+                </button>
+                
+                <button type="button" id="close-modal"
+                    class="w-full text-neutral-400 py-2 text-[10px] font-bold uppercase tracking-widest hover:text-neutral-600 transition-all">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const btnAvanzar = document.getElementById('btn-avanzar');
+    const btnAvanzarDirecto = document.getElementById('btn-avanzar-directo');
+    const modal = document.getElementById('modal-merma');
+    const modalContent = document.getElementById('modal-content');
+    const closeModal = document.getElementById('close-modal');
+    const confirmNoMerma = document.getElementById('confirm-no-merma');
+    const nextStateLabel = document.getElementById('next-state-label');
+    const csrfTokenInput = document.getElementById('csrf_token_avanzar');
+
+    const estados = ["Pendiente", "En Corte", "Confección", "Terminado"];
+    const estadoActual = "{{ orden.estado }}";
+    const idx = estados.indexOf(estadoActual);
+    const proximoEstado = idx < estados.length - 1 ? estados[idx + 1] : "Fin";
+    
+    if (nextStateLabel) nextStateLabel.textContent = proximoEstado;
+
+    const openModal = () => {
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            if (modalContent) {
+                modalContent.classList.add('opacity-100', 'scale-100');
+                modalContent.classList.remove('opacity-0', 'scale-95');
+            }
+        }, 10);
+    };
+
+    const hideModal = () => {
+        if (!modalContent) return;
+        modalContent.classList.add('opacity-0', 'scale-95');
+        modalContent.classList.remove('opacity-100', 'scale-100');
+        setTimeout(() => {
+            if (modal) modal.classList.add('hidden');
+        }, 300);
+    };
+
+    // Funcionalidad genérica para llamar API de avance
+    const ejecutarAvanceAPI = (boton, conMerma) => {
+        const url = boton.getAttribute('data-url');
+        const token = csrfTokenInput ? csrfTokenInput.value : '';
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': token
+            },
+            body: JSON.stringify({con_merma: conMerma})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.error || data.message || 'Error desconocido'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ocurrió un error al avanzar el estado.');
+        });
+    };
+
+    // Para el botón de pasar de Pendiente a Corte (saltando modal)
+    if (btnAvanzarDirecto) {
+        btnAvanzarDirecto.addEventListener('click', (e) => {
+            ejecutarAvanceAPI(btnAvanzarDirecto, false);
+        });
+    }
+
+    // Para el botón normal que abre modal
+    if (btnAvanzar) {
+        btnAvanzar.addEventListener('click', (e) => {
+            openModal();
+        });
+    }
+
+    if (closeModal) closeModal.addEventListener('click', hideModal);
+    
+    // El botón 'Sí, registrar merma' ahora es un <a href="..."> y funciona nativamente.
+
+    if (confirmNoMerma) {
+        confirmNoMerma.addEventListener('click', () => {
+            hideModal();
+            ejecutarAvanceAPI(btnAvanzar, false);
+        });
+    }
+});
+</script>
 {% endblock %}

@@ -8,12 +8,14 @@ from flask_security import login_required, roles_required, roles_accepted, curre
 from . import ventas_bp
 from app.utils.database_connection import db
 from app.models.ventas import VentaEncabezado, VentaDetalle
-from app.models.modelos_productos import ProductoTerminado, ModeloRopa
+from app.models.modelos_productos import ProductoTerminado
+from app.models.explosion_materiales import ExplosionMaterialesCabecera
 from app.models.clientes import Cliente
 from app.models.usuarios import Usuario
 from app.models.produccion import OrdenProduccion
 from sqlalchemy import func
 from datetime import datetime, timedelta
+from flask_mail import Message
 
 @ventas_bp.route('/cancelar/<uuid_venta>', methods=['POST'])
 @login_required
@@ -36,6 +38,41 @@ def cancelar_pedido(uuid_venta):
     
     flash(f"Pedido {venta.numero_pedido} cancelado. La producción continuará para integrar los productos al stock.", "info")
     return redirect(request.referrer or url_for('ventas.index'))
+
+@ventas_bp.route('/enviar/<uuid_venta>', methods=['POST'])
+@login_required
+@roles_accepted('admin', 'gerente')
+def marcar_enviado(uuid_venta):
+    venta = VentaEncabezado.query.get_or_404(uuid_venta)
+    
+    # Solo si el estatus es Pendiente o Completado (no Enviado ni Cancelado)
+    if venta.estatus_envio in ['Enviado', 'Cancelado']:
+        flash(f"El pedido ya está en estatus {venta.estatus_envio}.", "warning")
+        return redirect(url_for('ventas.index'))
+
+    venta.estatus_envio = 'Enviado'
+    db.session.commit()
+    
+    # Enviar correo al cliente
+    try:
+        from app.app import mail
+        msg = Message(
+            f"¡Tu pedido {venta.numero_pedido} ha sido enviado! 🚀",
+            recipients=[venta.cliente.usuario.email]
+        )
+        msg.html = render_template(
+            'emails/envio_pedido.html',
+            nombre_cliente=venta.cliente.usuario.nombre_completo,
+            numero_pedido=venta.numero_pedido,
+            direccion=venta.cliente.direccion_completa,
+            url_host=request.host_url.rstrip('/')
+        )
+        mail.send(msg)
+        flash(f"Pedido {venta.numero_pedido} marcado como enviado y notificación enviada por correo.", "success")
+    except Exception as e:
+        flash(f"Pedido marcado como enviado, pero hubo un error al enviar el correo: {str(e)}", "warning")
+        
+    return redirect(url_for('ventas.index'))
 
 @ventas_bp.route('/')
 @login_required
@@ -117,12 +154,12 @@ def index():
     for ve, nombre_cliente, total_venta, total_unidades in ventas_rows:
         # Detalle de productos de esta venta
         productos = db.session.query(
-            ModeloRopa.nombre_modelo,
-            ProductoTerminado.talla,
+            ExplosionMaterialesCabecera.nombre_receta,
+            ExplosionMaterialesCabecera.talla,
             VentaDetalle.cantidad,
             VentaDetalle.precio_unitario_historico,
         ).join(ProductoTerminado, VentaDetalle.uuid_producto == ProductoTerminado.uuid_producto)\
-         .join(ModeloRopa,        ProductoTerminado.uuid_modelo == ModeloRopa.uuid_modelo)\
+         .join(ExplosionMaterialesCabecera, ProductoTerminado.uuid_explosion == ExplosionMaterialesCabecera.uuid_explosion)\
          .filter(VentaDetalle.uuid_venta == ve.uuid_venta)\
          .all()
 
@@ -137,7 +174,7 @@ def index():
             'total_unidades'  : int(total_unidades or 0),
             'productos'       : [
                 {
-                    'nombre' : p.nombre_modelo,
+                    'nombre' : p.nombre_receta,
                     'talla'  : p.talla,
                     'qty'    : p.cantidad,
                     'precio' : float(p.precio_unitario_historico),

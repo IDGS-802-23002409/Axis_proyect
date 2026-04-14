@@ -24,10 +24,10 @@ def index():
     for ins in insumos_agotados + insumos_bajo_stock:
         # Buscar proveedor por categoría del insumo
         proveedor = None
-        if ins.categoria:
+        if ins.uuid_categoria:
             proveedor = Proveedor.query.filter(
-                Proveedor.categoria_insumo == ins.categoria.nombre,
-                Proveedor.estatus == 1
+                Proveedor.uuid_categoria == ins.uuid_categoria,
+                Proveedor.estatus == True,
             ).first()
 
         criticos.append({

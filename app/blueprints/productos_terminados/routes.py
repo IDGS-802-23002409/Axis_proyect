@@ -1,21 +1,33 @@
-from flask import flash, redirect, render_template, request, url_for
+import os
+import uuid as uuid_lib
+from flask import current_app, flash, redirect, render_template, request, url_for
+from sqlalchemy import or_
+from werkzeug.utils import secure_filename
 from app.blueprints.productos_terminados import productos_bp
 from app.blueprints.productos_terminados.form import ProductoTerminadoForm
-from app.models.modelos_productos import ProductoTerminado, ModeloRopa
+from app.models.modelos_productos import ProductoTerminado
+from app.models.explosion_materiales import ExplosionMaterialesCabecera
 from app.utils.database_connection import db
 from flask_security import login_required, roles_accepted
+
+def get_upload_folder():
+    """Garantiza la existencia y retorna la ruta local de las fotos de modelos."""
+    upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'modelos')
+    os.makedirs(upload_folder, exist_ok=True)
+    return upload_folder
+
 
 @productos_bp.route('/')
 @login_required
 @roles_accepted('admin', 'produccion')
 def index():
-    modelo_id = request.args.get('modelo', '').strip()
+    explosion_id = request.args.get('explosion', '').strip()
     talla = request.args.get('talla', '').strip()
     sku = request.args.get('sku', '').strip()
     estatus = request.args.get('estatus', '').strip()
     filtro = request.args.get('filtro', '').strip()
 
-    productos = ProductoTerminado.query.join(ModeloRopa)
+    productos = ProductoTerminado.query.join(ExplosionMaterialesCabecera)
 
     # Filtro por estatus
     if estatus.lower() == 'activo':
@@ -26,16 +38,19 @@ def index():
         # Por defecto mostrar solo activos
         productos = productos.filter(ProductoTerminado.active.is_(True))
 
-    if modelo_id:
-        productos = productos.filter(ProductoTerminado.uuid_modelo == modelo_id)
+    if explosion_id:
+        productos = productos.filter(ProductoTerminado.uuid_explosion == explosion_id)
 
     if talla:
-        productos = productos.filter(ProductoTerminado.talla == talla)
+        productos = productos.filter(ExplosionMaterialesCabecera.talla == talla)
 
     if sku:
         productos = productos.filter(ProductoTerminado.sku_especifico.ilike(f"%{sku}%"))
 
-    productos = productos.order_by(ProductoTerminado.fecha_actualizacion.desc()).all()
+    productos = productos.order_by(
+    ExplosionMaterialesCabecera.nombre_receta,
+    ExplosionMaterialesCabecera.talla
+).all()
     
     # Calcular stats ANTES de aplicar filtros de stock
     todos_productos_activos = ProductoTerminado.query.filter_by(active=True).all()
@@ -49,7 +64,8 @@ def index():
     elif filtro == 'agotado':
         productos = [p for p in productos if p.stock_fisico_actual <= 0]
     
-    modelos = ModeloRopa.query.order_by(ModeloRopa.nombre_modelo).all()
+    # Obtener explosiones activas para el dropdown
+    explosiones = ExplosionMaterialesCabecera.query.filter_by(estatus='ACTIVO').order_by(ExplosionMaterialesCabecera.nombre_receta).all()
 
     return render_template(
         'produccion/productos_terminados/index.html',
@@ -57,25 +73,29 @@ def index():
         total=total_neto,
         en_bajo_stock=en_bajo_stock_total,
         agotados=agotados_total,
-        modelos=modelos,
-        filtro_modelo=modelo_id,
+        explosiones=explosiones,
+        filtro_explosion=explosion_id,
         filtro_talla=talla,
         filtro_sku=sku,
         filtro_estatus=estatus,
         filtro_stock=filtro,
     )
 
-
-from app.models.explosion_materiales import ExplosionMaterialesCabecera
-
 @productos_bp.route('/registro', methods=['GET', 'POST'])
 @login_required
 @roles_accepted('admin', 'produccion')
 def registro_producto():
     form = ProductoTerminadoForm()
+    subquery = db.session.query(ProductoTerminado.uuid_explosion)
 
-    
-    explosiones = ExplosionMaterialesCabecera.query.filter_by(estatus='ACTIVO').all()
+    explosiones = ExplosionMaterialesCabecera.query.filter(
+        ExplosionMaterialesCabecera.estatus == 'ACTIVO',
+        ~ExplosionMaterialesCabecera.uuid_explosion.in_(subquery)
+    ).all()
+    form.explosion.choices = [
+        (str(e.uuid_explosion), f"{e.nombre_receta} Talla {e.talla}")
+        for e in explosiones
+    ]
 
     data_explosiones = []
     for e in explosiones:
@@ -106,16 +126,26 @@ def registro_producto():
                     form=form,
                     explosiones_data=data_explosiones
                 )
+                
+            imagen_url = "/static/images/default/default-image.png"
+        
+            # Procesamiento de la imagen
+            if form.imagen.data:
+                file = form.imagen.data
+                filename = secure_filename(f"{uuid_lib.uuid4().hex}_{file.filename}")
+                filepath = os.path.join(get_upload_folder(), filename)
+                file.save(filepath)
+                # Guardar la url parcial estática esperada por el navegador
+                imagen_url = f"/static/uploads/modelos/{filename}"
 
             producto = ProductoTerminado(
-                uuid_modelo=form.modelo.data,
                 uuid_explosion=form.explosion.data,
                 sku_especifico=sku,
-                talla=form.talla.data,
                 precio_venta=float(form.precio_venta.data),
                 stock_fisico_actual=0,
                 stock_minimo_alerta=form.stock_minimo_alerta.data or 0,
-                active=bool(form.active.data)
+                active=bool(form.active.data),
+                imagen_url=imagen_url
             )
 
             db.session.add(producto)
@@ -143,7 +173,21 @@ def editar_producto(uuid):
     form = ProductoTerminadoForm(obj=producto)
 
     # Cargar explosiones para el script de previsualización
-    explosiones = ExplosionMaterialesCabecera.query.filter_by(estatus='ACTIVO').all()
+    subquery = db.session.query(ProductoTerminado.uuid_explosion).filter(
+    ProductoTerminado.uuid_producto != producto.uuid_producto
+)
+
+    explosiones = ExplosionMaterialesCabecera.query.filter(
+    ExplosionMaterialesCabecera.estatus == 'ACTIVO',
+    or_(
+        ExplosionMaterialesCabecera.uuid_explosion == producto.uuid_explosion,
+        ~ExplosionMaterialesCabecera.uuid_explosion.in_(subquery)
+    )
+).all()
+    form.explosion.choices = [
+    (str(e.uuid_explosion), f"{e.nombre_receta} Talla {e.talla}")
+    for e in explosiones
+]
     data_explosiones = []
     for e in explosiones:
         detalles = []
@@ -192,26 +236,31 @@ def editar_producto(uuid):
                     explosiones_data=data_explosiones
                 )
 
-        # Actualizar datos (SIN stock)
-        producto.uuid_modelo = form.modelo.data
+        # Actualizar datos (SIN stock, SIN uuid_modelo, SIN talla - vienen de la explosión)
         producto.uuid_explosion = form.explosion.data
         producto.sku_especifico = nuevo_sku
-        producto.talla = form.talla.data
         producto.precio_venta = form.precio_venta.data
-        producto.active = bool(form.active.data)
+        producto.active = True if form.active.data == 1 else False
 
         # Solo mínimo alerta (opcional)
         if form.stock_minimo_alerta.data is not None:
             producto.stock_minimo_alerta = form.stock_minimo_alerta.data
-
+        file = request.files.get('imagen')
+        if file and file.filename:
+            if file.filename != '':
+                filename = secure_filename(f"{uuid_lib.uuid4().hex}_{file.filename}")
+                filepath = os.path.join(get_upload_folder(), filename)
+                file.save(filepath)
+                    # Opcionalmente podrías borrar el fichero local antiguo
+                producto.imagen_url = f"/static/uploads/modelos/{filename}"
+        
         db.session.commit()
 
         flash('Producto terminado actualizado correctamente', 'success')
         return redirect(url_for('productos_bp.index'))
 
-    # Cargar datos en GET (SIN stock físico)
+    # Cargar datos en GET (SIN stock físico, SIN modelo, SIN talla)
     if request.method == 'GET':
-        form.modelo.data = producto.uuid_modelo
         form.explosion.data = producto.uuid_explosion
         form.stock_minimo_alerta.data = producto.stock_minimo_alerta
         form.active.data = 1 if producto.active else 0
@@ -245,6 +294,6 @@ def eliminar_producto(uuid):
 @roles_accepted('admin', 'produccion')
 def detalle_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
-    modelo = producto.modelo
+    explosion = producto.explosion
     
-    return render_template('produccion/productos_terminados/detalle_producto.html', producto=producto, modelo=modelo)
+    return render_template('produccion/productos_terminados/detalle_producto.html', producto=producto, explosion=explosion)
