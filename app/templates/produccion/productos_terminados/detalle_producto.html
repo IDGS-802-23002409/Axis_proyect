@@ -15,121 +15,141 @@
       producto.sku_especifico }}</span>
   </div>
 
-  <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
-    <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
-      <h3 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Producto</h3>
-      <p class="text-lg font-bold">{{ explosion.nombre_receta }}</p>
-      <p class="text-sm text-muted-foreground mt-1">{{ explosion.talla }} • {{ explosion.categoria.nombre if explosion.categoria else 'Sin categoría'
-        }}</p>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left Column: Image and Main Info -->
+    <div class="lg:col-span-1 space-y-6">
+      <div class="bg-card border border-border rounded-lg overflow-hidden shadow-sm">
+        <div class="p-4 border-b border-border bg-muted/30">
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Imagen del Producto</h3>
+        </div>
+        <div class="p-4 flex justify-center bg-white">
+          {% if producto.imagen_url %}
+          <img src="{{ producto.imagen_url }}" class="max-w-full h-auto rounded-md object-contain border shadow-inner"
+            alt="img">
+          {% else %}
+          <div
+            class="w-full aspect-square bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-border">
+            <i data-lucide="image" class="w-16 h-16 text-muted-foreground/40"></i>
+          </div>
+          {% endif %}
+        </div>
+      </div>
 
-                <div class="col-span-1">
-                {% if producto.imagen_url %}
-                <img src="{{ producto.imagen_url }}" class="w-full h-auto rounded-lg object-cover border" alt="img">
-                {% else %}
-                <div class="w-full aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
-                    <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
-                </div>
-                {% endif %}
+      <div class="bg-card border border-border rounded-lg p-5 shadow-sm space-y-4">
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Inventario Actual</h3>
+          <div class="flex items-baseline gap-2">
+            <p class="text-3xl font-bold">{{ producto.stock_fisico_actual }}</p>
+            <span class="text-sm text-muted-foreground">unidades</span>
+          </div>
+          <span
+            class="inline-flex items-center rounded-full text-xs font-semibold px-2.5 py-0.5 mt-2 {% if producto.stock_fisico_actual == 0 %}bg-rose-100 text-rose-700 border border-rose-200{% elif producto.stock_fisico_actual <= producto.stock_minimo_alerta %}bg-amber-100 text-amber-700 border border-amber-200{% else %}bg-emerald-100 text-emerald-700 border border-emerald-200{% endif %}">
+            <i data-lucide="{% if producto.stock_fisico_actual == 0 %}alert-circle{% elif producto.stock_fisico_actual <= producto.stock_minimo_alerta %}alert-triangle{% else %}check-circle{% endif %}"
+              class="w-3 h-3 mr-1"></i>
+            {% if producto.stock_fisico_actual == 0 %}Agotado{% elif producto.stock_fisico_actual <=
+              producto.stock_minimo_alerta %}Bajo Stock{% else %}En Stock{% endif %} </span>
+              <p class="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                <i data-lucide="bell" class="w-3 h-3"></i> Mínimo alerta: {{ producto.stock_minimo_alerta }}
+              </p>
+        </div>
+
+        <div class="pt-4 border-t border-border">
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Precio de Venta</h3>
+          <p class="text-3xl font-bold text-primary">${{ '%.2f'|format(producto.precio_venta) }}</p>
+          <p class="text-xs text-muted-foreground mt-1">Último cambio: {{
+            producto.fecha_actualizacion.strftime('%d/%m/%Y') }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Details and Recipe -->
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-card border border-border rounded-lg shadow-sm">
+        <div class="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
+          <h3 class="text-sm font-semibold">Información General</h3>
+          <span
+            class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight {% if producto.active %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+            {% if producto.active %}Activo{% else %}Inactivo{% endif %}
+          </span>
+        </div>
+        <div class="p-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+            <div class="space-y-1">
+              <p class="text-xs text-muted-foreground font-medium uppercase">Nombre del Modelo</p>
+              <p class="text-base font-semibold">{{ explosion.nombre_receta }}</p>
             </div>
-    </div>
+            <div class="space-y-1">
+              <p class="text-xs text-muted-foreground font-medium uppercase">SKU Específico</p>
+              <p class="text-base font-mono">{{ producto.sku_especifico }}</p>
+            </div>
+            <div class="space-y-1">
+              <p class="text-xs text-muted-foreground font-medium uppercase">Talla</p>
+              <p class="text-base">{{ explosion.talla }}</p>
+            </div>
+            <div class="space-y-1">
+              <p class="text-xs text-muted-foreground font-medium uppercase">Categoría</p>
+              <p class="text-base">{{ explosion.categoria.nombre if explosion.categoria else 'No asignada' }}</p>
+            </div>
+          </div>
 
-    <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
-      <h3 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Inventario</h3>
-      <p class="text-2xl font-bold">{{ producto.stock_fisico_actual }}</p>
-      <span
-        class="inline-flex items-center rounded-full text-xs font-semibold px-2 py-1 mt-2 {% if producto.stock_fisico_actual == 0 %}bg-rose-500 text-white{% elif producto.stock_fisico_actual <= producto.stock_minimo_alerta %}bg-amber-500 text-gray-900{% else %}bg-emerald-500 text-white{% endif %}">
-        {% if producto.stock_fisico_actual == 0 %}Agotado{% elif producto.stock_fisico_actual <=
-          producto.stock_minimo_alerta %}Bajo Stock{% else %}En Stock{% endif %} </span>
-          <p class="text-xs text-muted-foreground mt-2">Mínimo alerta: {{ producto.stock_minimo_alerta }}</p>
-    </div>
-
-    <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
-      <h3 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Precio</h3>
-      <p class="text-2xl font-bold text-primary">${{ '%.2f'|format(producto.precio_venta) }}</p>
-      <p class="text-xs text-muted-foreground mt-2">Actualizado: {{ producto.fecha_actualizacion.strftime('%d/%m/%Y
-        %H:%M') }}</p>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
-      <h4 class="text-sm font-semibold mb-3">Detalles</h4>
-      <dl class="grid grid-cols-1 gap-2 text-sm text-foreground">
-        <div class="flex justify-between">
-          <dt class="font-medium">SKU</dt>
-          <dd>{{ producto.sku_especifico }}</dd>
+          <div class="mt-6 pt-6 border-t border-border">
+            <p class="text-xs text-muted-foreground font-medium uppercase mb-2">Descripción / Instrucciones</p>
+            <p
+              class="text-sm text-foreground leading-relaxed italic bg-muted/20 p-3 rounded-md border border-border/50">
+              "{{ explosion.instrucciones_proceso or 'No hay descripción disponible para esta receta.' }}"
+            </p>
+          </div>
         </div>
-        <div class="flex justify-between">
-          <dt class="font-medium">Receta</dt>
-          <dd>{{ explosion.nombre_receta }}</dd>
-        </div>
-        <div class="flex justify-between">
-          <dt class="font-medium">Talla</dt>
-          <dd>{{ explosion.talla }}</dd>
-        </div>
-        <div class="flex justify-between">
-          <dt class="font-medium">Categoría</dt>
-          <dd>{{ explosion.categoria.nombre if explosion.categoria else 'No asignada' }}</dd>
-        </div>
-        <div class="flex justify-between">
-          <dt class="font-medium">Creado</dt>
-          <dd>{{ producto.fecha_creacion.strftime('%d/%m/%Y') }}</dd>
-        </div>
-        <div class="flex justify-between">
-          <dt class="font-medium">Última actualización</dt>
-          <dd>{{ producto.fecha_actualizacion.strftime('%d/%m/%Y') }}</dd>
-        </div>
-        <div class="flex justify-between">
-          <dt class="font-medium">Estatus</dt>
-          <dd>{% if producto.active %}Activo{% else %}Inactivo{% endif %}</dd>
-        </div>
-      </dl>
-    </div>
-
-    <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
-      <h4 class="text-sm font-semibold mb-3">Descripción</h4>
-      <p class="text-sm text-foreground leading-relaxed">{{ explosion.instrucciones_proceso or 'No hay descripción disponible para
-        esta receta.' }}</p>
-    </div>
-  </div>
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
-    <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
-      <h4 class="text-sm font-semibold mb-3">Receta (Explosión)</h4>
-      {% if producto.explosion %}
-      <div class="mb-4">
-        <p class="text-xs text-muted-foreground mb-1">ID: {{ producto.explosion.uuid_explosion[:8] }}...</p>
-        <p class="text-sm">Estatus: {{ producto.explosion.estatus }}</p>
-        {% if producto.explosion.instrucciones_proceso %}
-        <div class="mt-2 text-sm text-muted-foreground p-2 bg-muted rounded-md border text-xs">
-          {{ producto.explosion.instrucciones_proceso }}
-        </div>
-        {% endif %}
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left">
-          <thead class="text-xs text-muted-foreground bg-muted/50 uppercase border-b border-border">
-            <tr>
-              <th class="px-4 py-2">Insumo</th>
-              <th class="px-4 py-2">Consumo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for detalle in producto.explosion.detalles %}
-            <tr class="border-b border-border hover:bg-muted/30">
-              <td class="px-4 py-2 font-medium">{{ detalle.insumo.nombre }}</td>
-              <td class="px-4 py-2">{{ '%.4f'|format(detalle.consumo_teorico_unitario) }}</td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="2" class="px-4 py-2 text-center text-muted-foreground">Sin insumos registrados.</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+
+      <div class="bg-card border border-border rounded-lg shadow-sm">
+        <div class="p-4 border-b border-border bg-muted/30">
+          <h3 class="text-sm font-semibold">Desglose de Receta (Explosión)</h3>
+        </div>
+        <div class="p-0">
+          {% if producto.explosion %}
+          <table class="w-full text-sm text-left">
+            <thead class="text-[11px] text-muted-foreground bg-muted/50 uppercase border-b border-border">
+              <tr>
+                <th class="px-6 py-3 font-semibold">Insumo</th>
+                <th class="px-6 py-3 font-semibold text-right">Consumo Teórico</th>
+                <th class="px-6 py-3 font-semibold text-center">Unidad</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              {% for detalle in producto.explosion.detalles %}
+              <tr class="hover:bg-muted/30 transition-colors">
+                <td class="px-6 py-4 font-medium text-foreground">{{ detalle.insumo.nombre }}</td>
+                <td class="px-6 py-4 text-right font-mono">{{ '%.4f'|format(detalle.consumo_teorico_unitario) }}</td>
+                <td class="px-6 py-4 text-center">
+                  <span
+                    class="px-2 py-1 rounded-md bg-secondary text-[10px] font-bold text-secondary-foreground uppercase">
+                    {{ detalle.insumo.contenido_unidad_medida }}
+                  </span>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="3" class="px-6 py-8 text-center text-muted-foreground">
+                  <div class="flex flex-col items-center gap-2">
+                    <i data-lucide="package-x" class="w-8 h-8 opacity-20"></i>
+                    <span>Sin insumos registrados en esta receta.</span>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <div class="p-3 bg-muted/10 text-[10px] text-muted-foreground border-t border-border text-right italic">
+            ID de explosión: {{ producto.explosion.uuid_explosion }}
+          </div>
+          {% else %}
+          <div class="p-8 text-center text-muted-foreground">
+            <p class="text-sm italic">Este producto no tiene una receta (explosión) asignada.</p>
+          </div>
+          {% endif %}
+        </div>
       </div>
-      {% else %}
-      <p class="text-sm text-muted-foreground">Este producto no tiene receta asignada.</p>
-      {% endif %}
     </div>
   </div>
 </div>
