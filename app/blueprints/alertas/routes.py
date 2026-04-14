@@ -3,6 +3,7 @@ from . import alertas_bp
 from app.models.modelos_productos import ProductoTerminado
 from app.models.insumos import Insumo
 from app.models.proveedores import Proveedor
+from app.models.compras import CompraEncabezado, CompraDetalle
 
 
 @alertas_bp.route('/')
@@ -24,11 +25,14 @@ def index():
     for ins in insumos_agotados + insumos_bajo_stock:
         # Buscar proveedor por categoría del insumo
         proveedor = None
-        if ins.uuid_categoria:
-            proveedor = Proveedor.query.filter(
-                Proveedor.uuid_categoria == ins.uuid_categoria,
-                Proveedor.estatus == True,
-            ).first()
+        # Buscar último proveedor por historial de compras
+        last_compra = (
+            CompraDetalle.query.filter_by(uuid_insumo=ins.uuid_insumo)
+            .join(CompraEncabezado)
+            .order_by(CompraEncabezado.fecha_compra.desc())
+            .first()
+        )
+        proveedor = last_compra.compra.proveedor if last_compra else None
 
         criticos.append({
             'uuid_insumo'       : ins.uuid_insumo,
