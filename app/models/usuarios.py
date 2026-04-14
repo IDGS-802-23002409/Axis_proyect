@@ -41,6 +41,9 @@ class Usuario(db.Model, UserMixin):
     # Rastreo de cambio de contraseña
     password_changed_at = Column(DateTime(), server_default=func.now())
 
+    # Multi-factor recovery codes
+    mf_recovery_codes = Column(db.JSON, nullable=True)
+
     # Relaciones
     roles = db.relationship('Role', secondary=roles_usuarios,
                           backref=db.backref('usuarios', lazy='dynamic'))

@@ -16,6 +16,9 @@ class OrdenProduccion(db.Model):
 
     uuid_venta_detalle = Column(String(36), ForeignKey('ventas_detalle.uuid_detalle'), nullable=True)
 
+    uuid_venta_detalle = Column(String(36), ForeignKey('ventas_detalle.uuid_detalle'), nullable=True) 
+    uuid_pedido_detalle = Column(String(36), ForeignKey('pedidos_cliente_detalle.uuid_detalle_pedido'), nullable=True) 
+    
     cantidad_a_producir = Column(Integer, nullable=False)
 
     estado = Column(Enum('Pendiente', 'En Corte', 'Confección', 'Terminado'), default='Pendiente')
@@ -31,6 +34,11 @@ class OrdenProduccion(db.Model):
         'VentaDetalle',
         backref=db.backref('orden_produccion', uselist=False)
     )
+    fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    
+    producto = db.relationship('ProductoTerminado', backref=db.backref('ordenes_produccion', lazy=True))
+    venta_detalle = db.relationship('VentaDetalle', backref=db.backref('orden_produccion', uselist=False))
+    pedido_detalle = db.relationship('PedidoClienteDetalle', backref=db.backref('orden_produccion', uselist=False))
 
     __table_args__ = (
         Index('idx_op_estado', 'estado'),
@@ -55,9 +63,14 @@ class EjecucionCorte(db.Model):
 
     metros_teoricos_requeridos = Column(Numeric(12, 4), nullable=False)
     metros_sacados_bodega = Column(Numeric(12, 4), nullable=False)
+    uuid_rollo_used = Column(String(36), ForeignKey('rollos_inventario.uuid_rollo'), nullable=False)
+    
+    metros_teoricos_requeridos = Column(Numeric(12, 4), nullable=False) 
+    metros_sacados_bodega = Column(Numeric(12, 4), nullable=False) 
     prendas_reales_logradas = Column(Integer, nullable=False)
 
     fecha_proceso = Column(DateTime, server_default=func.now())
+    fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
     usuario_corto_uuid = Column(String(36))
 
     orden_produccion = db.relationship(
@@ -104,10 +117,10 @@ class EjecucionCorteRollo(db.Model):
 
 '''
 motivo_merma_pieza_enum = Enum(
-    'DEFECTO_PROVEEDOR',    # Pieza llegó dañada desde la compra
-    'DAÑO_EN_PROCESO',      # Se dañó durante confección o corte
-    'ERROR_OPERARIO',       # Error humano al usar el insumo
-    'MUESTRA_PRUEBA',       # Se usó como prueba/muestra sin llegar a prenda
+    'DEFECTO_PROVEEDOR',    
+    'DAÑO_EN_PROCESO',      
+    'ERROR_OPERARIO',       
+    'MUESTRA_PRUEBA',       
     'OTRO',
     name='motivo_merma_pieza_enum'
 )
@@ -140,13 +153,12 @@ class MermaPiezas(db.Model):
         ForeignKey('insumos.uuid_insumo'),
         nullable=False
     )
-    # Cantidad que la explosión de materiales indicaba consumir
-    # (consumo_teorico_unitario × cantidad_a_producir de la OP)
     cantidad_teorica = Column(Numeric(12, 4), nullable=False)
     cantidad_real_consumida = Column(Numeric(12, 4), nullable=False)
     motivo = Column(motivo_merma_pieza_enum, nullable=True)
     observaciones = Column(Text, nullable=True)
     fecha_registro = Column(DateTime, server_default=func.now())
+    fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
     usuario_registro_uuid = Column(String(36), nullable=True)
     orden_produccion = db.relationship(
         'OrdenProduccion',

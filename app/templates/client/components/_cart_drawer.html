@@ -76,15 +76,15 @@
         <div id="cart-footer" class="border-t border-border p-6 space-y-4">
             <div class="flex justify-between items-center">
                 <span class="text-muted-foreground">Subtotal</span>
-                {% set subtotal = 0 %}
+                {% set ns = namespace(subtotal=0) %}
                 {% if cart_items %}
                 {% for item in cart_items %}
                 {% set item_price = item.price | float if item.price else 0.0 %}
-                {% set subtotal = subtotal + (item_price * item.quantity) %}
+                {% set ns.subtotal = ns.subtotal + (item_price * item.quantity) %}
                 {% endfor %}
                 {% endif %}
                 <span class="font-[var(--font-display)] text-2xl">$<span id="cart-total-price">{{
-                        "%.2f"|format(subtotal) }}</span></span>
+                        "%.2f"|format(ns.subtotal) }}</span></span>
             </div>
             <p class="text-xs text-muted-foreground">Envío calculado en el checkout</p>
             {% if not current_user.is_authenticated %}

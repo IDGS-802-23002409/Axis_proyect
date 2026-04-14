@@ -5,6 +5,7 @@ from app.models.clientes import Cliente
 from app.models.modelos_productos import ProductoTerminado
 from app.models.explosion_materiales import ExplosionMaterialesCabecera
 from app.models.ventas import VentaEncabezado, VentaDetalle
+from app.models.pedidos_cliente import PedidoClienteEncabezado
 from datetime import datetime
 import uuid
 from decimal import Decimal
@@ -174,7 +175,30 @@ def eliminar_carrito():
 @checkout_bp.route('/carrito/vaciar', methods=['POST'])
 def vaciar_carrito():
     save_cart([])
+    session.pop('axis_discount', None)
+    session.pop('discount_code', None)
     flash('Carrito vaciado', 'success')
+    return redirect(url_for('checkout.checkout_view'))
+
+
+@checkout_bp.route('/carrito/descuento', methods=['POST'])
+def aplicar_descuento():
+    codigo = request.form.get('codigo', '').strip().upper()
+    if codigo == 'AXIS10':
+        session['axis_discount'] = 0.10
+        session['discount_code'] = codigo
+        flash('¡Cupón AXIS10 aplicado correctamente! 10% de descuento.', 'success')
+    else:
+        flash('Código de descuento inválido.', 'error')
+    
+    return redirect(url_for('checkout.checkout_view'))
+
+
+@checkout_bp.route('/carrito/quitar-descuento', methods=['POST'])
+def quitar_descuento():
+    session.pop('axis_discount', None)
+    session.pop('discount_code', None)
+    flash('Cupón eliminado.', 'info')
     return redirect(url_for('checkout.checkout_view'))
 
 
@@ -189,6 +213,34 @@ def checkout_view():
         return redirect(url_for('checkout.completar_perfil'))
 
     return render_template('carrito.html', cart=cart, totals=totals)
+
+
+@checkout_bp.route('/newsletter', methods=['POST'])
+def newsletter():
+    email = request.form.get('email')
+    if not email:
+        flash('Por favor ingresa un correo válido.', 'error')
+        return redirect(request.referrer or '/')
+
+    try:
+        from app.app import mail
+        from flask_mail import Message
+        msg = Message(
+            "¡Bienvenido al Movimiento AXIS! 🎁 Tu regalo de bienvenida",
+            recipients=[email]
+        )
+        msg.html = render_template(
+            'emails/newsletter.html',
+            url_host=request.host_url.rstrip('/')
+        )
+        mail.send(msg)
+        flash('¡Gracias por unirte! Revisa tu correo, te hemos enviado un regalo. 🖤', 'success')
+    except Exception as e:
+        # Fallback si el correo falla, pero el usuario se "suscribió"
+        flash('¡Bienvenido al movimiento! (Usa el código AXIS10 para un 10% de descuento)', 'success')
+        print(f"Error newsletter mail: {e}")
+
+    return redirect(request.referrer or '/')
 
 
 @checkout_bp.route('/checkout/procesar', methods=['POST'])
@@ -221,18 +273,37 @@ def procesar_checkout():
         flash('El carrito está vacío', 'error')
         return redirect(url_for('checkout.checkout_view'))
 
+    import json
+    from sqlalchemy import text
+    
+    # Generar folio seguro
+    numero_pedido = f"AXIS-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
+    uuid_venta = str(uuid.uuid4())
+    
+    # Preparar items para el SP
+    json_items = []
+    for item in cart:
+        json_items.append({
+            'uuid_producto': item['uuid_producto'],
+            'quantity': int(item['quantity']),
+            'price': float(item['price'])
+        })
+
     try:
-        from app.models.produccion import OrdenProduccion
-        from app.models.explosion_materiales import ExplosionMaterialesCabecera
+        # Llamar al Procedimiento Almacenado
+        # Argumentos: uuid_venta, numero_pedido, uuid_cliente, metodo_pago, json_items
+        sp_query = text("CALL sp_procesar_venta_hibrida(:u_v, :n_p, :u_c, :m_p, :j_i, @resumen)")
+        db.session.execute(sp_query, {
+            'u_v': uuid_venta,
+            'n_p': numero_pedido,
+            'u_c': current_user.cliente.uuid_cliente,
+            'm_p': request.form.get('metodo_pago', 'Transferencia'),
+            'j_i': json.dumps(json_items)
+        })
         
-        # Generar folio seguro (máx 25 caracteres según el modelo)
-        # AXIS (4) + DATE (8) + - (1) + UUID[:6] (6) = 19 caracteres
-        numero_pedido = f"AXIS-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
-        
-        # Determinar si el pedido completo será Pendiente o Completado
-        # Regla: Si hay stock insuficiente en AL MENOS UN producto, el pedido queda Pendiente.
-        estatus_global = 'Completado'
-        mensajes_extra = []
+        # Obtener el resultado del OUT parameter
+        res_row = db.session.execute(text("SELECT @resumen")).fetchone()
+        resumen = json.loads(res_row[0]) if res_row and res_row[0] else {}
         
         venta = VentaEncabezado(
             uuid_venta=str(uuid.uuid4()),
@@ -366,11 +437,13 @@ def procesar_checkout():
 
         # Limpiar carrito
         save_cart([])
+        session.pop('axis_discount', None)
+        session.pop('discount_code', None)
 
-        for msg in mensajes_extra:
-            flash(msg, 'info')
+        if resumen.get('has_pedido'):
+             flash("Tu compra incluye prendas que entrarán a producción (+5 días entrega).", 'info')
             
-        flash(f'¡Pedido realizado! Número: {numero_pedido}', 'success')
+        flash(f"¡Compra procesada exitosamente! Folio: {numero_pedido}", 'success')
         return redirect(url_for('checkout.pedido_exito', numero_pedido=numero_pedido))
 
     except Exception as e:
@@ -379,7 +452,33 @@ def procesar_checkout():
         logger.error(f">>> [CHECKOUT] ERROR COMPLETO:\n{traceback.format_exc()}")
         print(traceback.format_exc()) # Log para consola
         flash(f'Error al procesar el pedido (DB): {str(e)}', 'error')
+        print(traceback.format_exc())
+        flash(f"Error al procesar la compra (BD): {str(e)}", 'error')
         return redirect(url_for('checkout.checkout_view'))
+
+
+@checkout_bp.route('/mis-pedidos')
+@login_required
+def mis_pedidos():
+    if not current_user.cliente:
+        return redirect(url_for('checkout.completar_perfil'))
+    
+    ventas = VentaEncabezado.query.filter_by(uuid_cliente=current_user.cliente.uuid_cliente).order_by(VentaEncabezado.fecha_venta.desc()).all()
+    pedidos_pendientes = PedidoClienteEncabezado.query.filter_by(uuid_cliente=current_user.cliente.uuid_cliente).order_by(PedidoClienteEncabezado.fecha_pedido.desc()).all()
+    
+    for v in ventas:
+        total = 0
+        for d in v.detalles:
+            total += (d.precio_unitario_historico * d.cantidad)
+        v.total_calculado = total
+
+    for p in pedidos_pendientes:
+        total = 0
+        for d in p.detalles:
+            total += (d.precio_unitario_historico * d.cantidad)
+        p.total_calculado = total
+
+    return render_template('mis_pedidos.html', ventas=ventas, pedidos_pendientes=pedidos_pendientes)
 
 
 @checkout_bp.route('/checkout/exito/<numero_pedido>')

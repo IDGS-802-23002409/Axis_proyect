@@ -14,6 +14,7 @@ class RolloInventario(db.Model):
     metraje_inicial = Column(Numeric(12, 4), nullable=False)
     metraje_continuo_actual = Column(Numeric(12, 4), nullable=False)
     fecha_creacion = Column(DateTime, server_default=func.now())
+    fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     insumo = db.relationship('Insumo', backref=db.backref('rollos', lazy=True))
     detalle_compra = db.relationship('CompraDetalle', backref=db.backref('rollos', lazy=True))
@@ -31,6 +32,7 @@ class RetazoInventario(db.Model):
     metraje = Column(Numeric(12, 4), nullable=False)
     motivo_merma = Column(db.Text)
     fecha_creacion = Column(DateTime, server_default=func.now())
+    fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     rollo_origen = db.relationship('RolloInventario', backref=db.backref('retazos', lazy=True))
     ejecucion_corte = db.relationship('EjecucionCorte', backref=db.backref('retazos_inventario', lazy=True))

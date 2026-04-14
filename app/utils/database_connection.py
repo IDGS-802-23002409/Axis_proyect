@@ -1,24 +1,40 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import event
-from sqlalchemy.engine import Engine
+from sqlalchemy import create_engine
+from app.utils.config import (
+    DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD,
+    ADMIN_DB_USER, ADMIN_DB_PASSWORD,
+    GERENTE_DB_USER, GERENTE_DB_PASSWORD,
+    PRODUCCION_DB_USER, PRODUCCION_DB_PASSWORD,
+    CLIENTE_DB_USER, CLIENTE_DB_PASSWORD,
+    BACKUP_DB_USER, BACKUP_DB_PASSWORD
+)
 
 db = SQLAlchemy()
 
-# == Manejo de Sesiones mediante Roles de BD ==
-# NOTA PARA DESARROLLO: Se mantiene comentado temporalmente para evitar problemas de permisos de BD local.
-# Se debe activar solo en entorno de Producción si los roles PostgreSQL/MySQL están configurados.
-#
-# @event.listens_for(Engine, "checkout")
-# def set_db_role_on_checkout(dbapi_connection, connection_record, connection_proxy):
-#     from flask import g
-#     try:
-#         cursor = dbapi_connection.cursor()
-#         # Asumiendo que guardamos el rol del usuario en `g.db_role` al inicio de cada petición
-#         if hasattr(g, 'db_role') and g.db_role:
-#             cursor.execute(f"SET ROLE {g.db_role}")
-#         else:
-#             cursor.execute("RESET ROLE") # Retorna al rol administrador/default del pool
-#         cursor.close()
-#     except Exception as e:
-#         pass
+# Diccionario para cachear los engines de cada rol
+_engines = {}
 
+def get_engine_for_role(role_name):
+    """
+    Retorna un engine de SQLAlchemy configurado con las credenciales 
+    específicas para el rol solicitado.
+    """
+    if role_name in _engines:
+        return _engines[role_name]
+    
+    # Mapeo de roles de sistema a credenciales de BD
+    creds = {
+        'admin_rol': (ADMIN_DB_USER, ADMIN_DB_PASSWORD),
+        'gerente_rol': (GERENTE_DB_USER, GERENTE_DB_PASSWORD),
+        'produccion_rol': (PRODUCCION_DB_USER, PRODUCCION_DB_PASSWORD),
+        'cliente_rol': (CLIENTE_DB_USER, CLIENTE_DB_PASSWORD),
+        'backup_rol': (BACKUP_DB_USER, BACKUP_DB_PASSWORD),
+        'default': (DB_USER, DB_PASSWORD)
+    }
+    
+    user, password = creds.get(role_name, creds['default'])
+    
+    uri = f"mysql+pymysql://{user}:{password}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    engine = create_engine(uri, pool_pre_ping=True, pool_recycle=3600)
+    _engines[role_name] = engine
+    return engine

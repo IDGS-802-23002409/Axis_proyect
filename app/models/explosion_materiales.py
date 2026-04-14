@@ -37,6 +37,8 @@ class ExplosionMaterialesDetalle(db.Model):
     uuid_insumo = Column(String(36), ForeignKey('insumos.uuid_insumo'), nullable=False)
     consumo_teorico_unitario = Column(Numeric(12, 4), nullable=False)
     ancho_referencia = Column(Numeric(5, 2))
+    fecha_creacion = Column(DateTime, server_default=func.now())
+    fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     explosion = db.relationship('ExplosionMaterialesCabecera', backref=db.backref('detalles', lazy=True))
     insumo = db.relationship('Insumo', backref=db.backref('explosion_detalles', lazy=True))

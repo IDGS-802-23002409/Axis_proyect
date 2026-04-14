@@ -7,31 +7,31 @@
             <div class="w-24 h-24 mx-auto mb-8 rounded-full bg-primary/10 flex items-center justify-center">
                 <i data-lucide="check-circle" class="w-12 h-12 text-primary"></i>
             </div>
-            
+
             <h1 class="font-[var(--font-display)] text-5xl md:text-6xl tracking-[0.1em] mb-6">
                 ¡PEDIDO<br>CONFIRMADO!
             </h1>
-            
+
             <p class="text-muted-foreground text-lg mb-8">
                 Gracias por tu compra. Tu pedido ha sido procesado correctamente.
             </p>
-            
+
             <div class="bg-secondary p-6 mb-8 inline-block">
                 <p class="text-sm text-muted-foreground uppercase tracking-wider mb-2">Número de pedido</p>
                 <p class="font-[var(--font-display)] text-3xl tracking-[0.2em]">{{ numero_pedido }}</p>
             </div>
-            
+
             <p class="text-muted-foreground mb-8">
                 Te hemos enviado un correo con los detalles de tu pedido.<br>
                 Puedes revisar el estado en tu perfil.
             </p>
-            
+
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="/catalogo"
                     class="px-8 py-4 border-2 border-foreground text-foreground font-[var(--font-display)] text-lg tracking-[0.2em] hover:bg-foreground hover:text-background transition-colors">
                     SEGUIR COMPRANDO
                 </a>
-                <a href="/usuarios/perfil"
+                <a href="{{ url_for('checkout.mis_pedidos') }}"
                     class="px-8 py-4 bg-primary text-primary-foreground font-[var(--font-display)] text-lg tracking-[0.2em] hover:bg-primary/90 transition-colors">
                     MI PERFIL
                 </a>

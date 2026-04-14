@@ -12,6 +12,7 @@ services:
       - "3331:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./app/database/01_crear_roles.sql:/docker-entrypoint-initdb.d/01_crear_roles.sql
     networks:
       - flask_network
     healthcheck:
@@ -44,6 +45,16 @@ services:
       MAIL_DEFAULT_SENDER: ${MAIL_DEFAULT_SENDER}
       SECURITY_TOTP_SECRETS: ${SECURITY_TOTP_SECRETS}
       SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
+      ADMIN_DB_USER: ${ADMIN_DB_USER}
+      ADMIN_DB_PASSWORD: ${ADMIN_DB_PASSWORD}
+      GERENTE_DB_USER: ${GERENTE_DB_USER}
+      GERENTE_DB_PASSWORD: ${GERENTE_DB_PASSWORD}
+      PRODUCCION_DB_USER: ${PRODUCCION_DB_USER}
+      PRODUCCION_DB_PASSWORD: ${PRODUCCION_DB_PASSWORD}
+      CLIENTE_DB_USER: ${CLIENTE_DB_USER}
+      CLIENTE_DB_PASSWORD: ${CLIENTE_DB_PASSWORD}
+      BACKUP_DB_USER: ${BACKUP_DB_USER}
+      BACKUP_DB_PASSWORD: ${BACKUP_DB_PASSWORD}
     ports:
       - "3030:3030"
     volumes:

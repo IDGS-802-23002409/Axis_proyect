@@ -57,6 +57,31 @@ def _obtener_costo_promedio_insumo(uuid_insumo, cache_costos=None):
             total_unidades_base += float(d.cantidad_comprada) * float(d.insumo.contenido_cantidad)
 
     costo_promedio = total_costo / total_unidades_base if total_unidades_base > 0 else 0.0
+            cantidad_comprada    = float(d.cantidad_comprada)
+            costo_unitario_compra = float(d.costo_unitario_compra)
+
+            total_costo += cantidad_comprada * costo_unitario_compra
+
+            if d.insumo.unidad_medida == 'ROLLO':
+                from app.models.inventario import RolloInventario
+                rollos = RolloInventario.query.filter_by(uuid_detalle_compra=d.uuid_detalle_compra).all()
+                total_real_metraje_base = sum(float(r.metraje_inicial) for r in rollos) if rollos else 0.0
+                
+                if total_real_metraje_base > 0:
+                    total_unidades_base += total_real_metraje_base
+                else:
+                    contenido_cantidad = float(d.insumo.contenido_cantidad)
+                    total_unidades_base += cantidad_comprada * contenido_cantidad
+            else:
+                contenido_cantidad = float(d.insumo.contenido_cantidad)
+                total_unidades_base += cantidad_comprada * contenido_cantidad
+
+    if total_unidades_base == 0:
+        if cache_costos is not None:
+            cache_costos[uuid_insumo] = 0.0
+        return 0.0
+
+    costo_promedio = total_costo / total_unidades_base
 
     if cache_costos is not None:
         cache_costos[uuid_insumo] = costo_promedio

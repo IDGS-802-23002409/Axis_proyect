@@ -15,6 +15,7 @@ from app.models.usuarios import Usuario
 from app.models.produccion import OrdenProduccion
 from sqlalchemy import func
 from datetime import datetime, timedelta
+from flask_mail import Message
 
 @ventas_bp.route('/cancelar/<uuid_venta>', methods=['POST'])
 @login_required
@@ -37,6 +38,41 @@ def cancelar_pedido(uuid_venta):
     
     flash(f"Pedido {venta.numero_pedido} cancelado. La producción continuará para integrar los productos al stock.", "info")
     return redirect(request.referrer or url_for('ventas.index'))
+
+@ventas_bp.route('/enviar/<uuid_venta>', methods=['POST'])
+@login_required
+@roles_accepted('admin', 'gerente')
+def marcar_enviado(uuid_venta):
+    venta = VentaEncabezado.query.get_or_404(uuid_venta)
+    
+    # Solo si el estatus es Pendiente o Completado (no Enviado ni Cancelado)
+    if venta.estatus_envio in ['Enviado', 'Cancelado']:
+        flash(f"El pedido ya está en estatus {venta.estatus_envio}.", "warning")
+        return redirect(url_for('ventas.index'))
+
+    venta.estatus_envio = 'Enviado'
+    db.session.commit()
+    
+    # Enviar correo al cliente
+    try:
+        from app.app import mail
+        msg = Message(
+            f"¡Tu pedido {venta.numero_pedido} ha sido enviado! 🚀",
+            recipients=[venta.cliente.usuario.email]
+        )
+        msg.html = render_template(
+            'emails/envio_pedido.html',
+            nombre_cliente=venta.cliente.usuario.nombre_completo,
+            numero_pedido=venta.numero_pedido,
+            direccion=venta.cliente.direccion_completa,
+            url_host=request.host_url.rstrip('/')
+        )
+        mail.send(msg)
+        flash(f"Pedido {venta.numero_pedido} marcado como enviado y notificación enviada por correo.", "success")
+    except Exception as e:
+        flash(f"Pedido marcado como enviado, pero hubo un error al enviar el correo: {str(e)}", "warning")
+        
+    return redirect(url_for('ventas.index'))
 
 @ventas_bp.route('/')
 @login_required

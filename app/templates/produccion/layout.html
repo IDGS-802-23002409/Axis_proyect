@@ -120,6 +120,7 @@
             {{ nav_link('empleados.index', 'Empleados', 'briefcase', 'empleados') }}
             {% if current_user.has_role('admin') %}
             {{ nav_link('usuarios.index', 'Usuarios', 'users', 'usuarios') }}
+            {{ nav_link('respaldos.index', 'Respaldos', 'database', 'respaldos') }}
             {% endif %}
           </div>
         </div>

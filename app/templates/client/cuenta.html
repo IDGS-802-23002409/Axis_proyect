@@ -3,35 +3,45 @@
 {% block content %}
 <div id="cuenta-container" class="min-h-screen bg-background pt-32 pb-24">
     <div class="container mx-auto px-4 lg:px-8">
-        
+
         <div class="flex flex-col lg:flex-row gap-12 max-w-7xl mx-auto">
-            
+
             <!-- Sidebar Navigation -->
             <aside class="w-full lg:w-80 space-y-8">
                 <div class="p-8 border border-border bg-secondary/20 relative group overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-0 bg-primary group-hover:h-full transition-all duration-500"></div>
-                    
+                    <div
+                        class="absolute top-0 left-0 w-1 h-0 bg-primary group-hover:h-full transition-all duration-500">
+                    </div>
+
                     <div class="flex flex-col items-center text-center space-y-6">
                         <div class="relative">
-                            <div class="w-24 h-24 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-4xl font-[var(--font-display)]">
+                            <div
+                                class="w-24 h-24 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-4xl font-[var(--font-display)]">
                                 {{ current_user.nombre_completo[0].upper() }}
                             </div>
-                            <div class="absolute -bottom-1 -right-1 w-8 h-8 bg-emerald-500 border-4 border-background rounded-full"></div>
+                            <div
+                                class="absolute -bottom-1 -right-1 w-8 h-8 bg-emerald-500 border-4 border-background rounded-full">
+                            </div>
                         </div>
                         <div>
-                            <h2 class="font-[var(--font-display)] text-3xl tracking-wider leading-none mb-2">HOLA, {{ current_user.nombre_completo.split()[0].upper() }}</h2>
-                            <p class="text-[10px] text-muted-foreground uppercase tracking-[0.3em]">Cliente AXIS · Desde {{ current_user.fecha_creacion.strftime('%Y') }}</p>
+                            <h2 class="font-[var(--font-display)] text-3xl tracking-wider leading-none mb-2">HOLA, {{
+                                current_user.nombre_completo.split()[0].upper() }}</h2>
+                            <p class="text-[10px] text-muted-foreground uppercase tracking-[0.3em]">Cliente AXIS · Desde
+                                {{ current_user.fecha_creacion.strftime('%Y') }}</p>
                         </div>
                     </div>
 
                     <nav class="mt-12 flex flex-col gap-2">
-                        <button class="flex items-center gap-3 px-4 py-3 bg-primary text-primary-foreground text-sm tracking-widest uppercase font-bold transition-all w-full text-left">
+                        <button
+                            class="flex items-center gap-3 px-4 py-3 bg-primary text-primary-foreground text-sm tracking-widest uppercase font-bold transition-all w-full text-left">
                             <i data-lucide="user" class="w-4 h-4"></i> Datos de la Cuenta
                         </button>
-                        <a href="{{ url_for('checkout.checkout_view') }}" class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:bg-secondary hover:text-foreground text-sm tracking-widest uppercase font-bold transition-all">
+                        <a href="{{ url_for('checkout.mis_pedidos') }}"
+                            class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:bg-secondary hover:text-foreground text-sm tracking-widest uppercase font-bold transition-all">
                             <i data-lucide="package" class="w-4 h-4"></i> Mis Pedidos
                         </a>
-                        <a href="{{ url_for('security.logout') }}" class="flex items-center gap-3 px-4 py-3 text-destructive hover:bg-destructive/10 text-sm tracking-widest uppercase font-bold transition-all mt-6 border-t border-border pt-6">
+                        <a href="{{ url_for('security.logout') }}"
+                            class="flex items-center gap-3 px-4 py-3 text-destructive hover:bg-destructive/10 text-sm tracking-widest uppercase font-bold transition-all mt-6 border-t border-border pt-6">
                             <i data-lucide="log-out" class="w-4 h-4"></i> Cerrar Sesión
                         </a>
                     </nav>
@@ -39,8 +49,11 @@
 
                 <div class="p-8 border border-border bg-primary/5 hidden lg:block">
                     <h4 class="text-xs font-bold uppercase tracking-[0.2em] mb-4">¿Necesitas ayuda?</h4>
-                    <p class="text-xs text-muted-foreground leading-relaxed mb-6">Nuestro equipo de soporte está disponible de lunes a viernes para ayudarte con tus envíos.</p>
-                    <a href="mailto:support@axis.com" class="text-xs text-primary font-bold uppercase tracking-widest hover:underline">Contactar Soporte</a>
+                    <p class="text-xs text-muted-foreground leading-relaxed mb-6">Nuestro equipo de soporte está
+                        disponible de lunes a viernes para ayudarte con tus envíos.</p>
+                    <a href="mailto:support@axis.com"
+                        class="text-xs text-primary font-bold uppercase tracking-widest hover:underline">Contactar
+                        Soporte</a>
                 </div>
             </aside>
 
@@ -48,14 +61,17 @@
             <div class="flex-1 space-y-12">
                 <!-- Header -->
                 <div class="border-b border-border pb-8">
-                    <h1 class="font-[var(--font-display)] text-6xl md:text-7xl tracking-[0.05em] mb-4 uppercase">MI CUENTA</h1>
-                    <p class="text-muted-foreground tracking-widest text-sm uppercase">Gestiona tu información personal y direcciones de entrega.</p>
+                    <h1 class="font-[var(--font-display)] text-6xl md:text-7xl tracking-[0.05em] mb-4 uppercase">MI
+                        CUENTA</h1>
+                    <p class="text-muted-foreground tracking-widest text-sm uppercase">Gestiona tu información personal
+                        y direcciones de entrega.</p>
                 </div>
 
                 <!-- Form Card -->
                 <div class="bg-secondary/10 border border-border p-8 lg:p-12 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full pointer-events-none"></div>
-                    
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full pointer-events-none">
+                    </div>
+
                     <form method="POST" class="space-y-12">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -68,12 +84,15 @@
 
                             <div class="grid md:grid-cols-2 gap-10">
                                 <div class="space-y-3 group">
-                                    <label class="block text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground group-focus-within:text-primary transition-colors">Nombre Completo</label>
+                                    <label
+                                        class="block text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground group-focus-within:text-primary transition-colors">Nombre
+                                        Completo</label>
                                     <input type="text" name="nombre" value="{{ current_user.nombre_completo }}" required
                                         class="w-full bg-transparent border-b border-border py-3 focus:outline-none focus:border-primary transition-all text-lg font-medium">
                                 </div>
                                 <div class="space-y-3 group">
-                                    <label class="block text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground group-focus-within:text-primary transition-colors">Email</label>
+                                    <label
+                                        class="block text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground group-focus-within:text-primary transition-colors">Email</label>
                                     <input type="email" name="email" value="{{ current_user.email }}" required
                                         class="w-full bg-transparent border-b border-border py-3 focus:outline-none focus:border-primary transition-all text-lg font-medium">
                                 </div>
@@ -89,13 +108,17 @@
 
                             <div class="grid md:grid-cols-2 gap-10">
                                 <div class="space-y-3 group">
-                                    <label class="block text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground group-focus-within:text-primary transition-colors">Teléfono</label>
-                                    <input type="tel" name="telefono" value="{{ current_user.cliente.telefono if current_user.cliente else '' }}"
+                                    <label
+                                        class="block text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground group-focus-within:text-primary transition-colors">Teléfono</label>
+                                    <input type="tel" name="telefono"
+                                        value="{{ current_user.cliente.telefono if current_user.cliente else '' }}"
                                         class="w-full bg-transparent border-b border-border py-3 focus:outline-none focus:border-primary transition-all text-lg font-medium"
                                         placeholder="55 1234 5678">
                                 </div>
                                 <div class="space-y-3 group md:col-span-2">
-                                    <label class="block text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground group-focus-within:text-primary transition-colors">Dirección Completa</label>
+                                    <label
+                                        class="block text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground group-focus-within:text-primary transition-colors">Dirección
+                                        Completa</label>
                                     <textarea name="direccion_completa" rows="2"
                                         class="w-full bg-transparent border-b border-border py-3 focus:outline-none focus:border-primary transition-all text-lg font-medium resize-none leading-relaxed"
                                         placeholder="Calle, Número, Colonia, C.P., Ciudad...">{{ current_user.cliente.direccion_completa if current_user.cliente else '' }}</textarea>
@@ -105,11 +128,12 @@
 
                         <!-- Actions -->
                         <div class="pt-10 flex flex-col md:flex-row items-center gap-6">
-                            <button type="submit" 
+                            <button type="submit"
                                 class="w-full md:w-auto px-16 py-5 bg-foreground text-background font-[var(--font-display)] text-2xl tracking-[0.2em] hover:bg-primary transition-all shadow-xl">
                                 GUARDAR CAMBIOS
                             </button>
-                            <span class="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold">Sus datos están encriptados vía SSL</span>
+                            <span class="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold">Sus
+                                datos están encriptados vía SSL</span>
                         </div>
                     </form>
                 </div>

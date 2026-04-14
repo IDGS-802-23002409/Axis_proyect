@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 from flask import Flask, redirect, url_for
 from flask_migrate import Migrate
@@ -7,6 +8,11 @@ from flask_security import Security, SQLAlchemyUserDatastore, current_user
 from app.blueprints.security.forms import ExtendedRegisterForm
 from app.utils.config import (
     DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME,
+    ADMIN_DB_USER, ADMIN_DB_PASSWORD,
+    GERENTE_DB_USER, GERENTE_DB_PASSWORD,
+    PRODUCCION_DB_USER, PRODUCCION_DB_PASSWORD,
+    CLIENTE_DB_USER, CLIENTE_DB_PASSWORD,
+    BACKUP_DB_USER, BACKUP_DB_PASSWORD,
     MAIL_SERVER, MAIL_PORT, MAIL_USE_TLS, MAIL_USERNAME, MAIL_PASSWORD,
     MAIL_DEFAULT_SENDER, SECURITY_TOTP_SECRETS
 )
@@ -32,6 +38,13 @@ def create_app():
     application.config['SQLALCHEMY_DATABASE_URI'] = (
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
+    application.config['SQLALCHEMY_BINDS'] = {
+        'admin_rol': f"mysql+pymysql://{ADMIN_DB_USER}:{ADMIN_DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        'gerente_rol': f"mysql+pymysql://{GERENTE_DB_USER}:{GERENTE_DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        'produccion_rol': f"mysql+pymysql://{PRODUCCION_DB_USER}:{PRODUCCION_DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        'cliente_rol': f"mysql+pymysql://{CLIENTE_DB_USER}:{CLIENTE_DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        'backup_rol': f"mysql+pymysql://{BACKUP_DB_USER}:{BACKUP_DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+    }
     application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # ── Mail ──────────────────────────────────────────────────
@@ -85,6 +98,11 @@ def create_app():
     }
     application.config['SECURITY_TOTP_ISSUER'] = 'Axis Urban Apparel'
 
+    # Seguridad avanzada: Códigos de recuperación y Sesiones
+    application.config['SECURITY_MULTI_FACTOR_RECOVERY_CODES'] = True
+    application.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
+    application.config['SESSION_REFRESH_EACH_REQUEST'] = True
+
     # Plantillas personalizadas
     application.config['SECURITY_LOGIN_USER_TEMPLATE'] = 'security/login.html'
     application.config['SECURITY_REGISTER_USER_TEMPLATE'] = 'security/register_user.html'
@@ -93,6 +111,7 @@ def create_app():
     application.config['SECURITY_FORGOT_PASSWORD_TEMPLATE'] = 'security/reset_password.html'
     application.config['SECURITY_TWO_FACTOR_SETUP_TEMPLATE'] = 'security/two_factor_setup.html'
     application.config['SECURITY_TWO_FACTOR_VERIFY_CODE_TEMPLATE'] = 'security/two_factor_verify_code.html'
+    application.config['SECURITY_TWO_FACTOR_RESCUE_TEMPLATE'] = 'security/two_factor_rescue.html'
 
     # Redirecciones
     application.config['SECURITY_POST_LOGIN_VIEW'] = '/security/post-login'
@@ -116,6 +135,15 @@ def create_app():
     db.init_app(application)
     mail.init_app(application)
     Migrate(application, db)
+
+    from app.utils.audit_listeners import register_audit_listeners
+    register_audit_listeners()
+
+    from app.utils.backup_commands import init_backup_cli
+    init_backup_cli(application)
+
+    from app.utils.db_hooks import init_db_objects
+    init_db_objects(application)
 
     from app.blueprints.dashboard_administrativo import dashboard_bp
     application.register_blueprint(dashboard_bp, url_prefix='/dashboard_administrativo')
@@ -160,8 +188,38 @@ def create_app():
             session.pop('axis_cart')
         logger.info(f'[LOGOUT] Sesión cerrada y carrito vaciado para: {user.email}')
 
+    from flask import g
+    @application.before_request
+    def set_db_role_g():
+        """Mapea el rol de Flask-Security al rol de base de datos en g.db_role."""
+        if current_user.is_authenticated:
+            if current_user.has_role('admin'):
+                g.db_role = 'admin_rol'
+            elif current_user.has_role('gerente'):
+                g.db_role = 'gerente_rol'
+            elif current_user.has_role('produccion'):
+                g.db_role = 'produccion_rol'
+            else:
+                g.db_role = 'cliente_rol'
+        else:
+            # Usuarios anónimos usan el rol de cliente (público)
+            g.db_role = 'cliente_rol'
 
     @application.before_request
+    def set_db_bind():
+        """Cambia el engine de la sesión según el rol en g.db_role."""
+        if hasattr(g, 'db_role'):
+            # Lista de roles que tienen su propio bind (ahora todos)
+            roles_with_binds = ['admin_rol', 'gerente_rol', 'produccion_rol', 'cliente_rol', 'backup_rol']
+            
+            if g.db_role in roles_with_binds:
+                # Cambiamos el engine de la sesión para este request
+                engine = application.extensions['sqlalchemy'].get_engine(bind=g.db_role)
+                db.session.bind = engine
+            else:
+                # Volver al default (flask_user con ALL PRIVILEGES)
+                engine = application.extensions['sqlalchemy'].get_engine()
+                db.session.bind = engine
     def ensure_roles():
         """Asegura que los roles básicos existan en la base de datos."""
         # Esta es una forma rápida de inicializar roles si no existen
@@ -203,6 +261,7 @@ def create_app():
     application.register_blueprint(bp.orden_bp, url_prefix='/orden_produccion')
     application.register_blueprint(bp.security_bp, url_prefix='/security')
     application.register_blueprint(bp.merma_bp, url_prefix='/merma')
+    application.register_blueprint(bp.respaldos_bp, url_prefix='/respaldos')
 
     # ── CSRF Exemptions (rutas públicas del carrito) ──────────────
     # El carrito es una función pública del ecommerce: cualquier usuario
@@ -248,6 +307,7 @@ def create_app():
         no verá la información anterior.
         """
         if current_user.is_authenticated:
+            session.permanent = True
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, post-check=0, pre-check=0"
             response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"

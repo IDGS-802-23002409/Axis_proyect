@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #09090b;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px;
+            border: 1px solid #e4e4e7;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 0.3em;
+            margin: 0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #09090b;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 24px;
+        }
+
+        .order-info {
+            margin-bottom: 32px;
+            padding: 24px;
+            background-color: #f4f4f5;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #71717a;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="logo">AXIS</h1>
+            <p style="text-transform: uppercase; letter-spacing: 0.2em; font-size: 10px; color: #71717a;">Urban Apparel
+            </p>
+        </div>
+
+        <div style="text-align: center;">
+            <div class="status-badge">Pedido Enviado</div>
+            <h2 style="font-weight: 800; margin-bottom: 16px;">¡TU PEDIDO ESTÁ EN CAMINO!</h2>
+            <p>Hola {{ nombre_cliente }}, tu pedido <strong>{{ numero_pedido }}</strong> ha sido entregado a la
+                paquetería y ya va directo hacia ti.</p>
+        </div>
+
+        <div class="order-info">
+            <p style="margin: 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #71717a;">
+                Detalles de la entrega</p>
+            <p style="margin: 8px 0 0 0; font-weight: bold;">Dirección:</p>
+            <p style="margin: 4px 0 0 0;">{{ direccion }}</p>
+        </div>
+
+        <p style="text-align: center; font-size: 14px;">Puedes seguir el estatus de tu entrega en tu sección de "Mis
+            Pedidos" en nuestro sitio web.</p>
+
+        <div style="text-align: center; margin-top: 32px;">
+            <a href="{{ url_host }}{{ url_for('checkout.mis_pedidos') }}"
+                style="display: inline-block; padding: 16px 32px; background-color: #09090b; color: #ffffff; text-decoration: none; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; font-size: 14px;">VER
+                MI PEDIDO</a>
+        </div>
+
+        <div class="footer">
+            <p>© 2026 AXIS CLOTHING. Este es un correo automático, por favor no respondas.</p>
+        </div>
+    </div>
+</body>
+
+</html>
