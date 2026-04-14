@@ -324,12 +324,9 @@ def procesar_checkout():
         db.session.rollback()
         import traceback
         logger.error(f">>> [CHECKOUT] ERROR COMPLETO:\n{traceback.format_exc()}")
-        flash(f"Error al procesar la compra (BD): {str(e)}", 'error')
+        flash(f"Error al procesar la compra. Por favor intenta de nuevo.", 'error')
         return redirect(url_for('checkout.checkout_view'))
-
-
-
-
+        
 
 @checkout_bp.route('/mis-pedidos')
 @login_required
