@@ -248,15 +248,16 @@ def newsletter():
 def procesar_checkout():
     import logging
     logger = logging.getLogger(__name__)
-    
+
     logger.warning(f">>> [CHECKOUT] email={current_user.email}")
     logger.warning(f">>> [CHECKOUT] cliente={current_user.cliente}")
     logger.warning(f">>> [CHECKOUT] roles={[r.name for r in current_user.roles]}")
-    
+
     if not current_user.cliente:
         logger.warning(">>> [CHECKOUT] REDIRIGE: sin cliente")
         flash('Por favor completa tu perfil primero', 'error')
         return redirect(url_for('checkout.completar_perfil'))
+
     logger.warning(f">>> [CHECKOUT] telefono={current_user.cliente.telefono}")
     logger.warning(f">>> [CHECKOUT] direccion={current_user.cliente.direccion_completa}")
 
@@ -275,11 +276,11 @@ def procesar_checkout():
 
     import json
     from sqlalchemy import text
-    
-    # Generar folio seguro
+
+    # Generar folio único
     numero_pedido = f"AXIS-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
     uuid_venta = str(uuid.uuid4())
-    
+
     # Preparar items para el SP
     json_items = []
     for item in cart:
@@ -290,8 +291,9 @@ def procesar_checkout():
         })
 
     try:
-        # Llamar al Procedimiento Almacenado
-        # Argumentos: uuid_venta, numero_pedido, uuid_cliente, metodo_pago, json_items
+        # ── El SP maneja TODA la lógica de negocio ACID: ──────────────────
+        # venta, descuento de stock, pedidos pendientes, órdenes de producción
+        # y reserva de materiales (ejecucion_corte + ejecucion_corte_rollo)
         sp_query = text("CALL sp_procesar_venta_hibrida(:u_v, :n_p, :u_c, :m_p, :j_i, @resumen)")
         db.session.execute(sp_query, {
             'u_v': uuid_venta,
@@ -300,149 +302,21 @@ def procesar_checkout():
             'm_p': request.form.get('metodo_pago', 'Transferencia'),
             'j_i': json.dumps(json_items)
         })
-        
-        # Obtener el resultado del OUT parameter
+
+        # Leer resultado del parametro OUT del SP
         res_row = db.session.execute(text("SELECT @resumen")).fetchone()
         resumen = json.loads(res_row[0]) if res_row and res_row[0] else {}
-        
-        venta = VentaEncabezado(
-            uuid_venta=str(uuid.uuid4()),
-            numero_pedido=numero_pedido,
-            uuid_cliente=current_user.cliente.uuid_cliente,
-            metodo_pago=request.form.get('metodo_pago', 'Transferencia'),
-            estatus_envio='Procesando' # Temporal
-        )
-        db.session.add(venta)
-        db.session.flush()
 
-        for item in cart:
-            producto = ProductoTerminado.query.get(item['uuid_producto'])
-            if not producto or not producto.active:
-                flash(f'El producto {item["nombre"]} ya no está disponible', 'error')
-                db.session.rollback()
-                return redirect(url_for('checkout.checkout_view'))
-
-            cantidad_pedida = int(item['quantity'])
-            stock_actual = int(producto.stock_fisico_actual or 0)
-            
-            detalle = VentaDetalle(
-                uuid_detalle=str(uuid.uuid4()),
-                uuid_venta=venta.uuid_venta,
-                uuid_producto=item['uuid_producto'],
-                cantidad=cantidad_pedida,
-                precio_unitario_historico=Decimal(str(item['price']))
-            )
-            db.session.add(detalle)
-            db.session.flush()
-
-            # REGLA: Política de Inventario "Express"
-            # Pedidos pequeños (< 10): toman del stock disponible y crean OP por el faltante.
-            # Pedidos grandes (>= 10) que superan stock: NO toman stock, crean OP completa
-            #   para preservar inventario para ventas pequeñas.
-            if cantidad_pedida > stock_actual:
-                estatus_global = 'Pendiente'
-
-                # Validar que tenga receta antes de crear OP
-                receta = ExplosionMaterialesCabecera.query.filter_by(uuid_explosion=producto.uuid_explosion).first()
-                if not receta:
-                     flash(f"Error: El producto {producto.sku_especifico} no tiene una receta asignada. Contacte a soporte.", "error")
-                     db.session.rollback()
-                     return redirect(url_for('checkout.checkout_view'))
-
-                if cantidad_pedida < 10 and stock_actual > 0:
-                    faltante = cantidad_pedida - stock_actual
-                    producto.stock_fisico_actual = 0
-                    mensajes_extra.append(
-                        f"{receta.nombre_receta}: {stock_actual} uds. del stock + "
-                        f"{faltante} uds. entrarán a producción (+5 días entrega)."
-                    )
-                    cantidad_op_base = faltante
-                else:
-                    mensajes_extra.append(
-                        f"{receta.nombre_receta} entrará a producción completa (+5 días entrega)."
-                    )
-                    cantidad_op_base = cantidad_pedida
-
-                nueva_op = OrdenProduccion(
-                    uuid_op=str(uuid.uuid4()),
-                    uuid_producto=producto.uuid_producto,
-                    uuid_venta_detalle=detalle.uuid_detalle,
-                    cantidad_a_producir=cantidad_op_base,
-                    estado='Pendiente'
-                )
-                db.session.add(nueva_op)
-                db.session.flush()
-
-                # Reserva de Materiales para la OP automática
-                from app.models.insumos import Insumo
-                from app.models.inventario import RolloInventario
-                from app.models.produccion import EjecucionCorte
-                
-                for det_receta in receta.detalles:
-                    consumo_unitario = Decimal(det_receta.consumo_teorico_unitario)
-                    cantidad_total_necesaria = consumo_unitario * Decimal(cantidad_op_base)
-                    insumo = Insumo.query.get(det_receta.uuid_insumo)
-                    
-                    if insumo.stock_total_acumulado < cantidad_total_necesaria:
-                        mensajes_extra.append(f"Nota de producción: Pendiente de abastecimiento de {insumo.nombre}.")
-                        continue # Saltamos la reserva automática, el admin la hará después
-                    
-                    insumo.stock_total_acumulado -= cantidad_total_necesaria
-
-                    if insumo.unidad_medida == "ROLLO":
-                        prendas_restantes = cantidad_op_base
-                        rollos = RolloInventario.query.filter(
-                            RolloInventario.uuid_insumo == det_receta.uuid_insumo,
-                            RolloInventario.metraje_continuo_actual > 0
-                        ).order_by(RolloInventario.fecha_creacion.asc()).all()
-
-                        for rollo in rollos:
-                            metraje_disponible = Decimal(rollo.metraje_continuo_actual)
-                            prendas_de_este_rollo = int(metraje_disponible // consumo_unitario)
-
-                            if prendas_de_este_rollo <= 0:
-                                continue
-
-                            prendas_a_usar = min(prendas_restantes, prendas_de_este_rollo)
-                            metros_a_descontar = Decimal(prendas_a_usar) * consumo_unitario
-
-                            rollo.metraje_continuo_actual -= metros_a_descontar
-
-                            if rollo.metraje_continuo_actual <= Decimal('0.0001'):
-                                rollo.metraje_continuo_actual = Decimal('0.0000')
-
-                            corte = EjecucionCorte(
-                                uuid_op=nueva_op.uuid_op,
-                                uuid_rollo_used=rollo.uuid_rollo,
-                                metros_teoricos_requeridos=metros_a_descontar,
-                                metros_sacados_bodega=metros_a_descontar,
-                                prendas_reales_logradas=prendas_a_usar
-                            )
-                            db.session.add(corte)
-
-                            prendas_restantes -= prendas_a_usar
-                            if prendas_restantes == 0:
-                                break
-
-                        if prendas_restantes > 0:
-                            mensajes_extra.append(f"Nota para taller: Asegurar trazabilidad de rollo para {insumo.nombre}.")
-                            # Se han descontado los cortes posibles, el resto quedará pendiente de asignar
-
-            else:
-                # Si hay stock suficiente: Se descuenta y queda como completado (si no hay otros pendientes)
-                producto.stock_fisico_actual -= cantidad_pedida
-
-        venta.estatus_envio = estatus_global
         db.session.commit()
 
-        # Limpiar carrito
+        # Limpiar carrito y descuentos de sesión
         save_cart([])
         session.pop('axis_discount', None)
         session.pop('discount_code', None)
 
         if resumen.get('has_pedido'):
-             flash("Tu compra incluye prendas que entrarán a producción (+5 días entrega).", 'info')
-            
+            flash("Tu compra incluye prendas que entrarán a producción (+5 días entrega).", 'info')
+
         flash(f"¡Compra procesada exitosamente! Folio: {numero_pedido}", 'success')
         return redirect(url_for('checkout.pedido_exito', numero_pedido=numero_pedido))
 
@@ -450,11 +324,11 @@ def procesar_checkout():
         db.session.rollback()
         import traceback
         logger.error(f">>> [CHECKOUT] ERROR COMPLETO:\n{traceback.format_exc()}")
-        print(traceback.format_exc()) # Log para consola
-        flash(f'Error al procesar el pedido (DB): {str(e)}', 'error')
-        print(traceback.format_exc())
         flash(f"Error al procesar la compra (BD): {str(e)}", 'error')
         return redirect(url_for('checkout.checkout_view'))
+
+
+
 
 
 @checkout_bp.route('/mis-pedidos')
