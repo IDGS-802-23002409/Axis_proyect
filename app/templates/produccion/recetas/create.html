@@ -1,6 +1,6 @@
 {% extends "produccion/layout.html" %}
 
-{% block container %}
+{% block content %}
 <div class="flex min-h-screen bg-white text-neutral-900 font-sans">
     <main class="flex-1 p-8 xl:p-12">
         <div class="mb-10">
@@ -23,24 +23,50 @@
 
                 {{ form.hidden_tag() }}
 
-                <!-- NOMBRE DEL PRODUCTO E INSTRUCCIONES -->
+                <!-- SECCIÓN: NOMBRE, TALLA, CATEGORÍA E INSTRUCCIONES -->
                 <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- NOMBRE DE LA RECETA -->
                     <div>
                         <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
-                            Nombre del producto *
+                            {{ form.nombre_producto.label }} *
                         </label>
-                        <input type="text" name="nombre_producto" required
-                            class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm"
-                            placeholder="Ej: Camisa Azul">
+                        {{ form.nombre_producto (class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm") }}
+                        {% if form.nombre_producto .errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.nombre_producto .errors[0] }}</p>
+                        {% endif %}
                     </div>
 
+                    <!-- TALLA -->
                     <div>
                         <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
-                            Instrucciones del proceso
+                            {{ form.talla.label }} *
                         </label>
-                        <textarea name="instrucciones_proceso"
-                            class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm"
-                            placeholder="Describe cómo se debe procesar esta prenda" required></textarea>
+                        {{ form.talla(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm") }}
+                        {% if form.talla.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.talla.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- CATEGORÍA -->
+                    <div>
+                        <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+                            {{ form.uuid_categoria.label }} *
+                        </label>
+                        {{ form.uuid_categoria(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm") }}
+                        {% if form.uuid_categoria.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.uuid_categoria.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- INSTRUCCIONES -->
+                    <div>
+                        <label class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+                            {{ form.instrucciones_proceso.label }} *
+                        </label>
+                        {{ form.instrucciones_proceso(class="w-full mt-2 px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm", rows="4") }}
+                        {% if form.instrucciones_proceso.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.instrucciones_proceso.errors[0] }}</p>
+                        {% endif %}
                     </div>
                 </section>
 

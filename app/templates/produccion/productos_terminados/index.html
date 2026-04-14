@@ -3,7 +3,7 @@
 
 {% block header %}Productos Terminados{% endblock %}
 
-{% block container %}
+{% block content %}
 <div class="px-10 pb-10">
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
     <div class="p-4 bg-card border border-border rounded-lg">
@@ -39,7 +39,7 @@
     </div>
 
     <div id="filterPanel" class="p-4 border-b border-border bg-surface hidden">
-      <form method="GET" class="grid grid-cols-1 md:grid-cols-6 gap-3">
+      <form method="GET" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-6 gap-3">
         <div>
           <label class="text-xs text-muted-foreground" for="sku">SKU</label>
           <input type="text" name="sku" id="sku" placeholder="Buscar SKU"
@@ -47,12 +47,12 @@
         </div>
 
         <div>
-          <label class="text-xs text-muted-foreground" for="modelo">Modelo</label>
-          <select name="modelo" id="modelo" class="w-full border border-border bg-input rounded-md px-3 py-2">
+          <label class="text-xs text-muted-foreground" for="explosion">Receta</label>
+          <select name="explosion" id="explosion" class="w-full border border-border bg-input rounded-md px-3 py-2">
             <option value="">Todas</option>
-            {% for m in modelos %}
-            <option value="{{ m.uuid_modelo }}" {% if filtro_modelo==m.uuid_modelo %}selected{% endif %}>{{
-              m.nombre_modelo }}</option>
+            {% for m in explosiones %}
+            <option value="{{ m.uuid_explosion }}" {% if filtro_explosion==m.uuid_explosion %}selected{% endif %}>{{
+              m.nombre_receta +" "+ m.talla }}</option>
             {% endfor %}
           </select>
         </div>
@@ -97,40 +97,54 @@
       <table class="w-full text-sm">
         <thead class="bg-secondary text-muted-foreground uppercase text-xs">
           <tr>
+            <th class="px-4 py-3 text-left">Imagen</th>
             <th class="px-4 py-3 text-left">SKU</th>
-            <th class="px-4 py-3 text-left">Modelo</th>
-            <th class="px-4 py-3 text-left">Talla</th>
+            <th class="px-4 py-3 text-left">Nombre</th>
+            <!-- <th class="px-4 py-3 text-left">Receta</th> -->
             <th class="px-4 py-3 text-left">Stock</th>
             <th class="px-4 py-3 text-left">Precio</th>
-            <th class="px-4 py-3 text-right">Acciones</th>
+            <th class="px-4 py-3 text-left">Acciones</th>
           </tr>
         </thead>
         <tbody>
           {% for p in productos %}
           <tr class="border-b border-border hover:bg-muted">
+            <td class="px-6 py-4">
+                        {% if p.imagen_url %}
+                        <img src="{{ p.imagen_url }}" class="w-12 h-12 rounded-md object-cover border" alt="img">
+                        {% else %}
+                        <div class="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center">
+                            <i data-lucide="image" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                        {% endif %}
+                    </td>
             <td class="px-4 py-3">{{ p.sku_especifico }}</td>
-            <td class="px-4 py-3">{{ p.modelo.nombre_modelo }}</td>
-            <td class="px-4 py-3">{{ p.talla }}</td>
+                        <td class="px-6 py-4">
+  {{ p.explosion.nombre_receta }} Talla {{ p.explosion.talla }}
+</td>
+            <!-- <td class="px-4 py-3">{{ p.explosion.nombre_receta }}</td> -->
             <td class="px-4 py-3">
               <span
                 class="px-2 py-1 rounded-full text-xs font-semibold {% if p.stock_fisico_actual == 0 %}bg-rose-500 text-white{% elif p.stock_fisico_actual <= p.stock_minimo_alerta %}bg-amber-500 text-gray-800{% else %}bg-emerald-500 text-white{% endif %}">{{
                 p.stock_fisico_actual }}</span>
             </td>
             <td class="px-4 py-3">${{ '%.2f'|format(p.precio_venta) }}</td>
-            <td class="px-4 py-3 text-right flex justify-end items-center gap-2">
-              <a href="{{ url_for('productos_bp.detalle_producto', uuid=p.uuid_producto) }}"
-                class="text-primary hover:text-primary/80 transition-colors" title="Ver detalles">
-                <i data-lucide="info" class="w-4 h-4 cursor-pointer hover:text-blue-600"></i>
-              </a>
-              <a href="{{ url_for('productos_bp.editar_producto', uuid=p.uuid_producto) }}"
-                class="text-blue-500 hover:text-blue-700">
-                <i data-lucide="edit-2" class="w-4 h-4"></i>
-              </a>
-              <button type="button" onclick="openDeleteModal('{{ p.uuid_producto }}')"
-                class="text-red-500 hover:text-red-700 {% if not p.active %}opacity-50 cursor-not-allowed{% endif %}" {%
-                if not p.active %}disabled{% endif %}>
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
+<td class="px-4 py-3">
+  <div class="flex justify-start items-center h-full gap-2">
+    <a href="{{ url_for('productos_bp.detalle_producto', uuid=p.uuid_producto) }}"
+      class="text-primary hover:text-primary/80 transition-colors" title="Ver detalles">
+      <i data-lucide="info" class="w-4 h-4 cursor-pointer hover:text-blue-600"></i>
+    </a>
+    <a href="{{ url_for('productos_bp.editar_producto', uuid=p.uuid_producto) }}"
+      class="text-blue-500 hover:text-blue-700">
+      <i data-lucide="edit-2" class="w-4 h-4"></i>
+    </a>
+    <button type="button" onclick="openDeleteModal('{{ p.uuid_producto }}')"
+      class="text-red-500 hover:text-red-700 {% if not p.active %}opacity-50 cursor-not-allowed{% endif %}" {%
+      if not p.active %}disabled{% endif %}>
+      <i data-lucide="trash-2" class="w-4 h-4"></i>
+    </button>
+  </div>
             </td>
           </tr>
           {% else %}

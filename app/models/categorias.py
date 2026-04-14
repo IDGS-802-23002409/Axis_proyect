@@ -1,6 +1,6 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import Column, String, Boolean, DateTime, func
+from sqlalchemy import Column, Enum, String, Boolean, DateTime, func
 
 
 class Categoria(db.Model):
@@ -9,6 +9,7 @@ class Categoria(db.Model):
     uuid_categoria = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     nombre = Column(String(50), nullable=False)
     descripcion = Column(String(255))
+    tipo = Column(Enum('Insumo', 'Prenda'), default='Insumo')
     imagen_url = Column(String(255), default="/static/images/default/default-image.png")
     estatus_visible = Column(Boolean, default=True)
     fecha_creacion = Column(DateTime, server_default=func.now())

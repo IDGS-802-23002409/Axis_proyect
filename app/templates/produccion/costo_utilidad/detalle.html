@@ -2,12 +2,13 @@
 {% block title %}Costo y Utilidad - {{ producto.sku_especifico if producto else 'Detalle' }}{% endblock %}
 {% block header %}Análisis de Costo y Utilidad{% endblock %}
 
-{% block container %}
+{% block content %}
 <div class="px-10 pb-10">
   <div class="mb-6">
-    <a href="{{ url_for('costo_utilidad.index') }}" class="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors">
+    <a href="{{ url_for('costo_utilidad.index') }}"
+       class="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
       </svg>
       Volver a lista de productos
     </a>
@@ -15,24 +16,28 @@
 
   <div class="bg-card border border-border rounded-lg p-6">
 
-    {# ------------------------------------------------------------------ #}
-    {# Selector de producto                                                 #}
-    {# ------------------------------------------------------------------ #}
+    <!-- ── Selector de producto ── -->
     <form method="GET" class="mb-6 pb-6 border-b border-border">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         <div class="md:col-span-3">
-          <label class="text-xs text-muted-foreground mb-2 block" for="producto">Seleccionar producto</label>
-          <select name="producto" id="producto" class="w-full border border-border bg-input rounded-md px-3 py-2" onchange="this.form.submit()">
+          <label class="text-xs text-muted-foreground mb-2 block" for="producto">
+            Seleccionar producto
+          </label>
+          <select name="producto" id="producto"
+            class="w-full border border-border bg-input rounded-md px-3 py-2"
+            onchange="this.form.submit()">
             <option value="">Seleccione un producto</option>
             {% for p in productos %}
-            <option value="{{ p.uuid_producto }}" {% if producto and producto.uuid_producto == p.uuid_producto %}selected{% endif %}>
-              {{ p.sku_especifico }} – {{ p.modelo.nombre_modelo }} – Talla {{ p.talla }}
+            <option value="{{ p.uuid_producto }}"
+              {% if producto and producto.uuid_producto == p.uuid_producto %}selected{% endif %}>
+              {{ p.sku_especifico }} – {{ p.explosion.nombre_receta }} – Talla {{ p.explosion.talla }}
             </option>
             {% endfor %}
           </select>
         </div>
         <div class="flex items-end">
-          <button type="submit" class="w-full px-4 py-2 bg-black text-white rounded-md text-sm hover:bg-black/90 transition-colors">
+          <button type="submit"
+            class="w-full px-4 py-2 bg-black text-white rounded-md text-sm hover:bg-black/90 transition-colors">
             Cargar
           </button>
         </div>
@@ -41,32 +46,32 @@
 
     {% if producto %}
 
-    {# ------------------------------------------------------------------ #}
-    {# Encabezado del producto                                              #}
-    {# ------------------------------------------------------------------ #}
+    <!-- ── Encabezado del producto ── -->
     <div class="mb-6 pb-6 border-b border-border">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <h2 class="text-2xl font-bold mb-2">{{ producto.modelo.nombre_modelo }}</h2>
+          <h2 class="text-2xl font-bold mb-2">{{ producto.explosion.nombre_receta }}</h2>
           <div class="space-y-1 text-sm text-muted-foreground">
-            <p><span class="font-semibold">SKU:</span> {{ producto.sku_especifico }}</p>
-            <p><span class="font-semibold">Talla:</span> {{ producto.talla }}</p>
-            <p><span class="font-semibold">Categoría:</span> {{ producto.modelo.categoria.nombre if producto.modelo and producto.modelo.categoria else 'N/A' }}</p>
+            <p><span class="font-semibold text-foreground">SKU:</span> {{ producto.sku_especifico }}</p>
+            <p><span class="font-semibold text-foreground">Talla:</span> {{ producto.explosion.talla }}</p>
+            <p><span class="font-semibold text-foreground">Categoría:</span>
+              {{ producto.explosion.categoria.nombre if producto.explosion and producto.explosion.categoria else 'N/A' }}
+            </p>
           </div>
         </div>
         <div class="flex items-start justify-end">
           <div class="text-right">
             <p class="text-xs text-muted-foreground mb-1">Última actualización</p>
-            <p class="text-sm">{{ producto.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') if producto.fecha_actualizacion else 'N/A' }}</p>
+            <p class="text-sm">
+              {{ producto.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') if producto.fecha_actualizacion else 'N/A' }}
+            </p>
           </div>
         </div>
       </div>
     </div>
 
-    {# ------------------------------------------------------------------ #}
-    {# KPIs — 5 tarjetas                                                    #}
-    {# ------------------------------------------------------------------ #}
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    <!-- ── KPIs — 3 tarjetas ── -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
 
       <div class="p-4 bg-secondary border border-border rounded-md hover:border-primary transition-colors">
         <p class="text-xs text-muted-foreground mb-2">Precio actual</p>
@@ -80,32 +85,17 @@
 
       <div class="p-4 bg-secondary border border-border rounded-md hover:border-primary transition-colors">
         <p class="text-xs text-muted-foreground mb-2">Utilidad actual</p>
-        <p class="text-2xl font-bold {% if utilidad_actual > 0 %}text-green-600{% elif utilidad_actual < 0 %}text-red-600{% else %}text-gray-500{% endif %}">
+        <p class="text-2xl font-bold
+          {% if utilidad_actual > 0 %}text-green-600
+          {% elif utilidad_actual < 0 %}text-red-600
+          {% else %}text-gray-500{% endif %}">
           {{ '%.2f' | format(utilidad_actual) }}%
-        </p>
-      </div>
-
-      {# Merma de tela: proviene de EjecucionCorte #}
-      <div class="p-4 bg-secondary border border-border rounded-md hover:border-primary transition-colors">
-        <p class="text-xs text-muted-foreground mb-1">Merma tela (corte)</p>
-        <p class="text-2xl font-bold">{{ '%.2f' | format(merma_tela) }}%</p>
-      </div>
-
-      {# Merma promedio de piezas: promedio simple del dict #}
-      {% set merma_pieza_vals = mermas_pieza.values() | list %}
-      {% set merma_pieza_prom = (merma_pieza_vals | sum / merma_pieza_vals | length) if merma_pieza_vals | length > 0 else 0 %}
-      <div class="p-4 bg-secondary border border-border rounded-md hover:border-primary transition-colors">
-        <p class="text-xs text-muted-foreground mb-1">Merma piezas (prom.)</p>
-        <p class="text-2xl font-bold {% if merma_pieza_prom < 0 %}text-green-600{% elif merma_pieza_prom > 3 %}text-amber-600{% endif %}">
-          {{ '%.2f' | format(merma_pieza_prom) }}%
         </p>
       </div>
 
     </div>
 
-    {# ------------------------------------------------------------------ #}
-    {# Tabla de desglose de insumos                                         #}
-    {# ------------------------------------------------------------------ #}
+    <!-- ── Desglose de insumos ── -->
     {% if desglose_insumos %}
     <div class="mb-6">
       <h3 class="text-lg font-semibold mb-4 pb-3 border-b border-border">Desglose de insumos</h3>
@@ -113,43 +103,35 @@
         <table class="w-full">
           <thead class="bg-secondary border border-border">
             <tr>
-              <th class="px-4 py-3 text-left   text-xs font-semibold text-muted-foreground">Insumo</th>
-              <th class="px-4 py-3 text-center  text-xs font-semibold text-muted-foreground">Origen merma</th>
-              <th class="px-4 py-3 text-right   text-xs font-semibold text-muted-foreground">Consumo teórico</th>
-              <th class="px-4 py-3 text-right   text-xs font-semibold text-muted-foreground">Consumo real</th>
-              <th class="px-4 py-3 text-right   text-xs font-semibold text-muted-foreground">Merma (%)</th>
-              <th class="px-4 py-3 text-right   text-xs font-semibold text-muted-foreground">Costo unit.</th>
-              <th class="px-4 py-3 text-right   text-xs font-semibold text-muted-foreground">Costo total</th>
+              <th class="px-4 py-3 text-left  text-xs font-semibold text-muted-foreground">Insumo</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Unidad</th>
+              <th class="px-4 py-3 text-right  text-xs font-semibold text-muted-foreground">Consumo teórico</th>
+              <th class="px-4 py-3 text-right  text-xs font-semibold text-muted-foreground">Costo unitario</th>
+              <th class="px-4 py-3 text-right  text-xs font-semibold text-muted-foreground">Costo total</th>
             </tr>
           </thead>
           <tbody>
             {% for item in desglose_insumos %}
             <tr class="border-b border-border hover:bg-secondary/50 transition-colors">
               <td class="px-4 py-3 text-sm">{{ item.insumo }}</td>
-
-              <td class="px-4 py-3 text-center">
-                {% if item.fuente_merma == 'corte' %}
-                  <span class="inline-block text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">Corte</span>
-                {% else %}
-                  <span class="inline-block text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Confección</span>
-                {% endif %}
+              <td class="px-4 py-3 text-sm text-center">
+                <span class="text-xs px-2 py-0.5 rounded-full
+                  {% if item.unidad_base == 'METRO' %}bg-blue-50 text-blue-700 border border-blue-200
+                  {% else %}bg-amber-50 text-amber-700 border border-amber-200{% endif %}">
+                  {{ item.unidad_base }}
+                </span>
               </td>
-
-              <td class="px-4 py-3 text-sm text-right">{{ '%.4f' | format(item.consumo_teorico) }} {{ item.unidad_base }}</td>
-              <td class="px-4 py-3 text-sm text-right">{{ '%.4f' | format(item.consumo_real) }} {{ item.unidad_base }}</td>
-
-              {# Merma en rojo si > 0, verde si negativa (ahorro) #}
-              <td class="px-4 py-3 text-sm text-right {% if item['merma_aplicada_%'] > 0 %}text-red-600{% elif item['merma_aplicada_%'] < 0 %}text-green-600{% endif %}">
-                {{ '%.2f' | format(item['merma_aplicada_%']) }}%
+              <td class="px-4 py-3 text-sm text-right">
+                {{ '%.4f' | format(item.consumo_teorico) }}
               </td>
-
               <td class="px-4 py-3 text-sm text-right">${{ '%.4f' | format(item.costo_unitario) }}</td>
               <td class="px-4 py-3 text-sm text-right font-semibold">${{ '%.2f' | format(item.costo_total) }}</td>
             </tr>
             {% endfor %}
 
+            <!-- Total -->
             <tr class="bg-secondary font-semibold">
-              <td colspan="6" class="px-4 py-3 text-sm text-right">Total costo MP:</td>
+              <td colspan="4" class="px-4 py-3 text-sm text-right">Total costo MP:</td>
               <td class="px-4 py-3 text-sm text-right">${{ '%.2f' | format(costo_mp) }}</td>
             </tr>
           </tbody>
@@ -157,6 +139,8 @@
       </div>
     </div>
     {% endif %}
+
+    <!-- ── Simulación de precio ── -->
     <div class="border-t border-border pt-6">
       <h3 class="text-lg font-semibold mb-4">Simulación de precio</h3>
       <form method="POST" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -164,64 +148,49 @@
         <input type="hidden" name="producto" value="{{ producto.uuid_producto }}">
 
         <div>
-          <label class="text-xs text-muted-foreground mb-2 block" for="margen">Margen deseado (%)</label>
-          <input
-            type="number"
-            step="0.1"
-            min="0"
-            name="margen"
-            id="margen"
-            value="{{ margen }}"
-            class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm focus:outline-none focus:border-primary"
-            required
-          >
+          <label class="text-xs text-muted-foreground mb-2 block" for="margen">
+            Margen deseado (%)
+          </label>
+          <input type="number" step="0.1" min="0"
+            name="margen" id="margen" value="{{ margen }}"
+            class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm
+                   focus:outline-none focus:border-primary"
+            required>
         </div>
 
         <div>
           <label class="text-xs text-muted-foreground mb-2 block">Costo de materiales</label>
-          <input
-            type="text"
-            readonly
+          <input type="text" readonly
             class="w-full border border-border bg-secondary rounded-md px-3 py-2 text-sm"
-            value="${{ '%.2f' | format(costo_mp) }}"
-          >
+            value="${{ '%.2f' | format(costo_mp) }}">
         </div>
 
         <div>
           <label class="text-xs text-muted-foreground mb-2 block">Precio sugerido</label>
-          <input
-            type="text"
-            readonly
+          <input type="text" readonly
             class="w-full border border-border bg-secondary rounded-md px-3 py-2 text-sm font-semibold text-primary"
-            value="{% if precio_ajustado > 0 %}${{ '%.2f' | format(precio_ajustado) }}{% else %}—{% endif %}"
-          >
+            value="{% if precio_ajustado > 0 %}${{ '%.2f' | format(precio_ajustado) }}{% else %}—{% endif %}">
         </div>
+
         <div>
           <label class="text-xs text-muted-foreground mb-2 block">
             {% if precio_ajustado > 0 %}Margen aplicado{% else %}Utilidad sobre precio actual{% endif %}
           </label>
-          <input
-            type="text"
-            readonly
+          <input type="text" readonly
             class="w-full border border-border bg-secondary rounded-md px-3 py-2 text-sm"
-            value="{% if precio_ajustado > 0 %}{{ '%.2f' | format(margen) }}%{% else %}{{ '%.2f' | format(utilidad_actual) }}%{% endif %}"
-          >
+            value="{% if precio_ajustado > 0 %}{{ '%.2f' | format(margen) }}%{% else %}{{ '%.2f' | format(utilidad_actual) }}%{% endif %}">
         </div>
 
         <div class="flex gap-3 col-span-1 md:col-span-2 lg:col-span-4">
-          <button
-            type="submit"
-            class="w-full px-4 py-2 rounded-md bg-primary text-white text-sm hover:bg-primary/90 transition-colors"
-          >
+          <button type="submit"
+            class="w-full px-4 py-2 rounded-md bg-primary text-white text-sm
+                   hover:bg-primary/90 transition-colors">
             Calcular precio sugerido
           </button>
-          <button
-            type="submit"
-            name="guardar_precio"
-            value="1"
-            class="w-full px-4 py-2 rounded-md bg-black text-white text-sm hover:bg-black/90 transition-colors"
-            {% if precio_ajustado == 0 %}disabled title="Primero calcula un precio"{% endif %}
-          >
+          <button type="submit" name="guardar_precio" value="1"
+            class="w-full px-4 py-2 rounded-md bg-black text-white text-sm
+                   hover:bg-black/90 transition-colors"
+            {% if precio_ajustado == 0 %}disabled title="Primero calcula un precio"{% endif %}>
             Guardar precio en producto
           </button>
         </div>

@@ -98,11 +98,7 @@ def create():
                         db.session.rollback()
                         return redirect(url_for("pedidos_proveedor_bp.create"))
 
-                if insumo.categoria and proveedor_obj:
-                    if insumo.categoria.nombre != proveedor_obj.categoria_insumo:
-                        flash(f"El insumo '{insumo.nombre}' ({insumo.categoria.nombre}) no coincide con la categoría del proveedor ({proveedor_obj.categoria_insumo}).", "error")
-                        db.session.rollback()
-                        return redirect(url_for("pedidos_proveedor_bp.create"))
+                
 
                 detalle = PedidoProveedorDetalle(
                     uuid_pedido=nuevo_pedido.uuid_pedido,

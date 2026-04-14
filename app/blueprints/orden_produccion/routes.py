@@ -1,39 +1,44 @@
 from flask import flash, redirect, render_template, request, url_for
 from app.blueprints.orden_produccion import orden_bp
 from app.blueprints.productos_terminados.form import ProductoTerminadoForm
-from app.models.modelos_productos import ProductoTerminado, ModeloRopa
+from app.models.modelos_productos import ProductoTerminado
 
 from app.utils.database_connection import db
 from flask_security import login_required, roles_accepted
 from sqlalchemy.orm import joinedload
 from decimal import Decimal
-from app.models.explosion_materiales import ExplosionMaterialesDetalle
+from app.models.explosion_materiales import ExplosionMaterialesDetalle, ExplosionMaterialesCabecera
 from app.models.inventario import RolloInventario
 from app.models.insumos import Insumo
-from app.models.produccion import OrdenProduccion, EjecucionCorte
-from app.models.ventas import VentaEncabezado,VentaDetalle
+from app.models.produccion import OrdenProduccion, EjecucionCorte, EjecucionCorteRollo
+from app.models.ventas import VentaEncabezado, VentaDetalle
 from app.utils.database_connection import db
 from .forms import OrdenProduccionForm
+from flask_security import current_user
+from decimal import Decimal
+from sqlalchemy.orm import joinedload
+from app.utils.database_connection import db
+from app.models import OrdenProduccion, Insumo, RolloInventario, EjecucionCorte
+from flask import request, jsonify, url_for
+from app.models.mermas import Merma
 
-@orden_bp.route('/')
+
+@orden_bp.route("/")
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted("admin", "gerente", "produccion")
 def index():
 
-    ordenes = db.session.query(OrdenProduccion).join(
-        ProductoTerminado
-    ).join(
-        ModeloRopa
-    ).order_by(OrdenProduccion.fecha_solicitud.desc()).all()
-
-    return render_template(
-        'produccion/orden/index.html',
-        ordenes=ordenes
+    ordenes = (
+        db.session.query(OrdenProduccion)
+        .join(ProductoTerminado)
+        .order_by(OrdenProduccion.fecha_solicitud.desc())
+        .all()
     )
 
+    return render_template("produccion/orden/index.html", ordenes=ordenes)
 
 
-
+"""
 @orden_bp.route('/crear', methods=['GET', 'POST'])
 @login_required
 @roles_accepted('admin', 'gerente', 'produccion')
@@ -44,7 +49,7 @@ def create():
     # Productos activos
     productos = ProductoTerminado.query.filter_by(active=True).all()
     form.uuid_producto.choices = [
-        (p.uuid_producto, f"{p.sku_especifico} - {p.modelo.nombre_modelo} ({p.talla})")
+        (p.uuid_producto, f"{p.sku_especifico} - {p.explosion.nombre_receta} ({p.explosion.talla})")
         for p in productos
     ]
 
@@ -162,57 +167,434 @@ def create():
             return redirect(url_for('orden_bp.index'))
 
     return render_template('produccion/orden/create.html', form=form)
+"""
+# CREAR UNA ORDEN DE PRODUCCION QUE NO FUE PEDIDO DE UN CLIENTE, NO TIENE VENTA RELACIONADA
+# YA NO SE CREA POR LOTES SE INGRESAN LAS PRENDAS A PRODUCIR
+# SE DESCUENTAN INSUMOS Y TELA HASTA QUE SU ESTADO PASA A CORTE, SIMPLEMENTE SE CREA LA  SOLICITUD
 
-@orden_bp.route('/ver/<uuid_op>')
+
+@orden_bp.route("/crear", methods=["GET", "POST"])
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted("admin", "gerente", "produccion")
+def create():
+
+    form = OrdenProduccionForm()
+
+    #  SIEMPRE cargar productos activos
+    productos = ProductoTerminado.query.filter_by(active=True).all()
+
+    form.uuid_producto.choices = [("", "Seleccione una prenda")] + [
+        (
+            str(p.uuid_producto),
+            f"{p.sku_especifico} - {p.explosion.nombre_receta} ({p.explosion.talla})",
+        )
+        for p in productos
+    ]
+
+    if form.validate_on_submit():
+
+        if not form.uuid_producto.data:
+            flash("Debes seleccionar una prenda", "warning")
+            return redirect(url_for("orden_bp.create"))
+
+        producto = ProductoTerminado.query.get(form.uuid_producto.data)
+
+        if not producto:
+            flash("El producto no existe", "danger")
+            return redirect(url_for("orden_bp.create"))
+
+        try:
+            cantidad = int(form.cantidad_a_producir.data)
+
+            if cantidad <= 0:
+                flash("La cantidad debe ser mayor a 0", "warning")
+                return redirect(url_for("orden_bp.create"))
+
+            #  SOLO ORDEN (SIN RECETA, SIN INVENTARIO, SIN NADA MÁS)
+            orden = OrdenProduccion(
+                uuid_producto=producto.uuid_producto,
+                uuid_venta_detalle=None,
+                cantidad_a_producir=cantidad,
+                estado="Pendiente",
+            )
+
+            db.session.add(orden)
+            db.session.commit()
+
+            flash("Orden creada en estado PENDIENTE.", "success")
+            return redirect(url_for("orden_bp.index"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error al crear la orden: {str(e)}", "danger")
+            return redirect(url_for("orden_bp.create"))
+
+    return render_template("produccion/orden/create.html", form=form)
+
+
+@orden_bp.route("/ver/<uuid_op>")
+@login_required
+@roles_accepted("admin", "gerente", "produccion")
 def ver(uuid_op):
-    orden = db.session.query(OrdenProduccion).options(
-        joinedload(OrdenProduccion.producto).joinedload(ProductoTerminado.modelo),
-        joinedload(OrdenProduccion.venta_detalle)
-    ).get_or_404(uuid_op)
-    
-    # Obtener ejecuciones de corte asociadas con carga ansiosa de relaciones
-    cortes = EjecucionCorte.query.options(
-        joinedload(EjecucionCorte.rollo_usado).joinedload(RolloInventario.insumo)
-    ).filter_by(uuid_op=uuid_op).all()
-    
-    return render_template(
-        'produccion/orden/ver.html',
-        orden=orden,
-        cortes=cortes
+    orden = (
+        db.session.query(OrdenProduccion)
+        .options(
+            joinedload(OrdenProduccion.producto).joinedload(
+                ProductoTerminado.explosion
+            ),
+            joinedload(OrdenProduccion.venta_detalle),
+        )
+        .get_or_404(uuid_op)
     )
 
-@orden_bp.route('/avanzar_estado/<uuid_op>', methods=['POST'])
-@login_required
-@roles_accepted('admin', 'gerente', 'produccion')
-def avanzar_estado(uuid_op):
-    orden = OrdenProduccion.query.get_or_404(uuid_op)
-    
-    estados = ['Pendiente', 'En Corte', 'Confección', 'Terminado']
-    
+    # Obtener ejecuciones de corte asociadas con carga ansiosa de relaciones
+    cortes = (
+        EjecucionCorte.query.options(
+            joinedload(EjecucionCorte.rollos_usados)
+            .joinedload(EjecucionCorteRollo.rollo)
+            .joinedload(RolloInventario.insumo)
+        )
+        .filter_by(uuid_op=uuid_op)
+        .all()
+    )
+
+    return render_template("produccion/orden/ver.html", orden=orden, cortes=cortes)
+
+
+
+from decimal import Decimal
+from sqlalchemy.orm import joinedload
+
+def iniciar_corte(uuid_op, uuid_usuario):
+
     try:
+
+        op = (
+            OrdenProduccion.query.options(
+                joinedload(OrdenProduccion.producto)
+                .joinedload(ProductoTerminado.explosion)
+                .joinedload(ExplosionMaterialesCabecera.detalles)
+                .joinedload(ExplosionMaterialesDetalle.insumo)
+            )
+            .filter_by(uuid_op=uuid_op)
+            .with_for_update()
+            .first()
+        )
+
+        if not op:
+            raise Exception("Orden no encontrada")
+
+        if op.estado != "Pendiente":
+            raise Exception("La orden no está en estado Pendiente")
+
+        explosion = op.producto.explosion
+
+        if not explosion or explosion.estatus != "ACTIVO":
+            raise Exception("La receta no es válida")
+
+        cantidad = Decimal(op.cantidad_a_producir)
+
+        # ─────────────────────────────
+        # 1. CALCULAR CONSUMO TEÓRICO
+        # ─────────────────────────────
+        consumo_insumos = {}
+
+        for d in explosion.detalles:
+
+            insumo = d.insumo
+            requerido = Decimal(d.consumo_teorico_unitario) * cantidad
+
+            consumo_insumos[insumo.uuid_insumo] = {
+                "insumo": insumo,
+                "requerido": requerido,
+                "unidad": insumo.unidad_medida
+            }
+
+        # ─────────────────────────────
+        # 2. VALIDAR PIEZAS
+        # ─────────────────────────────
+        for data in consumo_insumos.values():
+
+            if data["unidad"] == "PIEZA":
+
+                db_insumo = (
+                    Insumo.query
+                    .filter_by(uuid_insumo=data["insumo"].uuid_insumo)
+                    .with_for_update()
+                    .first()
+                )
+
+                if (db_insumo.stock_total_acumulado or 0) < data["requerido"]:
+                    raise Exception(f"Stock insuficiente de {db_insumo.nombre}")
+
+        # ─────────────────────────────
+        # 3. DESCONTAR PIEZAS
+        # ─────────────────────────────
+        for data in consumo_insumos.values():
+
+            if data["unidad"] == "PIEZA":
+
+                db_insumo = (
+                    Insumo.query
+                    .filter_by(uuid_insumo=data["insumo"].uuid_insumo)
+                    .with_for_update()
+                    .first()
+                )
+
+                db_insumo.stock_total_acumulado -= data["requerido"]
+
+        # ─────────────────────────────
+        # 4. DESCONTAR ROLLOS (REAL)
+        # ─────────────────────────────
+        ejecucion_rollos = []
+        metros_reales_usados = Decimal(0)
+
+        for data in consumo_insumos.values():
+
+            if data["unidad"] == "ROLLO":
+
+                requerido = data["requerido"]
+
+                rollos = (
+                    RolloInventario.query
+                    .filter_by(uuid_insumo=data["insumo"].uuid_insumo)
+                    .with_for_update()
+                    .order_by(RolloInventario.metraje_continuo_actual.desc())
+                    .all()
+                )
+
+                if not rollos:
+                    raise Exception(f"No hay rollos para {data['insumo'].nombre}")
+
+                restante = requerido
+
+                for rollo in rollos:
+
+                    if restante <= 0:
+                        break
+
+                    disponible = Decimal(rollo.metraje_continuo_actual or 0)
+
+                    if disponible <= 0:
+                        continue
+
+                    usado = min(disponible, restante)
+
+                    rollo.metraje_continuo_actual -= usado
+                    restante -= usado
+
+                    metros_reales_usados += usado
+
+                    ejecucion_rollos.append({
+                        "rollo": rollo,
+                        "metros": usado
+                    })
+
+                if restante > 0:
+                    raise Exception("No hay suficiente metraje en inventario")
+
+        # ─────────────────────────────
+        # 5. CREAR EJECUCIÓN (CORRECTA)
+        # ─────────────────────────────
+        metros_teoricos = sum(
+            data["requerido"] for data in consumo_insumos.values()
+        )
+
+        ejecucion = EjecucionCorte(
+            uuid_op=op.uuid_op,
+
+            metros_teoricos_requeridos=metros_teoricos,
+            metros_sacados_bodega=metros_reales_usados,
+
+            prendas_reales_logradas=int(op.cantidad_a_producir),
+
+            usuario_corto_uuid=uuid_usuario
+        )
+
+        db.session.add(ejecucion)
+        db.session.flush()
+
+        # ─────────────────────────────
+        # 6. GUARDAR ROLLOS USADOS (CON INSUMO)
+        # ─────────────────────────────
+        for data in consumo_insumos.values():
+
+            if data["unidad"] == "ROLLO":
+
+                rollos = (
+                    RolloInventario.query
+                    .filter_by(uuid_insumo=data["insumo"].uuid_insumo)
+                    .all()
+                )
+
+                for r in ejecucion_rollos:
+
+                    db.session.add(EjecucionCorteRollo(
+                        uuid_corte=ejecucion.uuid_corte,
+                        uuid_rollo=r["rollo"].uuid_rollo,
+                        uuid_insumo=r["rollo"].uuid_insumo,  # 🔥 CLAVE
+                        metros_usados=r["metros"]
+                    ))
+
+                break
+
+        # ─────────────────────────────
+        # 7. CAMBIAR ESTADO
+        # ─────────────────────────────
+        op.estado = "En Corte"
+
+        db.session.commit()
+
+        return {
+            "ok": True,
+            "mensaje": "Corte iniciado correctamente"
+        }
+
+    except Exception as e:
+        db.session.rollback()
+        return {"ok": False, "error": str(e)}
+
+from flask import request, jsonify, url_for
+from flask_login import current_user
+
+
+@orden_bp.route("/avanzar_estado/<uuid_op>", methods=["POST"])
+@login_required
+@roles_accepted("admin", "gerente", "produccion")
+def avanzar_estado(uuid_op):
+
+    orden = OrdenProduccion.query.get_or_404(uuid_op)
+    estados = ["Pendiente", "En Corte", "Confección", "Terminado"]
+
+    try:
+        data = request.get_json() or {}
+
+        # Solo considerar merma si NO viene de Pendiente
+        con_merma = False
+        if orden.estado != "Pendiente":
+            con_merma = data.get("con_merma", False)
+
+        # Si ya está terminada
+        if orden.estado == "Terminado":
+            return jsonify({
+                "ok": True,
+                "message": "La orden ya está en estado Terminado"
+            })
+
         idx_actual = estados.index(orden.estado)
-        if idx_actual < len(estados) - 1:
-            nuevo_estado = estados[idx_actual + 1]
+        nuevo_estado = estados[idx_actual + 1]
+
+        # ─────────────────────────────
+        # CORTE (NO preguntar merma)
+        # ─────────────────────────────
+        if nuevo_estado == "En Corte":
+
+            resultado = iniciar_corte(uuid_op, current_user.id)
+
+            if not resultado["ok"]:
+                return jsonify({
+                    "ok": False,
+                    "error": resultado["error"]
+                }), 400
+
             orden.estado = nuevo_estado
-            
-            # Si pasamos a Terminado, integramos al stock final
-            if nuevo_estado == 'Terminado':
-                if orden.uuid_venta_detalle:
-                    flash(f"Orden terminada. Las prendas están listas para surtir la venta relacionada.", "success")
-                else:
-                    producto = orden.producto
-                    producto.stock_fisico_actual = (producto.stock_fisico_actual or 0) + orden.cantidad_a_producir
-                    flash(f"Orden terminada. {orden.cantidad_a_producir} unidades añadidas al stock de {producto.modelo.nombre_modelo}.", "success")
-            else:
-                flash(f"Estado de la orden actualizado a {nuevo_estado}.", "success")
-                
             db.session.commit()
-        else:
-            flash("La orden ya está en estado Terminado.", "info")
-            
-    except ValueError:
-        flash("Estado actual inválido.", "danger")
-        
-    return redirect(url_for('orden_bp.index'))
+
+            return jsonify({
+                "ok": True,
+                "message": "Corte iniciado correctamente"
+            })
+
+        # ─────────────────────────────
+        # CONFECCIÓN (SÍ preguntar merma)
+        # ─────────────────────────────
+        if nuevo_estado == "Confección":
+
+            if con_merma:
+                merma_existe = Merma.query.filter_by(
+                    uuid_op=uuid_op,
+                    activo=True
+                ).first()
+
+                if not merma_existe:
+                    return jsonify({
+                        "ok": False,
+                        "requiere_merma": True,
+                        "message": "Debes registrar la merma antes de avanzar a Confección",
+                        "redirect": url_for(
+                            "merma_bp.registrar_merma_op",
+                            uuid_op=uuid_op
+                        )
+                    })
+
+            orden.estado = nuevo_estado
+            db.session.commit()
+
+            return jsonify({
+                "ok": True,
+                "message": "Estado actualizado a Confección"
+            })
+
+        # ─────────────────────────────
+        # TERMINADO (SÍ preguntar merma)
+        # ─────────────────────────────
+        if nuevo_estado == "Terminado":
+
+            if con_merma:
+                merma_existe = Merma.query.filter_by(
+                    uuid_op=uuid_op,
+                    activo=True
+                ).first()
+
+                if not merma_existe:
+                    return jsonify({
+                        "ok": False,
+                        "requiere_merma": True,
+                        "message": "Debes registrar la merma antes de terminar la orden",
+                        "redirect": url_for(
+                            "merma_bp.registrar_merma_op",
+                            uuid_op=uuid_op
+                        )
+                    })
+
+            # Cambiar estado
+            orden.estado = nuevo_estado
+
+            # ─────────────────────────
+            # PRODUCCIÓN NORMAL
+            # ─────────────────────────
+            if not orden.uuid_venta_detalle:
+
+                producto = orden.producto
+                producto.stock_fisico_actual = (
+                    producto.stock_fisico_actual or 0
+                ) + orden.cantidad_a_producir
+
+                message = f"{orden.cantidad_a_producir} unidades agregadas al stock."
+
+            # ─────────────────────────
+            # PRODUCCIÓN POR VENTA
+            # ─────────────────────────
+            else:
+
+                detalle = orden.venta_detalle
+
+                if detalle:
+                    venta = detalle.venta
+                    venta.estatus_envio = "Enviado"
+
+                message = "Orden terminada. Venta marcada como completada."
+
+            db.session.commit()
+
+            return jsonify({
+                "ok": True,
+                "message": message
+            })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "ok": False,
+            "error": str(e)
+        }), 500

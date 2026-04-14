@@ -100,8 +100,9 @@
                         {% for size in product.sizes %}
                         <button
                             class="size-btn w-12 h-12 text-sm border transition-all border-border hover:border-foreground"
-                            data-size="{{ size }}">
-                            {{ size }}
+                            data-size="{{ size.name }}"
+                            data-uuid="{{ size.id }}">
+                            {{ size.name }}
                         </button>
                         {% endfor %}
                     </div>
@@ -128,7 +129,7 @@
                     <form id="add-to-cart-form" action="{{ url_for('checkout.agregar_carrito') }}" method="POST"
                         class="flex-1">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="uuid_producto" value="{{ product.id }}">
+                        <input type="hidden" name="uuid_producto" id="form-uuid-producto" value="">
                         <input type="hidden" id="form-talla" name="talla" value="">
                         <input type="hidden" id="form-cantidad" name="cantidad" value="1" min="1" max="100">
                         <button id="btn-add-to-cart-product" type="submit"

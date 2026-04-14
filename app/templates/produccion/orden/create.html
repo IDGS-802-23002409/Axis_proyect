@@ -1,6 +1,6 @@
 {% extends "produccion/layout.html" %}
 
-{% block container %}
+{% block content %}
 <div class="flex min-h-screen bg-white text-neutral-900 font-sans">
 
     <main class="flex-1 p-8 xl:p-12 max-w-3xl mx-auto">
@@ -11,7 +11,7 @@
                 Nueva Orden de Producción
             </h1>
             <p class="text-sm text-neutral-500">
-                Genera una orden basada en la receta del producto
+                Genera una orden basada en la receta del producto terminado
             </p>
         </header>
 
@@ -43,13 +43,15 @@
             <!-- PRODUCTO -->
             <div>
                 <label class="block text-sm font-medium mb-2">
-                    Producto
+                    Producto a fabricar
                 </label>
+
                 {{ form.uuid_producto(
                     class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-black outline-none"
                 ) }}
+
                 <p class="text-xs text-neutral-400 mt-1">
-                    Selecciona el producto a fabricar
+                    Selecciona la prenda basada en su receta de producción
                 </p>
             </div>
 
@@ -58,29 +60,69 @@
                 <label class="block text-sm font-medium mb-2">
                     Cantidad a producir
                 </label>
+
                 {{ form.cantidad_a_producir(
-                    class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-black outline-none"
+                    class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-black outline-none",
+                    placeholder="Ejemplo: 10, 25, 50, 100 playeras"
                 ) }}
+
                 <p class="text-xs text-neutral-400 mt-1">
-                    Debe ser mayor a 0
+                    Número de unidades que deseas fabricar
                 </p>
             </div>
 
-            <!-- VENTA OPCIONAL -->
-            <div>
-                <label class="block text-sm font-medium mb-2">
-                    Venta relacionada (opcional)
-                </label>
-                {{ form.uuid_venta_detalle(
-                    class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-black outline-none"
-                ) }}
+            <!-- RECETA -->
+            {% if producto and producto.explosion and producto.explosion.detalles %}
+            <div class="bg-neutral-50 border rounded-lg p-4">
+
+                <h3 class="text-sm font-semibold mb-2">
+                    📋 Receta del producto: {{ producto.sku_especifico }}
+                </h3>
+
+                <ul class="text-sm text-neutral-700 space-y-1">
+
+                    {% for d in producto.explosion.detalles %}
+                        <li class="flex justify-between border-b py-1">
+
+                            <span>
+                                🧵
+                                {{ d.insumo.nombre if d.insumo else 'Insumo no disponible' }}
+                            </span>
+
+                            <span class="font-semibold">
+                                {{ d.consumo_teorico_unitario }}
+                            </span>
+
+                        </li>
+                    {% endfor %}
+
+                </ul>
             </div>
 
-            <!-- INFO IMPORTANTE -->
+            {% else %}
+            
+            {% endif %}
+
+            <!-- RESUMEN -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-5 text-sm text-blue-800 space-y-2">
+
+                <p class="font-semibold">📦 Resumen de producción</p>
+
+                <ul class="list-disc ml-5 space-y-1">
+                    <li>Se generará una orden en estado <b>PENDIENTE</b></li>
+                    <li>No se descuentan insumos aún</li>
+                    <li>Se basa en la receta del producto seleccionado</li>
+                    <li>El consumo se ejecuta en el módulo de corte</li>
+                </ul>
+
+            </div>
+
+            <!-- INFO -->
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
-                ⚠️ La orden consumirá automáticamente los insumos del inventario según la receta.
+                ⚠️ Importante:
                 <br>
-                Si no hay suficiente material, la orden no se podrá crear.
+                La orden NO modifica inventario hasta iniciar producción.
+                Solo se registra como pendiente.
             </div>
 
             <!-- BOTONES -->

@@ -1,6 +1,6 @@
 {% extends "produccion/layout.html" %}
 
-{% block container %}
+{% block content %}
 <div class="flex min-h-screen bg-white text-neutral-900 font-sans">
 
     <main class="flex-1 p-8 xl:p-12">
@@ -29,7 +29,7 @@
                 <thead class="bg-neutral-100 text-neutral-600 uppercase text-xs">
                     <tr>
                         <th class="px-6 py-4 text-left">Producto</th>
-                        <th class="px-6 py-4 text-left">Modelo</th>
+                        <th class="px-6 py-4 text-left">Receta</th>
                         <th class="px-6 py-4 text-left">Talla</th>
                         <th class="px-6 py-4 text-left">Cantidad</th>
                         <th class="px-6 py-4 text-left">Estado</th>
@@ -49,11 +49,11 @@
                         </td>
 
                         <td class="px-6 py-4">
-                            {{ orden.producto.modelo.nombre_modelo }}
+                            {{ orden.producto.explosion.nombre_receta }}
                         </td>
 
                         <td class="px-6 py-4">
-                            {{ orden.producto.talla }}
+                            {{ orden.producto.explosion.talla }}
                         </td>
 
                         <td class="px-6 py-4">
@@ -83,8 +83,9 @@
 
                         <td class="px-6 py-4 text-xs font-semibold">
                             {% if orden.uuid_venta_detalle %}
-                            <span class="bg-gray-100 px-2 py-1 rounded text-gray-700">#{{ orden.uuid_venta_detalle[:8]
-                                }}</span>
+                            <span class="bg-gray-100 px-2 py-1 rounded text-gray-700">
+                                #{{ orden.uuid_venta_detalle[:8] }}
+                            </span>
                             {% else %}
                             <span class="text-neutral-400 font-normal">Stock</span>
                             {% endif %}
@@ -104,16 +105,11 @@
                                 </a>
 
                                 {% if orden.estado != 'Terminado' %}
-                                <form method="POST"
-                                    action="{{ url_for('orden_bp.avanzar_estado', uuid_op=orden.uuid_op) }}"
-                                    class="inline">
-                                    <!-- CSRF oculto -->
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="text-green-600 hover:underline font-bold"
-                                        onclick="return confirm('¿Confirmar avance de estado de la orden?')">
-                                        Avanzar Estado
-                                    </button>
-                                </form>
+                                <button type="button"
+                                    class="text-green-600 hover:underline font-bold"
+                                    onclick="confirmarAvance('{{ orden.uuid_op }}', '{{ orden.estado }}')">
+                                    Avanzar Estado
+                                </button>
                                 {% endif %}
 
                             </div>
@@ -122,7 +118,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="7" class="text-center py-10 text-neutral-400">
+                        <td colspan="8" class="text-center py-10 text-neutral-400">
                             No hay órdenes registradas
                         </td>
                     </tr>
@@ -135,4 +131,78 @@
 
     </main>
 </div>
+
+<!-- SWEET ALERT -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+function confirmarAvance(uuid_op, estadoActual) {
+
+    const hacerLlamadaAvanzar = (conMerma = false) => {
+        fetch(`/orden_produccion/avanzar_estado/${uuid_op}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({
+                con_merma: conMerma
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.redirect) {
+                window.location.href = data.redirect;
+            } else if (data.ok) {
+                location.reload();
+            } else {
+                Swal.fire("Error", data.error || "Error desconocido", "error");
+            }
+        });
+    };
+
+    //  PRIMERA CONFIRMACIÓN
+    Swal.fire({
+        title: '¿Estás seguro de continuar?',
+        text: 'Se avanzará al siguiente proceso',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, continuar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#000000',
+        cancelButtonColor: '#9ca3af'
+    }).then((confirmacion) => {
+
+        if (!confirmacion.isConfirmed) return;
+
+        // 🔹 Si viene de Pendiente → NO preguntar merma
+        if (estadoActual === 'Pendiente') {
+            hacerLlamadaAvanzar(false);
+            return;
+        }
+
+        //  SEGUNDA CONFIRMACIÓN (MERMA)
+        Swal.fire({
+            title: '¿Hubo mermas en este proceso?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, hubo merma',
+            cancelButtonText: 'No, continuar',
+            confirmButtonColor: '#000000',
+            cancelButtonColor: '#9ca3af'
+        }).then((result) => {
+
+            if (result.isConfirmed) {
+                window.location.href = `/merma/registrar/${uuid_op}`;
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                hacerLlamadaAvanzar(false);
+            }
+
+        });
+
+    });
+
+}
+</script>
+
 {% endblock %}

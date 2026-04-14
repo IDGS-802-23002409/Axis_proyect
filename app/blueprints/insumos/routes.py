@@ -44,8 +44,13 @@ def index():
 
     query = Insumo.query.filter(Insumo.estatus == 'ACTIVO')
 
-    # categorías
-    categorias = db.session.query(Categoria.nombre).distinct().all()
+    # categorías (solo tipo Insumo)
+    categorias = (
+        db.session.query(Categoria.nombre)
+        .filter(Categoria.tipo == "Insumo", Categoria.estatus_visible == True)
+        .distinct()
+        .all()
+    )
     categorias = [c[0] for c in categorias]
 
     # búsqueda
@@ -62,7 +67,9 @@ def index():
     # filtro por categoría
     if categoria:
         query = query.join(Insumo.categoria).filter(
-            Categoria.nombre == categoria
+            Categoria.nombre == categoria,
+            Categoria.tipo == "Insumo",
+            Categoria.estatus_visible == True,
         )
 
     insumos = query.all()
@@ -101,7 +108,11 @@ def index():
 def create():
     form = InsumoForm()
 
-    categorias = Categoria.query.all()
+    categorias = (
+        Categoria.query.filter_by(tipo="Insumo", estatus_visible=True)
+        .order_by(Categoria.nombre)
+        .all()
+    )
     form.uuid_categoria.choices = [("", "Seleccione una categoría")] + [
         (c.uuid_categoria, c.nombre) for c in categorias
     ]
@@ -213,7 +224,17 @@ def edit(uuid_insumo):
     insumo = Insumo.query.get_or_404(uuid_insumo)
     form = InsumoForm(obj=insumo)
 
-    categorias = Categoria.query.all()
+    categorias = (
+        Categoria.query.filter(
+            Categoria.tipo == "Insumo",
+            or_(
+                Categoria.estatus_visible == True,
+                Categoria.uuid_categoria == insumo.uuid_categoria,
+            ),
+        )
+        .order_by(Categoria.nombre)
+        .all()
+    )
     form.uuid_categoria.choices = [("", "Seleccione una categoría")] + [
         (c.uuid_categoria, c.nombre) for c in categorias
     ]

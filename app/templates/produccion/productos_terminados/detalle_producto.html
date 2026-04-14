@@ -1,9 +1,9 @@
-﻿{% extends "produccion/layout.html" %}
+{% extends "produccion/layout.html" %}
 {% block title %}Detalle del Producto - {{ producto.sku_especifico }}{% endblock %}
 
 {% block header %}Detalle del Producto{% endblock %}
 
-{% block container %}
+{% block content %}
 <div class="px-8 pb-10">
   <div class="mb-6 flex items-center justify-between gap-2">
     <a href="{{ url_for('productos_bp.index') }}"
@@ -18,9 +18,19 @@
   <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
     <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
       <h3 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Producto</h3>
-      <p class="text-lg font-bold">{{ modelo.nombre_modelo }}</p>
-      <p class="text-sm text-muted-foreground mt-1">{{ producto.talla }} • {{ modelo.categoria.nombre or 'Sin categoría'
+      <p class="text-lg font-bold">{{ explosion.nombre_receta }}</p>
+      <p class="text-sm text-muted-foreground mt-1">{{ explosion.talla }} • {{ explosion.categoria.nombre if explosion.categoria else 'Sin categoría'
         }}</p>
+
+                <div class="col-span-1">
+                {% if producto.imagen_url %}
+                <img src="{{ producto.imagen_url }}" class="w-full h-auto rounded-lg object-cover border" alt="img">
+                {% else %}
+                <div class="w-full aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
+                    <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
+                </div>
+                {% endif %}
+            </div>
     </div>
 
     <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
@@ -50,16 +60,16 @@
           <dd>{{ producto.sku_especifico }}</dd>
         </div>
         <div class="flex justify-between">
-          <dt class="font-medium">Modelo</dt>
-          <dd>{{ modelo.nombre_modelo }}</dd>
+          <dt class="font-medium">Receta</dt>
+          <dd>{{ explosion.nombre_receta }}</dd>
         </div>
         <div class="flex justify-between">
           <dt class="font-medium">Talla</dt>
-          <dd>{{ producto.talla }}</dd>
+          <dd>{{ explosion.talla }}</dd>
         </div>
         <div class="flex justify-between">
           <dt class="font-medium">Categoría</dt>
-          <dd>{{ modelo.categoria.nombre or 'No asignada' }}</dd>
+          <dd>{{ explosion.categoria.nombre if explosion.categoria else 'No asignada' }}</dd>
         </div>
         <div class="flex justify-between">
           <dt class="font-medium">Creado</dt>
@@ -78,8 +88,8 @@
 
     <div class="bg-card border border-border rounded-lg p-4 shadow-sm">
       <h4 class="text-sm font-semibold mb-3">Descripción</h4>
-      <p class="text-sm text-foreground leading-relaxed">{{ modelo.descripcion or 'No hay descripción disponible para
-        este modelo.' }}</p>
+      <p class="text-sm text-foreground leading-relaxed">{{ explosion.instrucciones_proceso or 'No hay descripción disponible para
+        esta receta.' }}</p>
     </div>
   </div>
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">

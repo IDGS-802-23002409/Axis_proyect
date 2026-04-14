@@ -1,19 +1,39 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import CheckConstraint, Column, String, Integer, Numeric, DateTime, Enum, ForeignKey, Text, func, Index
+from sqlalchemy import (
+    CheckConstraint, Column, String, Integer, Numeric,
+    DateTime, Enum, ForeignKey, Text, func, Index
+)
 
-
+# ─────────────────────────────────────────────
+# ORDEN DE PRODUCCIÓN
+# ─────────────────────────────────────────────
 class OrdenProduccion(db.Model):
     __tablename__ = 'ordenes_produccion'
 
     uuid_op = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     uuid_producto = Column(String(36), ForeignKey('productos_terminados.uuid_producto'), nullable=False)
+
+    uuid_venta_detalle = Column(String(36), ForeignKey('ventas_detalle.uuid_detalle'), nullable=True)
+
     uuid_venta_detalle = Column(String(36), ForeignKey('ventas_detalle.uuid_detalle'), nullable=True) 
     uuid_pedido_detalle = Column(String(36), ForeignKey('pedidos_cliente_detalle.uuid_detalle_pedido'), nullable=True) 
     
     cantidad_a_producir = Column(Integer, nullable=False)
+
     estado = Column(Enum('Pendiente', 'En Corte', 'Confección', 'Terminado'), default='Pendiente')
+
     fecha_solicitud = Column(DateTime, server_default=func.now())
+
+    producto = db.relationship(
+        'ProductoTerminado',
+        backref=db.backref('ordenes_produccion', lazy=True)
+    )
+
+    venta_detalle = db.relationship(
+        'VentaDetalle',
+        backref=db.backref('orden_produccion', uselist=False)
+    )
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
     
     producto = db.relationship('ProductoTerminado', backref=db.backref('ordenes_produccion', lazy=True))
@@ -29,25 +49,73 @@ class OrdenProduccion(db.Model):
         return f'<OrdenProduccion {self.uuid_op}>'
 
 
+# ─────────────────────────────────────────────
+# EJECUCIÓN DE CORTE
+# ─────────────────────────────────────────────
 class EjecucionCorte(db.Model):
     __tablename__ = 'ejecucion_corte'
 
     uuid_corte = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     uuid_op = Column(String(36), ForeignKey('ordenes_produccion.uuid_op'), nullable=False)
+
+    # ya no se usa directo
+    # uuid_rollo_used eliminado
+
+    metros_teoricos_requeridos = Column(Numeric(12, 4), nullable=False)
+    metros_sacados_bodega = Column(Numeric(12, 4), nullable=False)
     uuid_rollo_used = Column(String(36), ForeignKey('rollos_inventario.uuid_rollo'), nullable=False)
     
     metros_teoricos_requeridos = Column(Numeric(12, 4), nullable=False) 
     metros_sacados_bodega = Column(Numeric(12, 4), nullable=False) 
     prendas_reales_logradas = Column(Integer, nullable=False)
-    merma_real_calculada = Column(Numeric(12, 4), nullable=False)
+
     fecha_proceso = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
     usuario_corto_uuid = Column(String(36))
-    orden_produccion = db.relationship('OrdenProduccion', backref=db.backref('ejecuciones_corte', lazy=True))
-    rollo_usado = db.relationship('RolloInventario', backref=db.backref('ejecuciones_corte', lazy=True))
+
+    orden_produccion = db.relationship(
+        'OrdenProduccion',
+        backref=db.backref('ejecuciones_corte', lazy=True)
+    )
+
+    # relación con rollos usados
+    rollos_usados = db.relationship(
+        'EjecucionCorteRollo',
+        backref='ejecucion',
+        lazy=True,
+        cascade="all, delete-orphan"
+    )
+
     def __repr__(self):
         return f'<EjecucionCorte {self.uuid_corte}>'
 
+
+# ─────────────────────────────────────────────
+#  MODELO FALTANTE QUE TE ESTABA ROMPIENDO 
+# ─────────────────────────────────────────────
+class EjecucionCorteRollo(db.Model):
+    __tablename__ = 'ejecucion_corte_rollo'
+
+    uuid = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+
+    uuid_corte = Column(String(36), ForeignKey('ejecucion_corte.uuid_corte'), nullable=False)
+    uuid_rollo = Column(String(36), ForeignKey('rollos_inventario.uuid_rollo'), nullable=False)
+
+    # 🔥 NUEVO (CLAVE PARA TRAZABILIDAD)
+    uuid_insumo = Column(String(36), ForeignKey('insumos.uuid_insumo'), nullable=True)
+
+    metros_usados = Column(Numeric(12, 4), nullable=False)
+
+    fecha_creacion = Column(DateTime, server_default=func.now())
+
+    # RELACIONES
+    rollo = db.relationship("RolloInventario", backref="usos_en_corte")
+    insumo = db.relationship("Insumo", backref="usos_en_corte")
+
+
+
+
+'''
 motivo_merma_pieza_enum = Enum(
     'DEFECTO_PROVEEDOR',    
     'DAÑO_EN_PROCESO',      
@@ -58,6 +126,9 @@ motivo_merma_pieza_enum = Enum(
 )
  
  
+
+
+
 class MermaPiezas(db.Model):
     """
     Flujo esperado:
@@ -108,3 +179,5 @@ class MermaPiezas(db.Model):
  
     def __repr__(self):
         return f'<MermaPiezas op={self.uuid_op} insumo={self.uuid_insumo} diff={self.diferencia}>'
+
+'''
