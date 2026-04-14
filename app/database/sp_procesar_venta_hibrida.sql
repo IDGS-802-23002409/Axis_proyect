@@ -1,5 +1,5 @@
 DELIMITER //
-DROP PROCEDURE IF EXISTS sp_procesar_venta_hibrida //
+
 CREATE PROCEDURE sp_procesar_venta_hibrida(
 
     IN p_uuid_venta VARCHAR(36),
@@ -137,5 +137,3 @@ proc: BEGIN
     );
 
 END //
-
-DELIMITER ;
