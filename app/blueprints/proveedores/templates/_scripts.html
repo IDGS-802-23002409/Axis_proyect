@@ -34,7 +34,7 @@
                 document.getElementById('det-razon-social').textContent = data.razon_social;
                 document.getElementById('det-rfc').textContent = data.rfc;
                 document.getElementById('det-telefono').textContent = data.telefono || '---';
-                
+
                 document.getElementById('det-contacto').textContent = data.contacto_nombre || '---';
                 document.getElementById('det-estatus').textContent = data.estatus ? 'ACTIVO' : 'INACTIVO';
                 document.getElementById('det-fecha-creacion').textContent = data.fecha_creacion;
@@ -59,7 +59,7 @@
                 document.getElementById('upd_razon_social').value = data.razon_social;
                 document.getElementById('upd_rfc').value = data.rfc;
                 document.getElementById('upd_telefono').value = data.telefono || '';
-                
+
                 document.getElementById('upd_contacto').value = data.contacto_nombre || '';
                 document.getElementById('upd_estatus').checked = data.estatus;
 
@@ -134,7 +134,7 @@
                 rows.forEach(row => {
                     const razon = row.querySelector("td:nth-child(1)").textContent.toLowerCase();
                     const rfc = row.querySelector("td:nth-child(3)").textContent.toLowerCase();
-                    const statusText = row.querySelector("td:nth-child(5)").textContent.toLowerCase().trim();
+                    const statusText = row.querySelector("td:nth-child(4)").textContent.toLowerCase().trim();
                     const rowStatus = statusText.includes('inactivo') ? 'inactivo' : 'activo';
 
                     const matchesSearch = razon.includes(query) || rfc.includes(query);

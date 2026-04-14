@@ -180,6 +180,11 @@ def create():
 
 
         try:
+            # CONVERSIÓN DE STOCK MÍNIMO
+            stock_minimo = form.stock_minimo_alerta.data or 0
+            if form.modo_stock_minimo.data == 'COMPRA' and unidad == 'ROLLO':
+                stock_minimo = float(stock_minimo) * float(contenido_cantidad)
+
             nuevo_insumo = Insumo(
                 sku=sku,
                 nombre=nombre,
@@ -192,7 +197,7 @@ def create():
                 ancho=ancho,
 
                 stock_total_acumulado=0,
-                stock_minimo_alerta=form.stock_minimo_alerta.data or 0
+                stock_minimo_alerta=stock_minimo
             )
 
             db.session.add(nuevo_insumo)
@@ -202,11 +207,11 @@ def create():
             if nuevo_insumo.stock_total_acumulado == 0:
                 flash("El insumo se ha registrado con stock 0. Recuerda que no podrás usarlo en producción hasta agregar stock.", "warning")
 
-            if form.submit.data:
-                return redirect(url_for('insumos_bp.index'))
-
-            if form.submit_add.data:
+            # Redirigir siempre a la tabla a menos que sea submit_add (aunque lo quitaremos del template)
+            if hasattr(form, 'submit_add') and form.submit_add.data:
                 return redirect(url_for('insumos_bp.create'))
+            
+            return redirect(url_for('insumos_bp.index'))
 
         except Exception as e:
             db.session.rollback()
@@ -325,6 +330,11 @@ def edit(uuid_insumo):
         # =========================
 
         try:
+            # CONVERSIÓN DE STOCK MÍNIMO
+            stock_minimo = form.stock_minimo_alerta.data or 0
+            if form.modo_stock_minimo.data == 'COMPRA' and unidad == 'ROLLO':
+                stock_minimo = float(stock_minimo) * float(contenido_cantidad)
+
             insumo.sku = sku
             insumo.nombre = nombre
             insumo.uuid_categoria = categoria_uuid
@@ -335,7 +345,7 @@ def edit(uuid_insumo):
 
             insumo.ancho = ancho  #  AQUÍ SE ACTUALIZA
 
-            insumo.stock_minimo_alerta = form.stock_minimo_alerta.data or 0
+            insumo.stock_minimo_alerta = stock_minimo
 
             db.session.commit()
 

@@ -9,6 +9,7 @@ from app.models.pedidos_cliente import PedidoClienteEncabezado
 from datetime import datetime
 import uuid
 from decimal import Decimal
+import re
 
 checkout_bp = Blueprint('checkout', __name__, template_folder='../../templates/client')
 
@@ -324,12 +325,9 @@ def procesar_checkout():
         db.session.rollback()
         import traceback
         logger.error(f">>> [CHECKOUT] ERROR COMPLETO:\n{traceback.format_exc()}")
-        flash(f"Error al procesar la compra (BD): {str(e)}", 'error')
+        flash(f"Error al procesar la compra. Por favor intenta de nuevo.", 'error')
         return redirect(url_for('checkout.checkout_view'))
-
-
-
-
+        
 
 @checkout_bp.route('/mis-pedidos')
 @login_required
@@ -386,7 +384,7 @@ def mi_cuenta():
             cliente = Cliente(uuid_usuario=current_user.uuid_usuario)
             db.session.add(cliente)
         
-        cliente.telefono = telefono
+        cliente.telefono = re.sub(r'\D', '', str(telefono))
         cliente.direccion_completa = direccion
         
         try:
@@ -443,7 +441,7 @@ def completar_perfil():
 
         nuevo_cliente = Cliente(
             uuid_usuario=current_user.uuid_usuario,
-            telefono=telefono,
+            telefono=re.sub(r'\D', '', str(telefono)),
             direccion_completa=direccion
         )
         db.session.add(nuevo_cliente)

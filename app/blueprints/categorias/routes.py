@@ -18,8 +18,6 @@ def _categoria_usos(uuid_categoria):
     usos = []
     if Insumo.query.filter_by(uuid_categoria=uuid_categoria).first():
         usos.append("insumos")
-    if Proveedor.query.filter_by(uuid_categoria=uuid_categoria).first():
-        usos.append("proveedores")
     if ExplosionMaterialesCabecera.query.filter_by(uuid_categoria=uuid_categoria).first():
         usos.append("recetas / explosión de materiales")
     return usos

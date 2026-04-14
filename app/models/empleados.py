@@ -1,6 +1,6 @@
 import uuid
 from app.utils.database_connection import db
-from sqlalchemy import Column, String, DateTime, ForeignKey, func
+from sqlalchemy import Column, String, DateTime, ForeignKey, func, Boolean
 
 class Empleado(db.Model):
     __tablename__ = 'empleados'
@@ -13,6 +13,7 @@ class Empleado(db.Model):
     fecha_ingreso = Column(DateTime)
     fecha_creacion = Column(DateTime, server_default=func.now())
     fecha_actualizacion = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    activo = Column(Boolean, default=True, nullable=False)
 
     usuario = db.relationship('Usuario', backref=db.backref('empleado', uselist=False))
 

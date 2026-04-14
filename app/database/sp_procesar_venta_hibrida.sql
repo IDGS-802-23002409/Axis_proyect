@@ -1,6 +1,7 @@
 DELIMITER //
 
 CREATE PROCEDURE sp_procesar_venta_hibrida(
+
     IN p_uuid_venta VARCHAR(36),
     IN p_numero_pedido VARCHAR(25),
     IN p_uuid_cliente VARCHAR(36),
@@ -30,6 +31,10 @@ proc: BEGIN
     DECLARE v_necesario DECIMAL(12,4);
     DECLARE v_u_medida VARCHAR(20);
     DECLARE v_prendas_rest INT;
+    DECLARE v_stock_actual_insumo DECIMAL(12,4);
+    DECLARE v_insumo_nombre VARCHAR(100);
+    DECLARE v_mensaje_error VARCHAR(255);
+
     
     -- Variables para Trazabilidad de Rollos
     DECLARE v_rollo_id VARCHAR(36);
@@ -110,82 +115,10 @@ proc: BEGIN
             INSERT INTO ordenes_produccion (uuid_op, uuid_producto, uuid_pedido_detalle, cantidad_a_producir, estado, fecha_solicitud)
             VALUES (v_uuid_op, v_uuid_item, v_uuid_detalle_pedido, v_cantidad_op, 'Pendiente', NOW());
 
-            -- ── Reserva de Materiales (según receta) ──
-            BEGIN
-                DECLARE cur_insumos CURSOR FOR 
-                    SELECT uuid_insumo, consumo_teorico_unitario 
-                    FROM explosion_materiales_detalle 
-                    WHERE uuid_explosion = v_uuid_explosion;
-                DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-                
-                SET done = FALSE;
-                OPEN cur_insumos;
-                insumo_loop: LOOP
-                    FETCH cur_insumos INTO v_uuid_insumo, v_consumo_u;
-                    IF done THEN LEAVE insumo_loop; END IF;
-                    
-                    SET v_necesario = v_consumo_u * v_cantidad_op;
-                    
-                    -- Descontar del stock total del insumo (bloqueo)
-                    SELECT unidad_medida INTO v_u_medida 
-                    FROM insumos WHERE uuid_insumo = v_uuid_insumo FOR UPDATE;
-                    
-                    UPDATE insumos 
-                    SET stock_total_acumulado = stock_total_acumulado - v_necesario 
-                    WHERE uuid_insumo = v_uuid_insumo;
-                    
-                    -- ── Trazabilidad de telas (ROLLO): usar ejecucion_corte_rollo ──
-                    IF v_u_medida = 'ROLLO' THEN
-                        SET v_prendas_rest = v_cantidad_op;
-
-                        -- Crear registro de corte agregado para este insumo
-                        SET v_uuid_corte = UUID();
-                        INSERT INTO ejecucion_corte (uuid_corte, uuid_op, metros_teoricos_requeridos, metros_sacados_bodega, prendas_reales_logradas, fecha_proceso)
-                        VALUES (v_uuid_corte, v_uuid_op, v_necesario, v_necesario, v_cantidad_op, NOW());
-
-                        -- Sub-bucle: registrar consumo por rollo específico
-                        BEGIN
-                            DECLARE cur_rollos CURSOR FOR 
-                                SELECT uuid_rollo, metraje_continuo_actual 
-                                FROM rollos_inventario 
-                                WHERE uuid_insumo = v_uuid_insumo AND metraje_continuo_actual > 0 
-                                ORDER BY fecha_creacion ASC;
-                            DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-                            
-                            OPEN cur_rollos;
-                            rollos_loop: LOOP
-                                FETCH cur_rollos INTO v_rollo_id, v_rollo_metraje;
-                                IF done THEN SET done = FALSE; LEAVE rollos_loop; END IF;
-                                
-                                SET v_prendas_rollo = FLOOR(v_rollo_metraje / v_consumo_u);
-                                IF v_prendas_rollo > 0 THEN
-                                    SET v_prendas_usar = LEAST(v_prendas_rest, v_prendas_rollo);
-                                    SET v_metros_usar = v_prendas_usar * v_consumo_u;
-                                    
-                                    -- Descontar metraje físico del rollo
-                                    UPDATE rollos_inventario 
-                                    SET metraje_continuo_actual = metraje_continuo_actual - v_metros_usar 
-                                    WHERE uuid_rollo = v_rollo_id;
-                                    
-                                    -- Trazabilidad granular: qué rollo aportó cuántos metros
-                                    INSERT INTO ejecucion_corte_rollo (uuid, uuid_corte, uuid_rollo, uuid_insumo, metros_usados)
-                                    VALUES (UUID(), v_uuid_corte, v_rollo_id, v_uuid_insumo, v_metros_usar);
-                                    
-                                    SET v_prendas_rest = v_prendas_rest - v_prendas_usar;
-                                END IF;
-                                
-                                IF v_prendas_rest <= 0 THEN LEAVE rollos_loop; END IF;
-                            END LOOP rollos_loop;
-                            CLOSE cur_rollos;
-                            SET done = FALSE; -- Reset para continuar el loop de insumos
-                        END;
-                    END IF;
-                END LOOP insumo_loop;
-                CLOSE cur_insumos;
-            END;
         END IF;
 
         SET v_i = v_i + 1;
+
     END WHILE;
 
     -- 3. Actualizar estatus final de la venta
@@ -204,5 +137,3 @@ proc: BEGIN
     );
 
 END //
-
-DELIMITER ;

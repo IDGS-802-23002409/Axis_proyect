@@ -1,0 +1,75 @@
+{% extends "produccion/layout.html" %}
+{% block title %}Detalles de Empleado{% endblock %}
+
+{% block content %}
+<div class="px-10 pb-10 max-w-3xl">
+    <div class="flex items-center gap-4 mb-8">
+        <a href="{{ url_for('empleados.index') }}" class="text-muted-foreground hover:text-primary transition">
+            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+        </a>
+        <h2 class="text-2xl font-bold">Ficha de Empleado</h2>
+    </div>
+
+    <div class="bg-card border border-border rounded-xl p-8 flex flex-col gap-6">
+        <div class="flex items-center gap-4">
+            <div class="bg-secondary rounded-full p-4">
+                <i data-lucide="user" class="w-8 h-8 text-muted-foreground"></i>
+            </div>
+            <div>
+                <p class="text-xl font-bold">{{ empleado.usuario.nombre_completo }}</p>
+                <p class="text-sm text-muted-foreground">{{ empleado.usuario.email }}</p>
+            </div>
+            <span class="ml-auto px-3 py-1 text-xs font-bold uppercase rounded-full
+                {{ 'bg-green-100 text-green-700' if empleado.activo else 'bg-zinc-100 text-zinc-400' }}">
+                {{ 'Activo' if empleado.activo else 'Inactivo' }}
+            </span>
+        </div>
+
+        <hr class="border-border">
+
+        <div class="grid grid-cols-2 gap-6 text-sm">
+            <div>
+                <p class="text-muted-foreground text-xs uppercase tracking-widest mb-1">No. Empleado</p>
+                <p class="font-semibold">{{ empleado.numero_empleado or '—' }}</p>
+            </div>
+            <div>
+                <p class="text-muted-foreground text-xs uppercase tracking-widest mb-1">Puesto</p>
+                <p class="font-semibold">{{ empleado.puesto or '—' }}</p>
+            </div>
+            <div>
+                <p class="text-muted-foreground text-xs uppercase tracking-widest mb-1">Departamento</p>
+                <p class="font-semibold">{{ empleado.departamento or '—' }}</p>
+            </div>
+            <div>
+                <p class="text-muted-foreground text-xs uppercase tracking-widest mb-1">Fecha de Ingreso</p>
+                <p class="font-semibold">{{ empleado.fecha_ingreso.strftime('%d %b %Y') if empleado.fecha_ingreso else
+                    '—' }}</p>
+            </div>
+            <div>
+                <p class="text-muted-foreground text-xs uppercase tracking-widest mb-1">Fecha de Alta</p>
+                <p class="font-semibold">{{ empleado.fecha_creacion.strftime('%d %b %Y %H:%M') if
+                    empleado.fecha_creacion else '—' }}</p>
+            </div>
+            <div>
+                <p class="text-muted-foreground text-xs uppercase tracking-widest mb-1">Última Actualización</p>
+                <p class="font-semibold">{{ empleado.fecha_actualizacion.strftime('%d %b %Y %H:%M') if
+                    empleado.fecha_actualizacion else '—' }}</p>
+            </div>
+        </div>
+
+        <hr class="border-border">
+
+        <div class="flex gap-3">
+            <a href="{{ url_for('empleados.update_empleado', uuid_empleado=empleado.uuid_empleado) }}"
+                class="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-800 transition">
+                <i data-lucide="pencil" class="w-4 h-4"></i>
+                Editar
+            </a>
+            <a href="{{ url_for('empleados.index') }}"
+                class="px-5 py-2.5 border border-border rounded-lg text-sm font-semibold hover:bg-secondary transition">
+                Volver al listado
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

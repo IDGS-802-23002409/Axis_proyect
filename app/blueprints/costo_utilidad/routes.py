@@ -50,11 +50,22 @@ def _obtener_costo_promedio_insumo(uuid_insumo, cache_costos=None):
             d.costo_unitario_compra is not None
             and d.cantidad_comprada is not None
             and d.insumo is not None
-            and d.insumo.contenido_cantidad is not None
-            and float(d.insumo.contenido_cantidad) > 0
         ):
-            total_costo         += float(d.cantidad_comprada) * float(d.costo_unitario_compra)
-            total_unidades_base += float(d.cantidad_comprada) * float(d.insumo.contenido_cantidad)
+            # TOTAL COST: Siempre es cantidad * costo_unitario (ya ajustado en la recepción)
+            total_costo += float(d.cantidad_comprada) * float(d.costo_unitario_compra)
+            
+            # TOTAL UNITS: Para rollos, usamos el metraje real inicial. Para piezas, la cantidad.
+            if d.insumo.unidad_medida == "ROLLO":
+                # Sumar metraje inicial de todos los rollos vinculados a este detalle
+                # Esto es más preciso que usar insumo.contenido_cantidad
+                metraje_real_lote = sum(float(r.metraje_inicial or 0) for r in d.rollos)
+                if metraje_real_lote > 0:
+                    total_unidades_base += metraje_real_lote
+                else:
+                    # Fallback si no hay rollos registrados (no debería pasar en RECIBIDO)
+                    total_unidades_base += float(d.cantidad_comprada) * float(d.insumo.contenido_cantidad or 0)
+            else:
+                total_unidades_base += float(d.cantidad_comprada)
 
     costo_promedio = total_costo / total_unidades_base if total_unidades_base > 0 else 0.0
 

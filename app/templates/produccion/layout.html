@@ -34,6 +34,33 @@
     }
   </script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @media print {
+
+      aside,
+      .h-20.px-10.flex.items-center,
+      .print\:hidden {
+        display: none !important;
+      }
+
+      main {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+      }
+
+      .flex.min-h-screen {
+        display: block !important;
+      }
+
+      body {
+        background: white !important;
+        color: black !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
 </head>
 
 <body class="bg-background text-foreground font-sans">
@@ -79,7 +106,7 @@
             {{ nav_link('insumos_bp.index', 'Insumos & Stocks', 'package', 'insumos_bp') }}
             {{ nav_link('recetas_bp.index', 'Recetas', 'book-open', 'recetas_bp') }}
             {{ nav_link('inventario_bp.index', 'Inventario', 'archive', 'inventario_bp') }}
-            
+
             {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
             {{ nav_link('orden_bp.index', 'Órdenes Producción', 'clipboard-list', 'orden_bp') }}
             {% endif %}

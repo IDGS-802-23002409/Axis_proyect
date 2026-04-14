@@ -39,7 +39,7 @@
                         {{ form.sku(class="w-full border-b-2 border-neutral-200 py-2") }}
                     </div>
 
-                    <div >
+                    <div>
                         <label class="text-xs font-bold uppercase">Categoría</label>
                         {{ form.uuid_categoria(class="w-full bg-neutral-100 p-3 rounded-lg") }}
                     </div>
@@ -96,9 +96,19 @@
                     Control de Alertas
                 </h2>
 
-                <div class="max-w-xs">
-                    <label class="text-xs font-bold uppercase">Stock mínimo</label>
-                    {{ form.stock_minimo_alerta(class="w-full border-b-2 py-2") }}
+                <div class="grid md:grid-cols-2 gap-8 max-w-2xl">
+                    <div>
+                        <label class="text-xs font-bold uppercase">Definir stock mínimo por</label>
+                        {{ form.modo_stock_minimo(class="w-full border-b py-2") }}
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold uppercase" id="label-stock-minimo">Stock mínimo</label>
+                        <div class="relative">
+                            {{ form.stock_minimo_alerta(class="w-full border-b-2 py-2 pr-12") }}
+                            <span id="unidad-stock-minimo"
+                                class="absolute right-0 bottom-2 text-xs font-bold text-neutral-400 uppercase"></span>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -107,11 +117,6 @@
                 <button type="submit" name="submit"
                     class="px-8 py-4 bg-black text-white text-xs font-bold uppercase rounded">
                     Guardar
-                </button>
-
-                <button type="submit" name="submit_add"
-                    class="px-8 py-4 border-2 border-black text-xs font-bold uppercase rounded">
-                    Guardar y crear otro
                 </button>
 
                 <a href="{{ url_for('insumos_bp.index') }}"
@@ -130,6 +135,10 @@
         const unidad = document.querySelector("[name='unidad_medida']");
         const unidadUso = document.querySelector("[name='contenido_unidad_medida']");
 
+        const modoStockMin = document.querySelector("[name='modo_stock_minimo']");
+        const spanUnidadStock = document.getElementById("unidad-stock-minimo");
+        const inputStockMin = document.querySelector("[name='stock_minimo_alerta']");
+
         const grupo = document.getElementById("grupo-config");
         const mensaje = document.getElementById("mensaje-info");
 
@@ -143,6 +152,7 @@
             if (!unidad) return;
 
             const tipo = unidad.value;
+            const modo = modoStockMin ? modoStockMin.value : 'INTERNO';
 
             // 🔹 CASO PIEZA
             if (tipo === "PIEZA") {
@@ -166,6 +176,10 @@
                     unidadUso.value = "PIEZA";
                     unidadUso.disabled = true;
                 }
+
+                // UNIDAD STOCK MÍNIMO
+                spanUnidadStock.innerText = "Piezas";
+                inputStockMin.step = "1";
 
             } else {
 
@@ -199,10 +213,20 @@
                         }
                     }
                 }
+
+                // UNIDAD STOCK MÍNIMO
+                if (modo === 'COMPRA') {
+                    spanUnidadStock.innerText = "Rollos";
+                    inputStockMin.step = "1";
+                } else {
+                    spanUnidadStock.innerText = "Metros";
+                    inputStockMin.step = "0.01";
+                }
             }
         }
 
         unidad.addEventListener("change", actualizar);
+        if (modoStockMin) modoStockMin.addEventListener("change", actualizar);
         actualizar();
     });
 </script>

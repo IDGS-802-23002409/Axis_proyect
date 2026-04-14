@@ -133,17 +133,23 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-bold uppercase">
+                        <label class="text-[10px] font-bold uppercase">Definir stock mínimo por</label>
+                        {{ form.modo_stock_minimo(class="input") }}
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-bold uppercase" id="label-stock-minimo">
                             Stock mínimo *
                         </label>
-                        {{ form.stock_minimo_alerta(class="input") }}
+                        <div class="relative">
+                            {{ form.stock_minimo_alerta(class="input pr-16") }}
+                            <span id="unidad-stock-minimo"
+                                class="absolute right-4 bottom-3 text-[10px] font-bold text-neutral-400 uppercase"></span>
+                        </div>
                         {% for error in form.stock_minimo_alerta.errors %}
                         <span class="text-xs text-red-500">{{ error }}</span>
                         {% endfor %}
                     </div>
-
                 </div>
             </section>
 
@@ -161,84 +167,115 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function () {
 
-    const unidad = document.querySelector("[name='unidad_medida']");
-    const grupo = document.getElementById("grupo-config");
-    const mensaje = document.getElementById("mensaje-info");
+        const unidad = document.querySelector("[name='unidad_medida']");
+        const grupo = document.getElementById("grupo-config");
+        const mensaje = document.getElementById("mensaje-info");
 
-    const cantidad = document.querySelector("[name='contenido_cantidad']");
-    const unidadUso = document.querySelector("[name='contenido_unidad_medida']");
-    const grupoAncho = document.getElementById("grupo-ancho");
-    const anchoInput = document.querySelector("[name='ancho']");
+        const cantidad = document.querySelector("[name='contenido_cantidad']");
+        const unidadUso = document.querySelector("[name='contenido_unidad_medida']");
+        const grupoAncho = document.getElementById("grupo-ancho");
+        const anchoInput = document.querySelector("[name='ancho']");
 
-    function bloquearOpciones(tipo) {
-        for (let option of unidadUso.options) {
+        const modoStockMin = document.querySelector("[name='modo_stock_minimo']");
+        const spanUnidadStock = document.getElementById("unidad-stock-minimo");
+        const inputStockMin = document.querySelector("[name='stock_minimo_alerta']");
 
-            if (tipo === "ROLLO") {
-                option.disabled = option.value !== "METRO";
+        function bloquearOpciones(tipo) {
+            if (!unidadUso) return;
+            for (let option of unidadUso.options) {
+
+                if (tipo === "ROLLO") {
+                    option.disabled = option.value !== "METRO";
+                }
+
+                if (tipo === "PIEZA") {
+                    option.disabled = option.value !== "PIEZA";
+                }
             }
+        }
 
+        function actualizar() {
+            if (!unidad) return;
+
+            const tipo = unidad.value;
+            const modo = modoStockMin ? modoStockMin.value : 'INTERNO';
+
+            // =========================
+            // PIEZA
+            // =========================
             if (tipo === "PIEZA") {
-                option.disabled = option.value !== "PIEZA";
+
+                grupo.style.display = "none";
+                mensaje.classList.remove("hidden");
+
+                // ancho oculto
+                grupoAncho.classList.add("hidden");
+                if (anchoInput) {
+                    anchoInput.value = "";
+                    anchoInput.required = false;
+                }
+
+                // cantidad fija
+                if (cantidad) {
+                    cantidad.value = 1;
+                    cantidad.readOnly = true;
+                }
+
+                // unidad fija
+                if (unidadUso) {
+                    unidadUso.value = "PIEZA";
+                    unidadUso.disabled = true;
+                }
+
+                bloquearOpciones("PIEZA");
+
+                // UNIDAD STOCK MÍNIMO
+                if (spanUnidadStock) spanUnidadStock.innerText = "Piezas";
+                if (inputStockMin) inputStockMin.step = "1";
+            }
+
+            // =========================
+            // ROLLO
+            // =========================
+            else if (tipo === "ROLLO") {
+
+                grupo.style.display = "contents";
+                mensaje.classList.add("hidden");
+
+                // mostrar ancho
+                grupoAncho.classList.remove("hidden");
+                if (anchoInput) anchoInput.required = true;
+
+                // cantidad editable
+                if (cantidad) cantidad.readOnly = false;
+
+                // unidad forzada
+                if (unidadUso) {
+                    unidadUso.disabled = false;
+                    unidadUso.value = "METRO";
+                }
+
+                bloquearOpciones("ROLLO");
+
+                // UNIDAD STOCK MÍNIMO
+                if (spanUnidadStock) {
+                    if (modo === 'COMPRA') {
+                        spanUnidadStock.innerText = "Rollos";
+                        inputStockMin.step = "1";
+                    } else {
+                        spanUnidadStock.innerText = "Metros";
+                        inputStockMin.step = "0.01";
+                    }
+                }
             }
         }
-    }
 
-    function actualizar() {
-
-        const tipo = unidad.value;
-
-        // =========================
-        // PIEZA
-        // =========================
-        if (tipo === "PIEZA") {
-
-            grupo.style.display = "none";
-            mensaje.classList.remove("hidden");
-
-            // ancho oculto
-            grupoAncho.classList.add("hidden");
-            anchoInput.value = "";
-            anchoInput.required = false;
-
-            // cantidad fija
-            cantidad.value = 1;
-            cantidad.readOnly = true;
-
-            // unidad fija
-            unidadUso.value = "PIEZA";
-            unidadUso.disabled = true;
-
-            bloquearOpciones("PIEZA");
-        }
-
-        // =========================
-        // ROLLO
-        // =========================
-        else if (tipo === "ROLLO") {
-
-            grupo.style.display = "contents";
-            mensaje.classList.add("hidden");
-
-            // mostrar ancho
-            grupoAncho.classList.remove("hidden");
-            anchoInput.required = true;
-
-            // cantidad editable
-            cantidad.readOnly = false;
-
-            // unidad forzada
-            unidadUso.disabled = false;
-            unidadUso.value = "METRO";
-
-            bloquearOpciones("ROLLO");
-        }
-    }
-
-    unidad.addEventListener("change", actualizar);
-    actualizar();
-});
+        unidad.addEventListener("change", actualizar);
+        if (modoStockMin) modoStockMin.addEventListener("change", actualizar);
+        actualizar();
+    });
 </script>
 
 {% endblock %}

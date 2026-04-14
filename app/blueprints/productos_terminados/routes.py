@@ -21,7 +21,7 @@ def get_upload_folder():
 @login_required
 @roles_accepted('admin', 'produccion')
 def index():
-    explosion_id = request.args.get('explosion', '').strip()
+    nombre = request.args.get('nombre', '').strip()
     talla = request.args.get('talla', '').strip()
     sku = request.args.get('sku', '').strip()
     estatus = request.args.get('estatus', '').strip()
@@ -38,8 +38,8 @@ def index():
         # Por defecto mostrar solo activos
         productos = productos.filter(ProductoTerminado.active.is_(True))
 
-    if explosion_id:
-        productos = productos.filter(ProductoTerminado.uuid_explosion == explosion_id)
+    if nombre:
+        productos = productos.filter(ExplosionMaterialesCabecera.nombre_receta.ilike(f"%{nombre}%"))
 
     if talla:
         productos = productos.filter(ExplosionMaterialesCabecera.talla == talla)
@@ -64,8 +64,8 @@ def index():
     elif filtro == 'agotado':
         productos = [p for p in productos if p.stock_fisico_actual <= 0]
     
-    # Obtener explosiones activas para el dropdown
-    explosiones = ExplosionMaterialesCabecera.query.filter_by(estatus='ACTIVO').order_by(ExplosionMaterialesCabecera.nombre_receta).all()
+    # Obtener explosiones activas para el dropdown (opcional, pero se quita del filtro en template)
+    # explosiones = ExplosionMaterialesCabecera.query.filter_by(estatus='ACTIVO').order_by(ExplosionMaterialesCabecera.nombre_receta).all()
 
     return render_template(
         'produccion/productos_terminados/index.html',
@@ -73,8 +73,7 @@ def index():
         total=total_neto,
         en_bajo_stock=en_bajo_stock_total,
         agotados=agotados_total,
-        explosiones=explosiones,
-        filtro_explosion=explosion_id,
+        filtro_nombre=nombre,
         filtro_talla=talla,
         filtro_sku=sku,
         filtro_estatus=estatus,

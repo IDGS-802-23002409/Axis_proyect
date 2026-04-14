@@ -142,9 +142,9 @@ def guardar(uid=None):
 def eliminar(uid):
     try:
         proveedor = Proveedor.query.get_or_404(uid)
-        db.session.delete(proveedor)
+        proveedor.estatus = False
         db.session.commit()
-        flash("Proveedor eliminado correctamente", "success")
+        flash("Proveedor desactivado correctamente", "success")
     except Exception as e:
         db.session.rollback()
         flash("No se pudo eliminar el proveedor", "error")

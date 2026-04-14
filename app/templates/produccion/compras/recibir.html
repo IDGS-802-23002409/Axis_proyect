@@ -41,7 +41,7 @@
 
     <!-- FORM -->
     <form method="POST">
-        {{ form.hidden_tag() }}  <!-- Aquí va el token CSRF -->
+        {{ form.hidden_tag() }} <!-- Aquí va el token CSRF -->
 
         <!-- TABLA -->
         <div class="overflow-x-auto border border-neutral-200 rounded-xl">
@@ -51,17 +51,32 @@
                         <th class="px-4 py-4">Insumo</th>
                         <th class="px-4 py-4">Cantidad Pedida</th>
                         <th class="px-4 py-4">Costo Unitario</th>
-                        <th class="px-4 py-4">Metraje Real (M) <br><span class="text-[9px] text-neutral-400">Solo Rollos</span></th>
+                        <th class="px-4 py-4">Metraje Real (M) <br><span class="text-[9px] text-neutral-400">Solo
+                                Rollos</span></th>
                     </tr>
                 </thead>
 
                 <tbody id="tabla-detalles" class="divide-y">
+                    {% set pedido_insumos = [] %}
+                    {% if compra.pedido %}
+                    {% for d in compra.pedido.detalles %}
+                    {% do pedido_insumos.append(d.uuid_insumo) %}
+                    {% endfor %}
+                    {% endif %}
+
                     {% for detalle in compra.detalles %}
-                    <tr class="hover:bg-neutral-50">
+                    {% set es_extra = compra.uuid_pedido and detalle.uuid_insumo not in pedido_insumos %}
+                    <tr class="hover:bg-neutral-50 {{ 'bg-amber-50' if es_extra else '' }}">
                         <!-- INSUMO -->
                         <td class="px-4 py-4">
                             <input type="hidden" name="uuid_insumo[]" value="{{ detalle.uuid_insumo }}">
-                            <p class="text-sm font-bold">{{ detalle.insumo.nombre }}</p>
+                            <div class="flex items-center gap-2">
+                                <p class="text-sm font-bold">{{ detalle.insumo.nombre }}</p>
+                                {% if es_extra %}
+                                <span
+                                    class="px-2 py-0.5 bg-amber-200 text-amber-800 text-[10px] font-bold rounded uppercase">Extra</span>
+                                {% endif %}
+                            </div>
                             <p class="text-xs text-neutral-500">{{ detalle.insumo.unidad_medida }}</p>
                         </td>
 
@@ -69,6 +84,14 @@
                         <td class="px-4 py-4">
                             <input type="hidden" name="cantidad[]" value="{{ detalle.cantidad_comprada }}">
                             <p class="text-sm">{{ detalle.cantidad_comprada }}</p>
+                            {% if compra.uuid_pedido and not es_extra %}
+                            {% set dp = (compra.pedido.detalles | selectattr("uuid_insumo", "equalto",
+                            detalle.uuid_insumo) | first) %}
+                            {% if dp and dp.cantidad_pedida != detalle.cantidad_comprada %}
+                            <p class="text-[10px] text-purple-600 font-medium">Pedido: {{ dp.cantidad_pedida }}
+                                (Diferencia: {{ detalle.cantidad_comprada - dp.cantidad_pedida }})</p>
+                            {% endif %}
+                            {% endif %}
                         </td>
 
                         <!-- COSTO -->
@@ -80,10 +103,12 @@
                         <!-- METRAJE REAL -->
                         <td class="px-4 py-4">
                             {% if detalle.insumo.unidad_medida == 'ROLLO' %}
-                            <input type="number" step="0.01" name="metraje_real_{{ detalle.uuid_detalle_compra }}" required
+                            <input type="number" step="0.01" name="metraje_real_{{ detalle.uuid_detalle_compra }}"
+                                required
                                 placeholder="Ej: {{ (detalle.cantidad_comprada * detalle.insumo.contenido_cantidad)|round(2) }}"
                                 class="w-full border rounded-lg px-3 py-2 text-sm bg-white">
-                            <p class="text-[10px] text-neutral-500 mt-1">Esperado: {{ detalle.cantidad_comprada * detalle.insumo.contenido_cantidad }} m</p>
+                            <p class="text-[10px] text-neutral-500 mt-1">Esperado: {{ detalle.cantidad_comprada *
+                                detalle.insumo.contenido_cantidad }} m</p>
                             {% else %}
                             <input type="hidden" name="metraje_real[]" value="0">
                             <p class="text-xs text-neutral-400">N/A (Pieza)</p>
@@ -124,18 +149,18 @@
 
 <!-- JS -->
 <script>
-function calcularTotal() {
-    let total = 0;
-    document.querySelectorAll("#tabla-detalles tr").forEach(fila => {
-        const cantidad = parseFloat(fila.querySelector("input[name='cantidad[]']")?.value) || 0;
-        const costo = parseFloat(fila.querySelector("input[name='costo[]']")?.value) || 0;
-        total += cantidad * costo;
-    });
-    document.getElementById("total").innerText = total.toFixed(2);
-}
+    function calcularTotal() {
+        let total = 0;
+        document.querySelectorAll("#tabla-detalles tr").forEach(fila => {
+            const cantidad = parseFloat(fila.querySelector("input[name='cantidad[]']")?.value) || 0;
+            const costo = parseFloat(fila.querySelector("input[name='costo[]']")?.value) || 0;
+            total += cantidad * costo;
+        });
+        document.getElementById("total").innerText = total.toFixed(2);
+    }
 
-window.addEventListener("load", function() {
-    calcularTotal();
-});
+    window.addEventListener("load", function () {
+        calcularTotal();
+    });
 </script>
 {% endblock %}

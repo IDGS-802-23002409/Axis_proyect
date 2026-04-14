@@ -1,4 +1,5 @@
 from flask import flash, redirect, render_template, request, url_for
+import re
 from flask_security import login_required, roles_required, roles_accepted
 from app.blueprints.clientes import clientes_bp
 from app.blueprints.clientes.form import ClienteForm
@@ -33,7 +34,7 @@ def registro_cliente():
     if request.method == "POST" and form.validate():
         nuevo_ = Cliente(
             uuid_usuario=form.uuid_usuario.data,
-            telefono=form.telefono.data,
+            telefono=re.sub(r'\D', '', str(form.telefono.data)),
             direccion_completa=form.direccion_completa.data
         )
         db.session.add(nuevo_)
@@ -52,7 +53,7 @@ def update_cliente(uuid_cliente):
         form = ClienteForm(request.form, obj=cli)
         if form.validate():
             cli.uuid_usuario = form.uuid_usuario.data
-            cli.telefono = form.telefono.data
+            cli.telefono = re.sub(r'\D', '', str(form.telefono.data))
             cli.direccion_completa = form.direccion_completa.data
             
             db.session.commit()

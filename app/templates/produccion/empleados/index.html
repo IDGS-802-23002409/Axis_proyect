@@ -13,24 +13,36 @@ Gestión de Empleados
     <!-- STATS -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="bg-card border border-border rounded-lg p-6">
-            <p class="text-sm text-muted-foreground">Total Plantilla</p>
+            <p class="text-sm text-muted-foreground">Total Plantilla Activa</p>
             <p class="text-3xl font-bold">{{ total_empleados }}</p>
         </div>
     </div>
 
+    <!-- FILTERS -->
+    <div class="flex flex-wrap gap-4 items-center justify-between bg-sidebar/50 p-4 rounded-xl border border-border">
+        <form method="GET" action="{{ url_for('empleados.index') }}"
+            class="flex flex-1 min-w-[300px] gap-3 items-center">
+            <div class="relative flex-1">
+                <i data-lucide="search"
+                    class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"></i>
+                <input type="text" name="q" value="{{ q or '' }}" placeholder="Buscar por nombre..."
+                    class="w-full pl-10 pr-4 py-2 bg-white border border-border rounded-lg text-sm focus:outline-none">
+            </div>
+            <select name="estado" onchange="this.form.submit()"
+                class="bg-white border border-border px-3 py-2 rounded-lg text-xs font-semibold focus:outline-none cursor-pointer">
+                <option value="activos" {% if estado=='activos' %}selected{% endif %}>Activos</option>
+                <option value="inactivos" {% if estado=='inactivos' %}selected{% endif %}>Inactivos</option>
+            </select>
+        </form>
+        <a href="{{ url_for('empleados.registro_empleado') }}"
+            class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            Añadir Empleado
+        </a>
+    </div>
+
     <!-- TABLE CARD -->
     <div class="bg-card border border-border rounded-lg overflow-hidden">
-        <div class="flex justify-between items-center p-5 border-b border-border">
-            <h3 class="font-semibold">Directorio de Empleados</h3>
-            <div class="flex items-center gap-2">
-                <a href="{{ url_for('empleados.registro_empleado') }}"
-                    class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                    Añadir Empleado
-                </a>
-            </div>
-        </div>
-
         <!-- Table -->
         <table class="w-full text-sm">
             <thead class="bg-secondary text-muted-foreground uppercase text-xs">
@@ -39,6 +51,7 @@ Gestión de Empleados
                     <th class="text-left px-6 py-4">No. Empleado</th>
                     <th class="text-left px-6 py-4">Puesto y Depto</th>
                     <th class="text-left px-6 py-4">F. Ingreso</th>
+                    <th class="text-left px-6 py-4 text-center">Estado</th>
                     <th class="text-right px-6 py-4">Acciones</th>
                 </tr>
             </thead>
@@ -57,21 +70,43 @@ Gestión de Empleados
                     <td class="px-6 py-4 text-muted-foreground">
                         {{ emp.fecha_ingreso.strftime('%d %b %Y') if emp.fecha_ingreso else '—' }}
                     </td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-3 py-1 text-[10px] font-bold uppercase rounded-full
+                            {{ 'bg-green-100 text-green-700' if emp.activo else 'bg-zinc-100 text-zinc-400' }}">
+                            {{ 'Activo' if emp.activo else 'Inactivo' }}
+                        </span>
+                    </td>
                     <td class="px-6 py-4 text-right">
                         <div class="flex justify-end gap-3 items-center">
-                            <a href="{{ url_for('empleados.update_empleado', uuid_empleado=emp.uuid_empleado) }}">
+                            <!-- Ver Detalles -->
+                            <a href="{{ url_for('empleados.ver_empleado', uuid_empleado=emp.uuid_empleado) }}"
+                                title="Ver detalles">
+                                <i data-lucide="eye" class="w-4 h-4 hover:text-primary"></i>
+                            </a>
+                            <!-- Editar -->
+                            <a href="{{ url_for('empleados.update_empleado', uuid_empleado=emp.uuid_empleado) }}"
+                                title="Editar">
                                 <i data-lucide="pencil" class="w-4 h-4 hover:text-primary"></i>
                             </a>
+                            <!-- Eliminar/Desactivar: solo si no es admin y está activo -->
+                            {% set emp_roles = emp.usuario.roles | map(attribute='name') | list %}
+                            {% if emp.activo and 'admin' not in emp_roles %}
                             <form method="POST"
                                 action="{{ url_for('empleados.delete_empleado', uuid_empleado=emp.uuid_empleado) }}"
                                 style="display:inline;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit"
-                                    onclick="return confirm('¿Seguro de desvincular este empleado? El usuario base seguirá existiendo.');">
-                                    <i data-lucide="trash-2" class="w-4 h-4 text-red-500 hover:text-red-700"></i>
+                                <button type="submit" onclick="return confirm('¿Desactivar este empleado?');">
+                                    <i data-lucide="user-x" class="w-4 h-4 text-red-500 hover:text-red-700"></i>
                                 </button>
                             </form>
+                            {% endif %}
                         </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-muted-foreground">
+                        No se encontraron empleados.
                     </td>
                 </tr>
                 {% endfor %}

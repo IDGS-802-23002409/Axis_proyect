@@ -69,6 +69,15 @@ class InsumoForm(FlaskForm):
     )
 
     # STOCK MÍNIMO
+    modo_stock_minimo = SelectField(
+        'Definir stock mínimo por',
+        choices=[
+            ('INTERNO', 'Contenido Interno (Metros/Piezas)'),
+            ('COMPRA', 'Unidad de Compra (Rollos/Piezas)')
+        ],
+        default='INTERNO'
+    )
+
     stock_minimo_alerta = DecimalField(
         'Stock mínimo',
         default=0,
