@@ -4,7 +4,8 @@ from app.utils.database_connection import db
 from app.models.compras import CompraEncabezado, CompraDetalle
 from app.models.insumos import Insumo
 from app.models.proveedores import Proveedor
-from app.models.inventario import RolloInventario  # ajusta si cambia
+from app.models.pedidos_proveedor import PedidoProveedorEncabezado
+from app.models.inventario import RolloInventario
 from .forms import CompraEncabezadoForm
 from flask import render_template, redirect, url_for, flash, request
 from sqlalchemy import or_, func
@@ -75,7 +76,7 @@ def create():
             nueva_compra = CompraEncabezado(
                 folio_factura=form.folio_factura.data,
                 uuid_proveedor=form.uuid_proveedor.data,
-                uuid_usuario_registro=current_user.uuid_usuario,  # ahora toma el usuario logueado
+                uuid_usuario_registro=current_user.uuid_usuario,
                 estatus=form.estatus.data or "PENDIENTE",
             )
 
@@ -346,6 +347,12 @@ def cancelar(uuid_compra):
 
     try:
         compra.estatus = "CANCELADO"
+
+        # Si viene de un pedido, cancelar también el pedido
+        if compra.uuid_pedido:
+            pedido = PedidoProveedorEncabezado.query.get(compra.uuid_pedido)
+            if pedido:
+                pedido.estatus = "Cancelado"
 
         db.session.commit()
 

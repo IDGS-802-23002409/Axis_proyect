@@ -62,7 +62,7 @@ def create():
                 folio_pedido=form.folio_pedido.data,
                 uuid_proveedor=form.uuid_proveedor.data,
                 uuid_usuario_solicita=current_user.uuid_usuario,
-                estatus=form.estatus.data
+                estatus=form.estatus.data or 'Pendiente'
             )
             db.session.add(nuevo_pedido)
             db.session.flush()
