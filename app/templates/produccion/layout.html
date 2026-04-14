@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     integrity="sha512-pE7d+0WXj+q8phl5kI+4XKg+QFQ5R4x1A8hM/6kVRkZC44kY6d6LhhC/0L0K74uhdLr50QpQ9QKNV+6w4b7+g=="
     crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- SweetAlert2 — Global para todos los módulos -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
     tailwind.config = {
@@ -35,6 +37,76 @@
   </script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
+    /* ── Tipografía base del panel admin ── */
+    body {
+      font-size: 15px;
+    }
+
+    /* ── Tabla estándar AXIS ── */
+    .axis-table thead tr {
+      background: #111111;
+      color: #ffffff;
+    }
+
+    .axis-table thead th {
+      padding: 14px 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-bottom: 2px solid #333;
+    }
+
+    .axis-table tbody td {
+      padding: 14px 20px;
+      font-size: 0.875rem;
+    }
+
+    .axis-table tbody tr {
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.15s;
+    }
+
+    .axis-table tbody tr:hover {
+      background: #f9f9f9;
+    }
+
+    /* ── Flash / Toast mejorados ── */
+    .axis-toast {
+      animation: axisSlideIn 0.35s ease-out;
+      font-size: 0.95rem;
+      min-width: 280px;
+      max-width: 420px;
+    }
+
+    @keyframes axisSlideIn {
+      from {
+        transform: translateX(110%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .axis-toast-bar {
+      animation: axisShrink linear forwards;
+      height: 3px;
+      border-radius: 0 0 8px 8px;
+    }
+
+    @keyframes axisShrink {
+      from {
+        width: 100%;
+      }
+
+      to {
+        width: 0%;
+      }
+    }
+
     @media print {
 
       aside,
@@ -210,32 +282,58 @@
         </div>
       </div>
 
-      {# Flash messages #}
+      {# Flash messages — estandarizados #}
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-      <div class="fixed top-4 right-4 z-50 space-y-2">
+      <div id="axis-flash-container" class="fixed top-5 right-5 z-[999] flex flex-col gap-3"
+        style="pointer-events:none;">
         {% for category, message in messages %}
-        <div class="flex items-center p-4 text-sm rounded-lg shadow-lg border
-          {% if category == 'success' %}bg-green-50 border-green-200 text-green-800
-          {% elif category == 'error' or category == 'danger' %}bg-red-50 border-red-200 text-red-800
-          {% elif category == 'warning' %}bg-yellow-50 border-yellow-200 text-yellow-800
-          {% elif category == 'info' %}bg-blue-50 border-blue-200 text-blue-800
-          {% else %}bg-gray-50 border-gray-200 text-gray-800{% endif %}">
-          <div class="shrink-0 mr-3">
-            {% if category == 'success' %}<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
-            {% elif category == 'error' or category == 'danger' %}<i data-lucide="x-circle"
-              class="w-5 h-5 text-red-600"></i>
-            {% elif category == 'warning' %}<i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-600"></i>
-            {% elif category == 'info' %}<i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
-            {% else %}<i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>{% endif %}
+        {% set duration = 5500 %}
+        {% if category == 'success' %}
+        {% set bg='bg-white' %}{% set border='border-green-400' %}{% set icon_color='text-green-500' %}{% set
+        bar_color='bg-green-400' %}{% set icon='check-circle' %}
+        {% elif category == 'error' or category == 'danger' %}
+        {% set bg='bg-white' %}{% set border='border-red-400' %}{% set icon_color='text-red-500' %}{% set
+        bar_color='bg-red-400' %}{% set icon='x-circle' %}
+        {% elif category == 'warning' %}
+        {% set bg='bg-white' %}{% set border='border-amber-400' %}{% set icon_color='text-amber-500' %}{% set
+        bar_color='bg-amber-400' %}{% set icon='alert-triangle' %}
+        {% elif category == 'info' %}
+        {% set bg='bg-white' %}{% set border='border-blue-400' %}{% set icon_color='text-blue-500' %}{% set
+        bar_color='bg-blue-400' %}{% set icon='info' %}
+        {% else %}
+        {% set bg='bg-white' %}{% set border='border-gray-300' %}{% set icon_color='text-gray-500' %}{% set
+        bar_color='bg-gray-400' %}{% set icon='bell' %}
+        {% endif %}
+        <div class="axis-toast {{ bg }} {{ border }} border-l-4 rounded-lg shadow-xl overflow-hidden"
+          style="pointer-events:auto;">
+          <div class="flex items-start gap-3 px-4 pt-4 pb-3">
+            <i data-lucide="{{ icon }}" class="w-5 h-5 mt-0.5 shrink-0 {{ icon_color }}"></i>
+            <p class="flex-1 font-semibold text-gray-800 leading-snug" style="font-size:0.92rem;">{{ message }}</p>
+            <button onclick="this.closest('.axis-toast').remove()"
+              class="shrink-0 text-gray-400 hover:text-gray-600 transition-colors ml-2 -mr-1">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
           </div>
-          <div class="flex-1 font-medium">{{ message }}</div>
-          <button onclick="this.parentElement.remove()" class="ml-3 shrink-0 hover:opacity-75">
-            <i data-lucide="x" class="w-4 h-4"></i>
-          </button>
+          <div class="{{ bar_color }} axis-toast-bar" style="animation-duration:{{ duration }}ms;"></div>
         </div>
         {% endfor %}
       </div>
+      <script>
+        // Auto-dismiss flash toasts
+        document.addEventListener('DOMContentLoaded', () => {
+          document.querySelectorAll('.axis-toast').forEach(toast => {
+            const bar = toast.querySelector('.axis-toast-bar');
+            const duration = bar ? parseFloat(getComputedStyle(bar).animationDuration) * 1000 : 5500;
+            setTimeout(() => {
+              toast.style.transition = 'opacity 0.4s, transform 0.4s';
+              toast.style.opacity = '0';
+              toast.style.transform = 'translateX(110%)';
+              setTimeout(() => toast.remove(), 400);
+            }, duration - 400);
+          });
+        });
+      </script>
       {% endif %}
       {% endwith %}
 
@@ -250,13 +348,61 @@
   <script>
     lucide.createIcons();
 
-    // Función para recrear iconos cuando se agregan elementos dinámicamente
-    function refreshIcons() {
-      lucide.createIcons();
+    function refreshIcons() { lucide.createIcons(); }
+    setTimeout(refreshIcons, 100);
+
+    /* ═══════════════════════════════════════════════════
+       axisConfirm — Modal de confirmación estándar AXIS
+       Uso:
+         axisConfirm({
+           title: 'Texto',
+           text: 'Detalle opcional',
+           icon: 'warning' | 'question' | 'error' | 'info',
+           confirmText: 'Sí, continuar',
+           cancelText: 'Cancelar',
+           danger: true/false,          // rojo vs negro
+           onConfirm: () => { ... }    // callback al confirmar
+         })
+       ═══════════════════════════════════════════════════ */
+    function axisConfirm(opts = {}) {
+      const confirmColor = opts.danger ? '#dc2626' : '#09090b';
+      return Swal.fire({
+        title: opts.title || '¿Estás seguro?',
+        text: opts.text || '',
+        icon: opts.icon || 'warning',
+        showCancelButton: true,
+        confirmButtonText: opts.confirmText || 'Sí, continuar',
+        cancelButtonText: opts.cancelText || 'Cancelar',
+        confirmButtonColor: confirmColor,
+        cancelButtonColor: '#6b7280',
+        focusCancel: true,
+        customClass: {
+          popup: 'rounded-xl shadow-2xl',
+          title: 'text-lg font-bold',
+          confirmButton: 'font-bold tracking-wide',
+          cancelButton: 'font-semibold tracking-wide'
+        }
+      }).then(result => {
+        if (result.isConfirmed && opts.onConfirm) opts.onConfirm();
+        return result;
+      });
     }
 
-    // Recrear iconos después de un pequeño delay para asegurar que se rendericen
-    setTimeout(refreshIcons, 100);
+    /* Helper para confirmar y enviar un formulario */
+    function axisConfirmForm(formId, opts = {}) {
+      axisConfirm(opts).then(result => {
+        if (result.isConfirmed) {
+          document.getElementById(formId).submit();
+        }
+      });
+    }
+
+    /* Helper para confirmar y navegar a una URL */
+    function axisConfirmUrl(url, opts = {}) {
+      axisConfirm(opts).then(result => {
+        if (result.isConfirmed) window.location.href = url;
+      });
+    }
   </script>
   {% block scripts %}{% endblock %}
 </body>

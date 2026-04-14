@@ -14,10 +14,11 @@
             </a>
 
             {% if merma.activo %}
-            <form method="POST" action="{{ url_for('merma_bp.anular', uuid_merma=merma.uuid_merma) }}"
-                onsubmit="return confirm('¿Deseas anular esta merma?');">
+            <form id="form-anular-merma" method="POST"
+                action="{{ url_for('merma_bp.anular', uuid_merma=merma.uuid_merma) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit"
+                <button type="button"
+                    onclick="axisConfirmForm('form-anular-merma', {title:'¿Anular esta merma?', text:'El stock afectado será revertido.', icon:'warning', danger:true, confirmText:'Sí, anular'})"
                     class="text-xs font-bold text-red-600 border border-red-300 px-4 py-2 rounded-lg hover:bg-red-50">
                     Anular Merma
                 </button>
@@ -119,7 +120,7 @@
                         {{ merma.fecha_creacion.strftime('%d/%m/%Y %H:%M') if merma.fecha_creacion else '' }}
                     </p>
 
-                    
+
 
                 </div>
             </div>

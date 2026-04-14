@@ -81,16 +81,16 @@
 
         <!--  TABLA -->
         <div class="w-full overflow-x-auto">
-            <table class="w-full text-left">
+            <table class="w-full text-left axis-table">
 
                 <thead>
-                    <tr class="text-[10px] uppercase tracking-[0.2em] text-neutral-400 border-b border-neutral-100">
-                        <th class="px-4 py-6 font-bold w-16">Imagen</th>
-                        <th class="px-4 py-6 font-bold">Nombre</th>
-                        <th class="px-4 py-6 font-bold">Tipo</th>
-                        <th class="px-4 py-6 font-bold">Descripción</th>
-                        <th class="px-4 py-6 font-bold text-center">Estado</th>
-                        <th class="px-4 py-6 font-bold text-right">Acciones</th>
+                    <tr>
+                        <th class="w-16">Imagen</th>
+                        <th>Nombre</th>
+                        <th>Tipo</th>
+                        <th>Descripción</th>
+                        <th class="text-center">Estado</th>
+                        <th class="text-right">Acciones</th>
                     </tr>
                 </thead>
 
@@ -163,23 +163,21 @@
                                     <i class="fas fa-pen text-[10px]"></i>
                                     Editar
                                 </a>
-                                <form method="POST"
-                                    action="{{ url_for('categorias_bp.delete', uuid_categoria=categoria.uuid_categoria) }}"
-                                    onsubmit="return confirmDelete('{{ categoria.nombre }}')">
-
-                                    <!-- CSRF oculto -->
+                                <form method="POST" id="cat-toggle-{{ categoria.uuid_categoria }}"
+                                    action="{{ url_for('categorias_bp.delete', uuid_categoria=categoria.uuid_categoria) }}">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
                                     {% if categoria.estatus_visible %}
-                                    <button
-                                        class="flex items-center gap-2 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-500 rounded-lg text-[10px] font-bold border border-red-200 transition-all">
-                                        <i class="fas fa-trash text-[10px]"></i>
+                                    <button type="button"
+                                        onclick="axisConfirmForm('cat-toggle-{{ categoria.uuid_categoria }}', {title:'¿Desactivar categoría?', text:'Se desactivará &quot;{{ categoria.nombre }}&quot;.', icon:'warning', danger:true, confirmText:'Sí, desactivar'})"
+                                        class="flex items-center gap-2 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-500 rounded-lg text-sm font-bold border border-red-200 transition-all">
+                                        <i class="fas fa-trash"></i>
                                         Desactivar
                                     </button>
                                     {% else %}
-                                    <button
-                                        class="flex items-center gap-2 px-5 py-3 bg-green-50 hover:bg-green-100 text-green-600 rounded-lg text-[10px] font-bold border border-green-200 transition-all">
-                                        <i class="fas fa-check text-[10px]"></i>
+                                    <button type="button"
+                                        onclick="axisConfirmForm('cat-toggle-{{ categoria.uuid_categoria }}', {title:'¿Activar categoría?', text:'Se activará &quot;{{ categoria.nombre }}&quot;.', icon:'question', danger:false, confirmText:'Sí, activar'})"
+                                        class="flex items-center gap-2 px-5 py-3 bg-green-50 hover:bg-green-100 text-green-600 rounded-lg text-sm font-bold border border-green-200 transition-all">
+                                        <i class="fas fa-check"></i>
                                         Activar
                                     </button>
                                     {% endif %}
@@ -199,9 +197,3 @@
     </main>
 </div>
 {% endblock %}
-
-<script>
-    function confirmDelete(nombre) {
-        return confirm(`¿Estás seguro de cambiar el estado de la categoría "${nombre}"?`);
-    }
-</script>

@@ -41,106 +41,105 @@
 
     {% if mermas %}
     <div class="overflow-x-auto">
-      <table class="w-full text-sm text-left">
-
-        <thead class="bg-neutral-50 text-neutral-500 uppercase text-[10px] font-black tracking-widest">
+      <table class="w-full text-sm text-left axis-table">
+        <thead>
           <tr>
-            <th class="px-6 py-4">Proceso</th>
-            <th class="px-6 py-4">Merma</th>
-            <th class="px-6 py-4">Orden</th>
-            <th class="px-6 py-4">Fecha</th>
-            <th class="px-6 py-4 text-right">Cantidad</th>
-            <th class="px-6 py-4">Evento</th>
-            <th class="px-6 py-4">Motivo</th>
-            <th class="px-6 py-4 text-center">Acción</th>
+            <th>Proceso</th>
+            <th>Merma</th>
+            <th>Orden</th>
+            <th>Fecha</th>
+            <th class="text-right">Cantidad</th>
+            <th>Evento</th>
+            <th>Motivo</th>
+            <th class="text-center">Acción</th>
           </tr>
         </thead>
 
         <tbody class="divide-y divide-neutral-100">
 
-        {% for merma in mermas %}
-        <tr class="hover:bg-neutral-50 {% if not merma.activo %}opacity-50{% endif %}">
+          {% for merma in mermas %}
+          <tr class="hover:bg-neutral-50 {% if not merma.activo %}opacity-50{% endif %}">
 
-          <!-- PROCESO -->
-          <td class="px-6 py-4 text-xs font-bold">
-            {{ merma.proceso }}
-          </td>
+            <!-- PROCESO -->
+            <td class="px-6 py-4 text-xs font-bold">
+              {{ merma.proceso }}
+            </td>
 
-          <!-- QUE SE MERMÓ -->
-          <td class="px-6 py-4 text-xs">
-            {% if merma.tipo_merma == 'INSUMO' and merma.insumo %}
+            <!-- QUE SE MERMÓ -->
+            <td class="px-6 py-4 text-xs">
+              {% if merma.tipo_merma == 'INSUMO' and merma.insumo %}
               <span class="font-bold">Insumo:</span> {{ merma.insumo.nombre }}
 
-            {% elif merma.tipo_merma == 'PRODUCTO' and merma.producto %}
+              {% elif merma.tipo_merma == 'PRODUCTO' and merma.producto %}
               <span class="font-bold">Producto:</span> {{ merma.producto.sku_especifico }}
 
-            {% elif merma.tipo_merma == 'TELA' and merma.insumo %}
+              {% elif merma.tipo_merma == 'TELA' and merma.insumo %}
               <span class="font-bold">Tela:</span> {{ merma.insumo.nombre }}
 
-            {% else %}
+              {% else %}
               <span class="italic text-neutral-400">Sin info</span>
-            {% endif %}
-          </td>
+              {% endif %}
+            </td>
 
-          <!-- ORDEN -->
-          <td class="px-6 py-4 text-xs font-mono">
-            {% if merma.uuid_op %}
+            <!-- ORDEN -->
+            <td class="px-6 py-4 text-xs font-mono">
+              {% if merma.uuid_op %}
               {{ merma.uuid_op[:8] }}
-            {% else %}
+              {% else %}
               <span class="text-neutral-400">Manual</span>
-            {% endif %}
-          </td>
+              {% endif %}
+            </td>
 
-          <!-- FECHA -->
-          <td class="px-6 py-4 text-xs">
-            {{ merma.fecha_creacion.strftime('%d/%m/%Y') if merma.fecha_creacion else '' }}
-          </td>
+            <!-- FECHA -->
+            <td class="px-6 py-4 text-xs">
+              {{ merma.fecha_creacion.strftime('%d/%m/%Y') if merma.fecha_creacion else '' }}
+            </td>
 
-          <!-- CANTIDAD CORREGIDA -->
-          <td class="px-6 py-4 text-right font-black">
-            {% if merma.tipo_merma == 'INSUMO' and merma.insumo and merma.insumo.unidad_medida == 'PIEZA' %}
-                {{ merma.cantidad|int }}
-            {% else %}
-                {{ "%.2f"|format(merma.cantidad) }}
-            {% endif %}
+            <!-- CANTIDAD CORREGIDA -->
+            <td class="px-6 py-4 text-right font-black">
+              {% if merma.tipo_merma == 'INSUMO' and merma.insumo and merma.insumo.unidad_medida == 'PIEZA' %}
+              {{ merma.cantidad|int }}
+              {% else %}
+              {{ "%.2f"|format(merma.cantidad) }}
+              {% endif %}
 
-            <span class="text-[10px] text-neutral-400">
+              <span class="text-[10px] text-neutral-400">
                 {% if merma.tipo_merma == 'TELA' %}
-                    m
+                m
                 {% elif merma.tipo_merma == 'INSUMO' and merma.insumo %}
-                    {% if merma.insumo.unidad_medida == 'PIEZA' %}
-                        pzas
-                    {% else %}
-                        m
-                    {% endif %}
-                {% elif merma.tipo_merma == 'PRODUCTO' %}
-                    pzas
+                {% if merma.insumo.unidad_medida == 'PIEZA' %}
+                pzas
                 {% else %}
-                    -
+                m
                 {% endif %}
-            </span>
-          </td>
+                {% elif merma.tipo_merma == 'PRODUCTO' %}
+                pzas
+                {% else %}
+                -
+                {% endif %}
+              </span>
+            </td>
 
-          <!-- EVENTO -->
-          <td class="px-6 py-4 text-xs">
-            {{ merma.tipo_evento }}
-          </td>
+            <!-- EVENTO -->
+            <td class="px-6 py-4 text-xs">
+              {{ merma.tipo_evento }}
+            </td>
 
-          <!-- MOTIVO -->
-          <td class="px-6 py-4 text-xs">
-            {{ merma.motivo }}
-          </td>
+            <!-- MOTIVO -->
+            <td class="px-6 py-4 text-xs">
+              {{ merma.motivo }}
+            </td>
 
-          <!-- ACCIÓN -->
-          <td class="px-6 py-4 text-center">
-            <a href="{{ url_for('merma_bp.ver', uuid_merma=merma.uuid_merma) }}"
-               class="text-indigo-600 text-xs font-bold hover:underline">
-              Ver
-            </a>
-          </td>
+            <!-- ACCIÓN -->
+            <td class="px-6 py-4 text-center">
+              <a href="{{ url_for('merma_bp.ver', uuid_merma=merma.uuid_merma) }}"
+                class="text-indigo-600 text-xs font-bold hover:underline">
+                Ver
+              </a>
+            </td>
 
-        </tr>
-        {% endfor %}
+          </tr>
+          {% endfor %}
 
         </tbody>
       </table>
