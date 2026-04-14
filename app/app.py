@@ -35,6 +35,7 @@ def create_app():
 
     # ── Core ──────────────────────────────────────────────────
     application.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'change-me')
+    application.jinja_env.add_extension('jinja2.ext.do')
     application.config['SQLALCHEMY_DATABASE_URI'] = (
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )

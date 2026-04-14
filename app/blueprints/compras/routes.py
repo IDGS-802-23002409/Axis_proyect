@@ -221,39 +221,27 @@ def recibir(uuid_compra):
     if request.method == "POST":
         try:
             # ── REGLA: Validación contra pedido formal ──────────────────
-            # No se acepta material que no coincida exactamente con lo solicitado.
+            # Se aceptan discrepancias en cantidades, pero NO productos extra.
+            # Los productos que no estén en el pedido original se descartan.
+            pedido_map = {}
             if compra.uuid_pedido:
                 pedido = PedidoProveedorEncabezado.query.get(compra.uuid_pedido)
                 if pedido:
-                    # Construir mapa {uuid_insumo: cantidad_pedida} del pedido
                     pedido_map = {
-                        d.uuid_insumo: d.cantidad_pedida # Ya es Decimal
+                        d.uuid_insumo: d.cantidad_pedida 
                         for d in pedido.detalles
                     }
-                    # Verificar cada detalle de la compra contra el pedido
-                    for detalle in compra.detalles:
-                        if detalle.uuid_insumo not in pedido_map:
-                            flash(
-                                f"Rechazado: El insumo '{detalle.insumo.nombre}' no está en el pedido original. "
-                                f"No se aceptan productos extra.",
-                                "error"
-                            )
-                            return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
-                        
-                        cantidad_comprada = detalle.cantidad_comprada # Ya es Decimal
-                        cantidad_pedida = pedido_map[detalle.uuid_insumo]
-                        if cantidad_comprada != cantidad_pedida:
-                            flash(
-                                f"Rechazado: La cantidad de '{detalle.insumo.nombre}' no coincide con el pedido. "
-                                f"Pedido: {cantidad_pedida}, Compra: {cantidad_comprada}.",
-                                "error"
-                            )
-                            return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
 
-            # Validar tolerancia para rollos
+            # Validar tolerancia para rollos e insumos
             for detalle in compra.detalles:
                 insumo = detalle.insumo
                 cantidad = detalle.cantidad_comprada
+                
+                # REGLA: Solo se recibe lo que estaba en el pedido.
+                if compra.uuid_pedido and detalle.uuid_insumo not in pedido_map:
+                    flash(f"Insumo '{insumo.nombre}' DESCARTADO: No forma parte del pedido original.", "warning")
+                    # No actualizamos stock ni nada, pasamos al siguiente.
+                    continue
 
                 if insumo.unidad_medida == "ROLLO":
                     input_name = f"metraje_real_{detalle.uuid_detalle_compra}"
@@ -266,10 +254,10 @@ def recibir(uuid_compra):
                         return redirect(url_for("compras_bp.recibir", uuid_compra=uuid_compra))
 
                     # Se eliminó la validación estricta de tolerancia.
-                    # Se permite aceptar rollos con menor/mayor metraje (ej. recibir 60m cuando se esperaban 100m).
+                    # Se permite aceptar rollos con menor/mayor metraje.
                     # El metraje real será el que dicte la suma en el inventario.
 
-                    # Si es aceptado, actualizamos stock y creamos rollos
+                    # Actualizamos stock y creamos rollos
                     metraje_por_rollo = metraje_real / cantidad
                     insumo.stock_total_acumulado += metraje_real
                     
