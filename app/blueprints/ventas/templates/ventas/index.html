@@ -72,7 +72,6 @@
                 <option value="Completado" {% if estatus=='Completado' %}selected{% endif %}>Completado</option>
                 <option value="Entregado" {% if estatus=='Entregado' %}selected{% endif %}>Entregado</option>
                 <option value="Cancelado" {% if estatus=='Cancelado' %}selected{% endif %}>Cancelado</option>
-                <option value="Devuelto" {% if estatus=='Devuelto' %}selected{% endif %}>Devuelto</option>
                 <option value="Procesando" {% if estatus=='Procesando' %}selected{% endif %}>Procesando</option>
             </select>
         </div>
@@ -159,13 +158,10 @@
                     <td class="px-4 py-4 text-center">
                         {% if v.estatus_envio == 'Completado' %}
                         <span
-                            class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Completado</span>
-                        {% elif v.estatus_envio == 'Enviado' %}
-                        <span
-                            class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Enviado</span>
+                            class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Listo (Recoger)</span>
                         {% elif v.estatus_envio == 'Entregado' %}
                         <span
-                            class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Entregado</span>
+                            class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Entregado</span>
                         {% elif v.estatus_envio == 'Procesando' %}
                         <span
                             class="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Procesando</span>
@@ -197,12 +193,12 @@
                                     Pedido</h4>
                                 <div class="flex gap-2">
                                     {% if v.estatus_envio in ['Procesando', 'Completado', 'Pendiente'] %}
-                                    <form action="{{ url_for('ventas.marcar_enviado', uuid_venta=v.uuid_venta) }}"
+                                    <form action="{{ url_for('ventas.marcar_entregado', uuid_venta=v.uuid_venta) }}"
                                         method="POST">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit"
-                                            class="bg-blue-600 text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase hover:bg-blue-700 transition-colors">
-                                            Marcar como Enviado
+                                            class="bg-emerald-600 text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase hover:bg-emerald-700 transition-colors">
+                                            Marcar como Entregado
                                         </button>
                                     </form>
                                     {% endif %}

@@ -40,38 +40,37 @@ def cancelar_pedido(uuid_venta):
     flash(f"Pedido {venta.numero_pedido} cancelado. La producción continuará para integrar los productos al stock.", "info")
     return redirect(request.referrer or url_for('ventas.index'))
 
-@ventas_bp.route('/enviar/<uuid_venta>', methods=['POST'])
+@ventas_bp.route('/entregar/<uuid_venta>', methods=['POST'])
 @login_required
 @roles_accepted('admin', 'gerente')
-def marcar_enviado(uuid_venta):
+def marcar_entregado(uuid_venta):
     venta = VentaEncabezado.query.get_or_404(uuid_venta)
     
-    # Solo si el estatus es Pendiente o Completado (no Enviado ni Cancelado)
-    if venta.estatus_envio in ['Enviado', 'Cancelado']:
-        flash(f"El pedido ya está en estatus {venta.estatus_envio}.", "warning")
+    # Solo si el estatus es Completado (ya está todo fabricado/en stock)
+    if venta.estatus_envio != 'Completado':
+        flash(f"El pedido debe estar en estatus 'Completado' (Listo para recolección) antes de marcarlo como Entregado.", "warning")
         return redirect(url_for('ventas.index'))
 
-    venta.estatus_envio = 'Enviado'
+    venta.estatus_envio = 'Entregado'
     db.session.commit()
     
-    # Enviar correo al cliente
+    # Enviar correo al cliente informando que su pedido fue entregado/recogido
     try:
         from app.app import mail
         msg = Message(
-            f"¡Tu pedido {venta.numero_pedido} ha sido enviado! 🚀",
+            f"¡Gracias por tu compra! Pedido {venta.numero_pedido} entregado ✓",
             recipients=[venta.cliente.usuario.email]
         )
         msg.html = render_template(
-            'emails/envio_pedido.html',
+            'emails/entrega_confirmada.html',
             nombre_cliente=venta.cliente.usuario.nombre_completo,
             numero_pedido=venta.numero_pedido,
-            direccion=venta.cliente.direccion_completa,
             url_host=request.host_url.rstrip('/')
         )
         mail.send(msg)
-        flash(f"Pedido {venta.numero_pedido} marcado como enviado y notificación enviada por correo.", "success")
+        flash(f"Pedido {venta.numero_pedido} marcado como entregado.", "success")
     except Exception as e:
-        flash(f"Pedido marcado como enviado, pero hubo un error al enviar el correo: {str(e)}", "warning")
+        flash(f"Pedido marcado como entregado, error al enviar correo: {str(e)}", "warning")
         
     return redirect(url_for('ventas.index'))
 
