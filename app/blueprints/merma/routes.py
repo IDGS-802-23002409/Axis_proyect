@@ -10,6 +10,7 @@ from app.models.modelos_productos import ProductoTerminado
 from app.models.usuarios import Usuario
 from app.utils.database_connection import db
 from decimal import Decimal
+from sqlalchemy import func
 
 @merma_bp.route('/')
 @login_required
