@@ -130,11 +130,78 @@ def run_seed():
                 "stock_min": 30,
                 "ancho": 1.50
             },
+            {
+                "sku": "TEL-GAB-NEG-001",
+                "nombre": "Gabardina Negra",
+                "categoria": "Telas",
+                "unidad_medida": "ROLLO",
+                "contenido_cantidad": 50,
+                "contenido_unidad_medida": "METRO",
+                "stock": 0,
+                "stock_min": 30,
+                "ancho": 1.50
+            },
+            {
+                "sku": "TEL-DEN-AZL-001",
+                "nombre": "Tela Denim Azul",
+                "categoria": "Telas",
+                "unidad_medida": "ROLLO",
+                "contenido_cantidad": 50,
+                "contenido_unidad_medida": "METRO",
+                "stock": 0,
+                "stock_min": 30,
+                "ancho": 1.50
+            },
+            {
+                "sku": "TEL-JER-BLA-001",
+                "nombre": "Jersey Blanco",
+                "categoria": "Telas",
+                "unidad_medida": "ROLLO",
+                "contenido_cantidad": 50,
+                "contenido_unidad_medida": "METRO",
+                "stock": 0,
+                "stock_min": 30,
+                "ancho": 1.50
+            },
+            {
+                "sku": "TEL-FEL-BEI-001",
+                "nombre": "Felpa Beige",
+                "categoria": "Telas",
+                "unidad_medida": "ROLLO",
+                "contenido_cantidad": 50,
+                "contenido_unidad_medida": "METRO",
+                "stock": 0,
+                "stock_min": 30,
+                "ancho": 1.50
+            },
+            {
+                "sku": "TEL-INT-NEG-001",
+                "nombre": "Interlock Negro",
+                "categoria": "Telas",
+                "unidad_medida": "ROLLO",
+                "contenido_cantidad": 50,
+                "contenido_unidad_medida": "METRO",
+                "stock": 0,
+                "stock_min": 30,
+                "ancho": 1.50
+            },
+
 
             # ───────────────── RIB ─────────────────
             {
                 "sku": "RIB-NEG-001",
                 "nombre": "Rib de Algodón Negro (Cuello)",
+                "categoria": "Rib de algodon",
+                "unidad_medida": "ROLLO",
+                "contenido_cantidad": 30,
+                "contenido_unidad_medida": "METRO",
+                "stock": 0,
+                "stock_min": 20,
+                "ancho": 1.20
+            },
+            {
+                "sku": "RIB-BLA-001",
+                "nombre": "Rib Blanco",
                 "categoria": "Rib de algodon",
                 "unidad_medida": "ROLLO",
                 "contenido_cantidad": 30,
@@ -224,11 +291,55 @@ def run_seed():
                 "stock_min": 50,
                 "ancho": 0.10
             },
+            {
+                "sku": "CIN-TAPA-BLA-001",
+                "nombre": "Cinta Tapacostura Blanca",
+                "categoria": "Cinta tapacostura",
+                "unidad_medida": "ROLLO",
+                "contenido_cantidad": 25,
+                "contenido_unidad_medida": "METRO",
+                "stock": 0,
+                "stock_min": 50,
+                "ancho": 0.10
+            },
+            {
+                "sku": "CIN-TAPA-BEI-001",
+                "nombre": "Cinta Tapacostura Beige",
+                "categoria": "Cinta tapacostura",
+                "unidad_medida": "ROLLO",
+                "contenido_cantidad": 25,
+                "contenido_unidad_medida": "METRO",
+                "stock": 0,
+                "stock_min": 50,
+                "ancho": 0.10
+            },
+            {
+                "sku": "CIN-VIVO-BLA-001",
+                "nombre": "Cinta Vivo Blanca",
+                "categoria": "Cinta tapacostura",
+                "unidad_medida": "ROLLO",
+                "contenido_cantidad": 25,
+                "contenido_unidad_medida": "METRO",
+                "stock": 0,
+                "stock_min": 50,
+                "ancho": 0.10
+            },
 
             # ───────────────── ELÁSTICO ─────────────────
             {
                 "sku": "ELA-4CM-NEG-001",
                 "nombre": "Elástico 4cm Negro",
+                "categoria": "Elastico",
+                "unidad_medida": "ROLLO",
+                "contenido_cantidad": 20,
+                "contenido_unidad_medida": "METRO",
+                "stock": 0,
+                "stock_min": 20,
+                "ancho": 0.04
+            },
+            {
+                "sku": "ELA-NEG-004CM-001",
+                "nombre": "Elastico 4cm Neg",
                 "categoria": "Elastico",
                 "unidad_medida": "ROLLO",
                 "contenido_cantidad": 20,
@@ -284,6 +395,16 @@ def run_seed():
             {
                 "sku": "ETQ-CUIDADO-001",
                 "nombre": "Etiqueta de Cuidado/Composición",
+                "categoria": "Etiquetas",
+                "unidad_medida": "PIEZA",
+                "contenido_cantidad": 1,
+                "contenido_unidad_medida": "PIEZA",
+                "stock": 0,
+                "stock_min": 100
+            },
+            {
+                "sku": "ETQ-TALLA-001",
+                "nombre": "Etiqueta Generica Talla",
                 "categoria": "Etiquetas",
                 "unidad_medida": "PIEZA",
                 "contenido_cantidad": 1,
@@ -426,6 +547,47 @@ def run_seed():
                 "contenido_unidad_medida": "PIEZA",
                 "stock": 0,
                 "stock_min": 100
+            },
+            {
+                "sku": "FOR-VIS-001",
+                "nombre": "Forro Viscosa",
+                "categoria": "Forro",
+                "unidad_medida": "ROLLO",
+                "contenido_cantidad": 50,
+                "contenido_unidad_medida": "METRO",
+                "stock": 0,
+                "stock_min": 30,
+                "ancho": 1.50
+            },
+            {
+                "sku": "BRO-PRES-001",
+                "nombre": "Broche Presion",
+                "categoria": "Botones",
+                "unidad_medida": "PIEZA",
+                "contenido_cantidad": 1,
+                "contenido_unidad_medida": "PIEZA",
+                "stock": 0,
+                "stock_min": 30
+            },
+            {
+                "sku": "OJA-MET-001",
+                "nombre": "Ojalillos Meta",
+                "categoria": "Ojalillos",
+                "unidad_medida": "PIEZA",
+                "contenido_cantidad": 1,
+                "contenido_unidad_medida": "PIEZA",
+                "stock": 0,
+                "stock_min": 30
+            },
+            {
+                "sku": "REM-MET-001",
+                "nombre": "Remache Meta",
+                "categoria": "Remaches",
+                "unidad_medida": "PIEZA",
+                "contenido_cantidad": 1,
+                "contenido_unidad_medida": "PIEZA",
+                "stock": 0,
+                "stock_min": 30
             },
         ]
 
