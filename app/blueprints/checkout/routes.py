@@ -176,30 +176,7 @@ def eliminar_carrito():
 @checkout_bp.route('/carrito/vaciar', methods=['POST'])
 def vaciar_carrito():
     save_cart([])
-    session.pop('axis_discount', None)
-    session.pop('discount_code', None)
     flash('Carrito vaciado', 'success')
-    return redirect(url_for('checkout.checkout_view'))
-
-
-@checkout_bp.route('/carrito/descuento', methods=['POST'])
-def aplicar_descuento():
-    codigo = request.form.get('codigo', '').strip().upper()
-    if codigo == 'AXIS10':
-        session['axis_discount'] = 0.10
-        session['discount_code'] = codigo
-        flash('¡Cupón AXIS10 aplicado correctamente! 10% de descuento.', 'success')
-    else:
-        flash('Código de descuento inválido.', 'error')
-    
-    return redirect(url_for('checkout.checkout_view'))
-
-
-@checkout_bp.route('/carrito/quitar-descuento', methods=['POST'])
-def quitar_descuento():
-    session.pop('axis_discount', None)
-    session.pop('discount_code', None)
-    flash('Cupón eliminado.', 'info')
     return redirect(url_for('checkout.checkout_view'))
 
 
@@ -227,7 +204,7 @@ def newsletter():
         from app.app import mail
         from flask_mail import Message
         msg = Message(
-            "¡Bienvenido al Movimiento AXIS! 🎁 Tu regalo de bienvenida",
+            "¡Bienvenido al Movimiento AXIS! 🎁",
             recipients=[email]
         )
         msg.html = render_template(
@@ -235,10 +212,9 @@ def newsletter():
             url_host=request.host_url.rstrip('/')
         )
         mail.send(msg)
-        flash('¡Gracias por unirte! Revisa tu correo, te hemos enviado un regalo. 🖤', 'success')
+        flash('¡Gracias por unirte al movimiento AXIS! Revisa tu correo. 🖤', 'success')
     except Exception as e:
-        # Fallback si el correo falla, pero el usuario se "suscribió"
-        flash('¡Bienvenido al movimiento! (Usa el código AXIS10 para un 10% de descuento)', 'success')
+        flash('¡Bienvenido al movimiento!', 'success')
         print(f"Error newsletter mail: {e}")
 
     return redirect(request.referrer or '/')
@@ -310,10 +286,8 @@ def procesar_checkout():
 
         db.session.commit()
 
-        # Limpiar carrito y descuentos de sesión
+        # Limpiar carrito
         save_cart([])
-        session.pop('axis_discount', None)
-        session.pop('discount_code', None)
 
         if resumen.get('has_pedido'):
             flash("Tu compra incluye prendas que entrarán a producción (+5 días entrega).", 'info')

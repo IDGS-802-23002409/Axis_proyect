@@ -147,13 +147,6 @@
                                 endif %}</span>
                         </div>
 
-                        {% if session.get('axis_discount') %}
-                        <div class="flex justify-between text-emerald-400 font-bold">
-                            <span>Descuento ({{ (session.axis_discount * 100)|int }}%)</span>
-                            <span>-${{ "%.2f"|format(totals.subtotal * session.axis_discount) }}</span>
-                        </div>
-                        {% endif %}
-
                         {% if totals.subtotal < 100 %} <p class="text-xs text-primary">Añade ${{ "%.2f"|format(100 -
                             totals.subtotal) }} más para envío gratis</p>
                             {% endif %}
@@ -162,30 +155,8 @@
                         <div class="flex justify-between items-center">
                             <span class="text-lg">Total</span>
                             {% set final_total = totals.total %}
-                            {% if session.get('axis_discount') %}
-                            {% set final_total = final_total - (totals.subtotal * session.axis_discount) %}
-                            {% endif %}
                             <span class="font-[var(--font-display)] text-3xl">${{ "%.2f"|format(final_total) }}</span>
                         </div>
-                    </div>
-                    <div class="mb-6">
-                        <label class="text-sm text-muted-foreground block mb-2">Código promocional</label>
-                        <form action="{{ url_for('checkout.aplicar_descuento') }}" method="POST" class="flex">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="text" name="codigo" placeholder="Ingresa código"
-                                value="{{ session.get('discount_code', '') }}"
-                                class="flex-1 bg-background border border-border px-4 py-2 text-sm focus:outline-none focus:border-primary uppercase" />
-                            <button type="submit"
-                                class="px-4 py-2 border border-l-0 border-border hover:border-primary hover:text-primary transition-colors text-sm">Aplicar</button>
-                        </form>
-                        {% if session.get('axis_discount') %}
-                        <form action="{{ url_for('checkout.quitar_descuento') }}" method="POST" class="mt-2">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit"
-                                class="text-[10px] text-muted-foreground hover:text-destructive underline uppercase tracking-widest">Eliminar
-                                cupón</button>
-                        </form>
-                        {% endif %}
                     </div>
                     {% if not current_user.is_authenticated %}
                     {# Usuario no autenticado: invitar a hacer login #}

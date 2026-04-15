@@ -82,7 +82,7 @@ def index():
 
 @productos_bp.route('/registro', methods=['GET', 'POST'])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def registro_producto():
     form = ProductoTerminadoForm()
     subquery = db.session.query(ProductoTerminado.uuid_explosion)
@@ -273,7 +273,7 @@ def editar_producto(uuid):
 
 @productos_bp.route('/eliminar/<uuid>', methods=['POST'])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def eliminar_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
     
@@ -290,7 +290,7 @@ def eliminar_producto(uuid):
 
 @productos_bp.route('/detalle/<uuid>')
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def detalle_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
     explosion = producto.explosion
@@ -300,7 +300,7 @@ def detalle_producto(uuid):
 
 @productos_bp.route('/ajustar-stock/<uuid>', methods=['POST'])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def ajustar_stock(uuid):
     """
     Permite agregar stock físico de un producto terminado de forma manual.

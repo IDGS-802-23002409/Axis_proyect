@@ -1,10 +1,10 @@
-from flask import flash, redirect, render_template, request, url_for
+from flask import flash, redirect, render_template, request, url_for, jsonify
 from app.blueprints.orden_produccion import orden_bp
 from app.blueprints.productos_terminados.form import ProductoTerminadoForm
 from app.models.modelos_productos import ProductoTerminado
 
 from app.utils.database_connection import db
-from flask_security import login_required, roles_accepted
+from flask_security import login_required, roles_accepted, current_user
 from sqlalchemy.orm import joinedload
 from decimal import Decimal
 from app.models.explosion_materiales import ExplosionMaterialesDetalle, ExplosionMaterialesCabecera
@@ -12,14 +12,8 @@ from app.models.inventario import RolloInventario
 from app.models.insumos import Insumo
 from app.models.produccion import OrdenProduccion, EjecucionCorte, EjecucionCorteRollo
 from app.models.ventas import VentaEncabezado, VentaDetalle
-from app.utils.database_connection import db
+from app.models.pedidos_cliente import PedidoClienteEncabezado, PedidoClienteDetalle
 from .forms import OrdenProduccionForm
-from flask_security import current_user
-from decimal import Decimal
-from sqlalchemy.orm import joinedload
-from app.utils.database_connection import db
-from app.models import OrdenProduccion, Insumo, RolloInventario, EjecucionCorte
-from flask import request, jsonify, url_for
 from app.models.mermas import Merma
 
 
