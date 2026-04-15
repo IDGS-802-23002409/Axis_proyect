@@ -87,7 +87,7 @@ def ver_insumo(uuid):
 
     if insumo.unidad_medida == 'ROLLO':
 
-        rollos = RolloInventario.query.filter_by(uuid_insumo=uuid).all()
+        rollos = RolloInventario.query.filter_by(uuid_insumo=uuid).order_by(RolloInventario.metraje_continuo_actual.asc()).all()
 
         total_metros_iniciales = sum(float(r.metraje_inicial or 0) for r in rollos)
         total_metros_actual    = sum(float(r.metraje_continuo_actual or 0) for r in rollos)
@@ -162,7 +162,7 @@ def ver_insumo(uuid):
                     total_usado   += cantidad_usada
 
                     uso_piezas.append({
-                        "producto": producto.nombre_display,
+                        "producto": producto.explosion.nombre_receta if producto.explosion else "S/N",
                         "sku":      producto.sku_especifico,
                         "orden":    op.uuid_op[:8] + "…",
                         "estado":   op.estado,
