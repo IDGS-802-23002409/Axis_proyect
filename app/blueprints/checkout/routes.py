@@ -309,22 +309,43 @@ def mis_pedidos():
     if not current_user.cliente:
         return redirect(url_for('checkout.completar_perfil'))
     
-    ventas = VentaEncabezado.query.filter_by(uuid_cliente=current_user.cliente.uuid_cliente).order_by(VentaEncabezado.fecha_venta.desc()).all()
-    pedidos_pendientes = PedidoClienteEncabezado.query.filter_by(uuid_cliente=current_user.cliente.uuid_cliente).order_by(PedidoClienteEncabezado.fecha_pedido.desc()).all()
-    
+    # Solo mostramos VentaEncabezado como la entidad principal de compra.
+    # Los PedidoClienteEncabezado vinculados se mostrarán DENTRO de la card de la venta.
+    ventas = VentaEncabezado.query.filter_by(
+        uuid_cliente=current_user.cliente.uuid_cliente
+    ).order_by(VentaEncabezado.fecha_venta.desc()).all()
+
+    # Si por alguna razón hubiera pedidos SIN venta (flujos antiguos o especiales), 
+    # los podríamos mostrar aparte, pero el flujo principal ahora es vía Venta.
+    pedidos_huerfanos = PedidoClienteEncabezado.query.filter_by(
+        uuid_cliente=current_user.cliente.uuid_cliente,
+        uuid_venta_origen=None
+    ).order_by(PedidoClienteEncabezado.fecha_pedido.desc()).all()
+
     for v in ventas:
         total = 0
+        # Sumar lo que salió de stock
         for d in v.detalles:
-            total += (d.precio_unitario_historico * d.cantidad)
+            total += (float(d.precio_unitario_historico) * d.cantidad)
+        
+        # Sumar lo que entró a producción
+        for p in v.pedidos_vinculados:
+            for d in p.detalles:
+                total += (float(d.precio_unitario_historico) * d.cantidad)
+        
         v.total_calculado = total
 
-    for p in pedidos_pendientes:
+    for p in pedidos_huerfanos:
         total = 0
         for d in p.detalles:
-            total += (d.precio_unitario_historico * d.cantidad)
+            total += (float(d.precio_unitario_historico) * d.cantidad)
         p.total_calculado = total
 
-    return render_template('mis_pedidos.html', ventas=ventas, pedidos_pendientes=pedidos_pendientes)
+    return render_template(
+        'mis_pedidos.html', 
+        ventas=ventas, 
+        pedidos_pendientes=pedidos_huerfanos
+    )
 
 
 @checkout_bp.route('/checkout/exito/<numero_pedido>')

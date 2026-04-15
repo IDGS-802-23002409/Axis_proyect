@@ -34,79 +34,20 @@
             </div>
             {% else %}
             
-            {% if pedidos_pendientes %}
-            <div class="mb-16">
-                <h2 class="text-2xl font-bold uppercase tracking-widest mb-8 flex items-center gap-4">
-                    <span class="w-8 h-px bg-amber-500"></span>
-                    Pendientes de Producción
-                </h2>
-                <div class="space-y-8">
-                    {% for pedido in pedidos_pendientes %}
-                    <div class="bg-amber-500/5 border border-amber-500/20 overflow-hidden group hover:border-amber-500/50 transition-all">
-                        <div class="bg-amber-500/10 p-6 flex flex-wrap justify-between items-center gap-6 border-b border-amber-500/20">
-                            <div class="flex gap-8">
-                                <div>
-                                    <p class="text-[10px] text-amber-500/70 uppercase tracking-widest mb-1">Folio Pedido</p>
-                                    <p class="font-bold text-sm tracking-widest text-amber-500">{{ pedido.numero_pedido }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] text-amber-500/70 uppercase tracking-widest mb-1">Fecha</p>
-                                    <p class="font-bold text-sm">{{ pedido.fecha_pedido.strftime('%d/%m/%Y') }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] text-amber-500/70 uppercase tracking-widest mb-1">Total</p>
-                                    <p class="font-bold text-sm">${{ "%.2f"|format(pedido.total_calculado) }}</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <span class="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/30">
-                                    {{ pedido.estatus }}
-                                </span>
-                                <i data-lucide="clock" class="w-4 h-4 text-amber-500 animate-pulse"></i>
-                            </div>
-                        </div>
-                        <div class="p-6">
-                            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {% for detalle in pedido.detalles %}
-                                <div class="flex gap-4">
-                                    <div class="w-16 h-20 bg-secondary flex-shrink-0 grayscale opacity-70">
-                                        <img src="{{ detalle.producto.modelo.imagen_url if detalle.producto.modelo else '/static/images/default/default-image.png' }}"
-                                            alt="Producto" class="w-full h-full object-cover">
-                                    </div>
-                                    <div>
-                                        <p class="text-xs font-bold uppercase tracking-wider mb-1 text-amber-200/80">
-                                            {{ detalle.producto.modelo.nombre_modelo if detalle.producto.modelo else 'Producto AXIS' }}
-                                        </p>
-                                        <p class="text-[10px] text-muted-foreground uppercase">Talla: {{ detalle.producto.talla }} · Cantidad: {{ detalle.cantidad }}</p>
-                                        <p class="text-[10px] font-bold text-amber-500/70 mt-1 uppercase">ESTADO: {{ detalle.estatus_item }}</p>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                            <p class="mt-6 text-[10px] text-amber-500/60 uppercase tracking-widest italic flex items-center gap-2">
-                                <i data-lucide="info" class="w-3 h-3"></i> 
-                                Este pedido se encuentra en fase de fabricación. Tiempo estimado: 5-7 días hábiles.
-                            </p>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
             {% if ventas %}
             <div>
                 <h2 class="text-2xl font-bold uppercase tracking-widest mb-8 flex items-center gap-4">
                     <span class="w-8 h-px bg-primary"></span>
-                    Compras Realizadas
+                    Tus Compras
                 </h2>
-                <div class="space-y-8">
+                <div class="space-y-12">
                     {% for venta in ventas %}
                     <div class="bg-secondary/10 border border-border overflow-hidden group hover:border-primary/50 transition-all">
+                        <!-- Card Header -->
                         <div class="bg-secondary/20 p-6 flex flex-wrap justify-between items-center gap-6 border-b border-border">
                             <div class="flex gap-8">
                                 <div>
-                                    <p class="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Folio Venta</p>
+                                    <p class="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Folio</p>
                                     <p class="font-bold text-sm tracking-widest">{{ venta.numero_pedido }}</p>
                                 </div>
                                 <div>
@@ -128,25 +69,91 @@
                                 </span>
                             </div>
                         </div>
+
+                        <!-- Card Body: Unified Product List -->
                         <div class="p-6">
-                            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {% for detalle in venta.detalles %}
-                                <div class="flex gap-4">
-                                    <div class="w-16 h-20 bg-secondary flex-shrink-0">
-                                        <img src="{{ detalle.producto.modelo.imagen_url if detalle.producto.modelo else '/static/images/default/default-image.png' }}"
+                            <div class="grid md:grid-cols-2 gap-8">
+                                {# Agrupar productos para mostrar una sola línea por producto con el desglose #}
+                                {% set items_ready = [] %}
+                                {% set items_prod = [] %}
+                                
+                                {% for d in venta.detalles %}
+                                    {% do items_ready.append({'prod': d.producto, 'qty': d.cantidad, 'status': 'LISTO'}) %}
+                                {% endfor %}
+
+                                {% for p in venta.pedidos_vinculados %}
+                                    {% for d in p.detalles %}
+                                        {% if d.estatus_item == 'Terminado' %}
+                                            {% do items_ready.append({'prod': d.producto, 'qty': d.cantidad, 'status': 'LISTO'}) %}
+                                        {% else %}
+                                            {% do items_prod.append({'prod': d.producto, 'qty': d.cantidad, 'status': d.estatus_item}) %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
+
+                                {# Combinar y mostrar #}
+                                {% for item in items_ready + items_prod %}
+                                <div class="flex gap-4 p-4 bg-background/50 border border-border/50">
+                                    <div class="w-20 h-24 bg-secondary flex-shrink-0">
+                                        <img src="{{ item.prod.modelo.imagen_url if item.prod.modelo else '/static/images/default/default-image.png' }}"
                                             alt="Producto" class="w-full h-full object-cover">
                                     </div>
-                                    <div>
-                                        <p class="text-xs font-bold uppercase tracking-wider mb-1">
-                                            {{ detalle.producto.modelo.nombre_modelo if detalle.producto.modelo else 'Producto' }}
+                                    <div class="flex-1">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <p class="text-xs font-bold uppercase tracking-wider">
+                                                {{ item.prod.modelo.nombre_modelo if item.prod.modelo else 'Producto AXIS' }}
+                                            </p>
+                                            <span class="text-[10px] font-black px-2 py-0.5 rounded
+                                                {% if item.status == 'LISTO' %} bg-emerald-500/10 text-emerald-500
+                                                {% else %} bg-amber-500/10 text-amber-500 animate-pulse {% endif %}">
+                                                {{ item.status }}
+                                            </span>
+                                        </div>
+                                        <p class="text-[10px] text-muted-foreground uppercase mb-2">
+                                            Talla: {{ item.prod.talla }} · Cantidad: {{ item.qty }}
                                         </p>
-                                        <p class="text-[10px] text-muted-foreground uppercase">Talla: {{ detalle.producto.talla }} · Cantidad: {{ detalle.cantidad }}</p>
-                                        <p class="text-xs font-bold mt-2 text-primary">${{ "%.2f"|format(detalle.precio_unitario_historico * detalle.cantidad) }}</p>
+                                        
+                                        {% if item.status != 'LISTO' %}
+                                        <div class="mt-3">
+                                            <div class="w-full bg-secondary h-1 rounded-full overflow-hidden">
+                                                <div class="bg-amber-500 h-full {% if item.status == 'En Producción' %} w-1/2 {% else %} w-1/4 {% endif %}"></div>
+                                            </div>
+                                            <p class="text-[9px] text-amber-500/70 mt-1 uppercase tracking-tighter">
+                                                Fase: {{ item.status }} (Est. 5-7 días)
+                                            </p>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 {% endfor %}
                             </div>
+
+                            {% if items_prod %}
+                            <div class="mt-6 p-4 bg-amber-500/5 border border-amber-500/10">
+                                <p class="text-[10px] text-amber-500/60 uppercase tracking-widest italic flex items-center gap-2">
+                                    <i data-lucide="info" class="w-3 h-3"></i> 
+                                    Algunas prendas de esta compra están siendo fabricadas artesanalmente para ti.
+                                </p>
+                            </div>
+                            {% endif %}
                         </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if pedidos_pendientes %}
+            <div class="mt-20">
+                <h2 class="text-2xl font-bold uppercase tracking-widest mb-8 flex items-center gap-4">
+                    <span class="w-8 h-px bg-amber-500"></span>
+                    Otros Pedidos Especiales
+                </h2>
+                <div class="space-y-8">
+                    {% for pedido in pedidos_pendientes %}
+                    <div class="bg-amber-500/5 border border-amber-500/20 overflow-hidden">
+                        <!-- Header simplificado para pedidos huérfanos -->
+                        ...
                     </div>
                     {% endfor %}
                 </div>

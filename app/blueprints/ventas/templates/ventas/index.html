@@ -214,7 +214,14 @@
                                 <tbody class="divide-y divide-gray-100">
                                     {% for p in v.productos %}
                                     <tr>
-                                        <td class="px-4 py-2 font-medium text-gray-700">{{ p.nombre }}</td>
+                                        <td class="px-4 py-2 font-medium text-gray-700">
+                                            {{ p.nombre }}
+                                            {% if p.status != 'LISTO' %}
+                                            <span class="ml-2 text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-black uppercase">{{ p.status }}</span>
+                                            {% else %}
+                                            <span class="ml-2 text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-black uppercase">Stock</span>
+                                            {% endif %}
+                                        </td>
                                         <td class="px-4 py-2 text-center text-gray-500">{{ p.talla }}</td>
                                         <td class="px-4 py-2 text-center text-gray-700 font-bold">{{ p.qty }}</td>
                                         <td class="px-4 py-2 text-right text-gray-500">${{ "{:,.2f}".format(p.precio) }}

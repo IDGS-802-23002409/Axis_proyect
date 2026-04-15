@@ -192,22 +192,37 @@ def index():
          .filter(PedidoClienteEncabezado.uuid_venta_origen == ve.uuid_venta)\
          .all()
 
-        combined_products = []
+        # ── Agrupar productos (Unificar Stock + Pedido) ──────────────────
+        products_map = {} # (nombre, talla, precio) -> {qty, stock_qty, pedido_qty}
+
         for p in productos_stock:
-            combined_products.append({
-                'nombre' : p.nombre_receta,
-                'talla'  : p.talla,
-                'qty'    : p.cantidad,
-                'precio' : float(p.precio_unitario_historico),
-                'tag'    : 'Stock'
-            })
+            key = (p.nombre_receta, p.talla, float(p.precio_unitario_historico))
+            if key not in products_map:
+                products_map[key] = {'qty': 0, 'stock_qty': 0, 'pedido_qty': 0}
+            products_map[key]['qty'] += p.cantidad
+            products_map[key]['stock_qty'] += p.cantidad
+
         for p in productos_pedido:
+            key = (p.nombre_receta, p.talla, float(p.precio_unitario_historico))
+            if key not in products_map:
+                products_map[key] = {'qty': 0, 'stock_qty': 0, 'pedido_qty': 0}
+            products_map[key]['qty'] += p.cantidad
+            products_map[key]['pedido_qty'] += p.cantidad
+
+        combined_products = []
+        for (nombre, talla, precio), data in products_map.items():
+            status = "LISTO"
+            if data['pedido_qty'] > 0:
+                status = f"PROD ({data['pedido_qty']}/{data['qty']})"
+                if data['stock_qty'] == 0:
+                    status = "EN PROD"
+
             combined_products.append({
-                'nombre' : p.nombre_receta,
-                'talla'  : p.talla,
-                'qty'    : p.cantidad,
-                'precio' : float(p.precio_unitario_historico),
-                'tag'    : 'Pedido'
+                'nombre' : nombre,
+                'talla'  : talla,
+                'qty'    : data['qty'],
+                'precio' : precio,
+                'status' : status
             })
 
         ventas.append({
