@@ -31,15 +31,6 @@ def registrar_merma_op(uuid_op):
     orden = OrdenProduccion.query.get_or_404(uuid_op)
     form = MermaForm()
     
-    # Mapeo de estado de orden a proceso de merma
-    mapeo_procesos = {
-        'Pendiente': 'ALMACEN',
-        'En Corte': 'CORTE',
-        'Confección': 'CONFECCION',
-        'Terminado': 'ACABADO'
-    }
-    proceso_sugerido = mapeo_procesos.get(orden.estado, 'CORTE')
-    
     # Obtener insumos relacionados (Receta + Rollos usados si está en corte)
     insumos_data = []
     
@@ -76,7 +67,7 @@ def registrar_merma_op(uuid_op):
         # Procesamos manualmente las listas enviadas por el formulario.
         
         tipo_merma_gral = request.form.get('tipo_merma')
-        proceso = request.form.get('proceso')
+        proceso = 'ALMACEN'
         tipo_evento = request.form.get('tipo_evento')
         motivo = request.form.get('motivo')
         observaciones = request.form.get('observaciones')
@@ -180,8 +171,7 @@ def registrar_merma_op(uuid_op):
         'produccion/merma/create.html', 
         form=form, 
         orden=orden, 
-        insumos=insumos_data,
-        proceso_sugerido=proceso_sugerido
+        insumos=insumos_data
     )
 
 @merma_bp.route('/crear_manual', methods=['GET', 'POST'])
@@ -220,7 +210,7 @@ def crear_manual():
         exito = False
         nueva_merma = Merma(
             tipo_merma=tipo_merma,
-            proceso=form.proceso.data,
+            proceso='ALMACEN',
             tipo_evento=form.tipo_evento.data,
             motivo=form.motivo.data,
             cantidad=cantidad,
