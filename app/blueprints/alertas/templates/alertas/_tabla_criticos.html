@@ -68,24 +68,16 @@
 
                     {# Acción con estilo AXIS (Negro y Minimalista) #}
                     <td class="px-8 py-5 text-right">
-                        {% if item.estado == 'AGOTADO' %}
-                        {# Redirige a la vista de Pedidos A Proveedor con pre-llenado #}
-                        <a href="{{ url_for('pedidos_proveedor_bp.create', uuid_proveedor=item.proveedor_uuid or '', uuid_insumo=item.uuid_insumo) }}"
-                            class="inline-block bg-black text-white px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-neutral-800 transition-all shadow-sm">
-                            Crear Orden
-                        </a>
-                        {% else %}
                         <button
-                            class="btn-contactar bg-white border border-neutral-200 text-black px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-neutral-50 transition-all shadow-sm"
+                            class="btn-contactar bg-black text-white px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-neutral-800 transition-all shadow-sm"
                             data-nombre="{{ item.nombre }}" data-sku="{{ item.sku or '—' }}"
                             data-prov-nombre="{{ item.proveedor_nombre or 'No asignado' }}"
                             data-prov-rfc="{{ item.proveedor_rfc or 'N/A' }}"
                             data-prov-contacto="{{ item.proveedor_contacto or 'N/A' }}"
                             data-prov-tel="{{ item.proveedor_tel or '' }}"
                             data-prov-uuid="{{ item.proveedor_uuid or '' }}">
-                            Contactar
+                            Atender
                         </button>
-                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

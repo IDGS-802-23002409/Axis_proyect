@@ -97,9 +97,9 @@
                        rounded-xl hover:bg-gray-800 transition-colors uppercase tracking-wider">
                 Cerrar
             </button>
-            <a id="modal-prov-ver-link" href="#" class="flex-1 px-4 py-2.5 text-xs font-bold text-black bg-white rounded-xl
+            <a href="/" class="flex-1 px-4 py-2.5 text-xs font-bold text-black bg-white rounded-xl
                        hover:bg-gray-200 transition-colors uppercase tracking-wider text-center">
-                Ver Ficha Completa
+                Contactar
             </a>
         </div>
     </div>
@@ -238,9 +238,6 @@
 
         const telLink = document.getElementById('modal-prov-tel-link');
         telLink.href = data.prov_tel ? `tel:${data.prov_tel}` : '#';
-
-        const verLink = document.getElementById('modal-prov-ver-link');
-        verLink.href = data.prov_uuid ? `/proveedores/${data.prov_uuid}?open=true` : '#';
 
         document.getElementById('modal-proveedor').classList.remove('hidden');
         lucide.createIcons();

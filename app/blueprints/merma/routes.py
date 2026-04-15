@@ -107,6 +107,27 @@ def registrar_merma_op(uuid_op):
                     raise Exception(f"La cantidad de merma ({qty}) excede el límite permitido ({max_permitido}) para el insumo.")
 
                 # Crear registro de merma
+                # RECALCULAR CAPACIDAD DE LA OP
+                # Usamos la cantidad_original para evitar errores acumulativos
+                consumo_u = consumos_receta.get(uuid_insumo)
+                if consumo_u and consumo_u > 0:
+                    # 1. Mermas previas en BD
+                    total_merma_db = db.session.query(func.sum(Merma.cantidad)).filter(
+                        Merma.uuid_op == uuid_op,
+                        Merma.uuid_insumo == uuid_insumo,
+                        Merma.activo == True
+                    ).scalar() or Decimal(0)
+                    
+                    # 2. Sumar la actual que estamos procesando
+                    total_merma_insumo = total_merma_db + qty
+                    
+                    cantidad_disponible = (consumo_u * cantidad_original) - total_merma_insumo
+                    posibles = int(cantidad_disponible // consumo_u)
+                    
+                    if posibles < orden.cantidad_a_producir:
+                        orden.cantidad_a_producir = posibles
+
+                # Crear registro de merma
                 nueva_merma = Merma(
                     tipo_merma='TELA' if uuid_rollo else 'INSUMO',
                     proceso=proceso,
@@ -121,29 +142,6 @@ def registrar_merma_op(uuid_op):
                     usuario_responsable=current_user.id
                 )
                 db.session.add(nueva_merma)
-                
-                # RECALCULAR CAPACIDAD DE LA OP
-                # Usamos la cantidad_original para evitar errores acumulativos
-                consumo_u = consumos_receta.get(uuid_insumo)
-                if consumo_u and consumo_u > 0:
-                    # Buscamos todas las mermas activas para este insumo en esta OP (incluyendo la actual)
-                    # Para simplificar, usaremos el total acumulado en esta transacción
-                    
-                    # 1. Mermas previas
-                    total_merma_insumo = db.session.query(func.sum(Merma.cantidad)).filter(
-                        Merma.uuid_op == uuid_op,
-                        Merma.uuid_insumo == uuid_insumo,
-                        Merma.activo == True
-                    ).scalar() or Decimal(0)
-                    
-                    # 2. Sumar la actual (que aún no está commit pero ya está en el session)
-                    total_merma_insumo += qty
-                    
-                    cantidad_disponible = (consumo_u * cantidad_original) - total_merma_insumo
-                    posibles = int(cantidad_disponible // consumo_u)
-                    
-                    if posibles < orden.cantidad_a_producir:
-                        orden.cantidad_a_producir = posibles
 
                 # Descuento de Inventario
                 if uuid_rollo:

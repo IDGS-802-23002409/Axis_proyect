@@ -398,7 +398,7 @@ def delete(uuid_insumo):
 
 @insumos_bp.route("/restore/<string:uuid_insumo>", methods=["POST"])
 @login_required
-@roles_required('admin')
+@roles_accepted('admin', 'gerente', 'produccion')
 def restore(uuid_insumo):
     insumo = Insumo.query.get_or_404(uuid_insumo)
 

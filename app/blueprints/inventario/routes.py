@@ -31,7 +31,7 @@ def index():
         Merma.activo == True
     ).scalar()
 
-    insumos    = Insumo.query.filter_by(estatus="ACTIVO").all()
+    insumos    = Insumo.query.filter_by(estatus="ACTIVO").order_by(Insumo.fecha_creacion.desc()).all()
     inventario = []
 
     for insumo in insumos:
