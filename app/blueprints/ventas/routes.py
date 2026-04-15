@@ -76,7 +76,7 @@ def marcar_entregado(uuid_venta):
 
 @ventas_bp.route('/')
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def index():
     q          = request.args.get('q', '').strip()         
     start_str  = request.args.get('start', '')

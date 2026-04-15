@@ -12,7 +12,7 @@ from app.models.insumos import Insumo
 
 @pedidos_proveedor_bp.route("/")
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def index():
     busqueda = request.args.get("q")
     query = PedidoProveedorEncabezado.query.options(
@@ -33,7 +33,7 @@ def index():
 
 @pedidos_proveedor_bp.route("/create", methods=["GET", "POST"])
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def create():
     form = PedidoProveedorForm()
     proveedores = Proveedor.query.all()
@@ -146,7 +146,7 @@ def create():
 
 @pedidos_proveedor_bp.route("/<uuid_pedido>")
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def ver(uuid_pedido):
     pedido = PedidoProveedorEncabezado.query.options(
         joinedload(PedidoProveedorEncabezado.detalles)
@@ -166,7 +166,7 @@ def ver(uuid_pedido):
 
 @pedidos_proveedor_bp.route("/aprobar/<uuid_pedido>", methods=["POST"])
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def aprobar(uuid_pedido):
     pedido = PedidoProveedorEncabezado.query.get_or_404(uuid_pedido)
     if pedido.estatus != 'Pendiente':
@@ -200,7 +200,7 @@ def aprobar(uuid_pedido):
 
 @pedidos_proveedor_bp.route("/rechazar/<uuid_pedido>", methods=["POST"])
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def rechazar(uuid_pedido):
     pedido = PedidoProveedorEncabezado.query.get_or_404(uuid_pedido)
     if pedido.estatus != 'Pendiente':
@@ -214,7 +214,7 @@ def rechazar(uuid_pedido):
 
 @pedidos_proveedor_bp.route("/completar/<uuid_pedido>", methods=["POST"])
 @login_required
-@roles_accepted('admin', 'gerente', 'produccion')
+@roles_accepted('admin', 'gerente')
 def completar(uuid_pedido):
     pedido = PedidoProveedorEncabezado.query.get_or_404(uuid_pedido)
     if pedido.estatus != 'Aprobado':
