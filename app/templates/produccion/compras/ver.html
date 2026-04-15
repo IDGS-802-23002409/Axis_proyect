@@ -81,7 +81,8 @@
                             <th class="px-6 py-4 font-bold">Unidad</th>
                             <th class="px-6 py-4 font-bold">Cantidad</th>
                             <th class="px-6 py-4 font-bold">Detalle</th>
-                            <th class="px-6 py-4 font-bold">Costo Unitario</th>
+                            <th class="px-6 py-4 font-bold">Costo Compra</th>
+                            <th class="px-6 py-4 font-bold">Costo Base</th>
                             <th class="px-6 py-4 font-bold text-right">Subtotal</th>
                         </tr>
                     </thead>
@@ -135,9 +136,18 @@
 
                             </td>
 
-                            <!-- COSTO -->
+                            <!-- COSTO COMPRA -->
                             <td class="px-6 py-4 text-xs text-neutral-600">
                                 $ {{ "{:.2f}".format(d.costo_unitario_compra|float) }}
+                            </td>
+
+                            <!-- COSTO BASE -->
+                            <td class="px-6 py-4 text-xs text-blue-600 font-medium">
+                                {% if d.insumo.unidad_medida == "ROLLO" and compra.estatus == "RECIBIDO" %}
+                                    $ {{ "{:.4f}".format(d.costo_unitario_compra|float) }} / {{ d.insumo.contenido_unidad_medida }}
+                                {% else %}
+                                    —
+                                {% endif %}
                             </td>
 
                             <!-- SUBTOTAL -->

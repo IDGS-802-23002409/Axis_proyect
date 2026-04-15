@@ -102,16 +102,18 @@
                         <td class="px-6 py-4 text-right">
                             <div class="flex justify-end gap-3 items-center">
 
-                                <a href="{{ url_for('orden_bp.ver', uuid_op=orden.uuid_op) }}"
-                                    class="text-blue-600 hover:underline">
-                                    Ver
-                                </a>
-
                                 {% if orden.estado != 'Terminado' %}
                                 <button type="button" class="text-green-600 hover:underline font-bold"
                                     onclick="confirmarAvance('{{ orden.uuid_op }}', '{{ orden.estado }}')">
                                     Avanzar Estado
                                 </button>
+                                {% else %}
+                                <span class="flex items-center gap-1 text-green-600 font-bold">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Completado
+                                </span>
                                 {% endif %}
 
                             </div>

@@ -179,26 +179,28 @@
             {{ nav_link('recetas_bp.index', 'Recetas', 'book-open', 'recetas_bp') }}
             {{ nav_link('inventario_bp.index', 'Inventario', 'archive', 'inventario_bp') }}
 
-            {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
+            {% if current_user.has_role('admin') or current_user.has_role('gerente') or current_user.has_role('produccion') %}
             {{ nav_link('orden_bp.index', 'Órdenes Producción', 'clipboard-list', 'orden_bp') }}
             {% endif %}
           </div>
         </div>
 
-        {# ── Comercial (admin + gerente) ─────────────── #}
-        {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
+        {# ── Comercial (admin + gerente + produccion para visualización) ─────────────── #}
+        {% if current_user.has_role('admin') or current_user.has_role('gerente') or current_user.has_role('produccion') %}
         <div>
           <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Comercial</p>
           <div class="flex flex-col gap-1">
             {{ nav_link('ventas.index', 'Ventas', 'shopping-cart', 'ventas') }}
+            {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
             {{ nav_link('clientes.index', 'Clientes', 'contact', 'clientes') }}
             {{ nav_link('costo_utilidad.index', 'Costo y Utilidad', 'dollar-sign', 'costo_utilidad') }}
+            {% endif %}
           </div>
         </div>
         {% endif %}
 
-        {# ── Control (admin + gerente) ────────────────── #}
-        {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
+        {# ── Control (todos los roles internos) ────────────────── #}
+        {% if current_user.has_role('admin') or current_user.has_role('gerente') or current_user.has_role('produccion') %}
         <div>
           <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Control</p>
           <div class="flex flex-col gap-1">

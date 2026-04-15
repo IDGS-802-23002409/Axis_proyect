@@ -16,7 +16,7 @@ class OrdenProduccionForm(FlaskForm):
         'Cantidad a producir',
         validators=[
             DataRequired(),
-            NumberRange(min=1, message="Debe ser mayor a 0")
+            NumberRange(min=1, max=500, message="La cantidad debe estar entre 1 y 500 unidades")
         ]
     )
 

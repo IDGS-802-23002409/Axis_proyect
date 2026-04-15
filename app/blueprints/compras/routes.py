@@ -257,6 +257,12 @@ def recibir(uuid_compra):
                     # Se permite aceptar rollos con menor/mayor metraje.
                     # El metraje real será el que dicte la suma en el inventario.
 
+                    # RECALCULAR COSTO UNITARIO A UNIDAD BASE (METRO)
+                    # Si el usuario compró 1 rollo a $5000 y el rollo tiene 100m,
+                    # el costo unitario base debe ser $50.
+                    costo_total_renglon = detalle.costo_unitario_compra * cantidad
+                    detalle.costo_unitario_compra = costo_total_renglon / metraje_real
+
                     # Actualizamos stock y creamos rollos
                     metraje_por_rollo = metraje_real / cantidad
                     insumo.stock_total_acumulado += metraje_real

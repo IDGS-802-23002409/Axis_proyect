@@ -63,7 +63,11 @@
 
                 {{ form.cantidad_a_producir(
                     class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-black outline-none",
-                    placeholder="Ejemplo: 10, 25, 50, 100 playeras"
+                    placeholder="Ejemplo: 10, 25, 50, 100 playeras",
+                    type="number",
+                    step="1",
+                    min="1",
+                    max="500"
                 ) }}
 
                 <p class="text-xs text-neutral-400 mt-1">
