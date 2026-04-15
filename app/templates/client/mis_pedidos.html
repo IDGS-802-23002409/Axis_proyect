@@ -62,10 +62,12 @@
                             <div class="flex items-center gap-4">
                                 <span class="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full 
                                     {% if venta.estatus_envio == 'Completado' %} bg-emerald-500/10 text-emerald-500 border border-emerald-500/20
+                                    {% elif venta.estatus_envio == 'Entregado' %} bg-blue-500/10 text-blue-500 border border-blue-500/20
                                     {% elif venta.estatus_envio == 'Pendiente' %} bg-amber-500/10 text-amber-500 border border-amber-500/20
-                                    {% elif venta.estatus_envio == 'Enviado' %} bg-blue-500/10 text-blue-500 border border-blue-500/20
                                     {% else %} bg-secondary text-muted-foreground border border-border {% endif %}">
-                                    {{ venta.estatus_envio }}
+                                    {% if venta.estatus_envio == 'Completado' %} Listo para recolección
+                                    {% elif venta.estatus_envio == 'Entregado' %} Completado
+                                    {% else %} {{ venta.estatus_envio }} {% endif %}
                                 </span>
                             </div>
                         </div>
