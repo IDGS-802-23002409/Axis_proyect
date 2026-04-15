@@ -8,12 +8,13 @@ from flask_security import login_required, roles_required, roles_accepted, curre
 from . import ventas_bp
 from app.utils.database_connection import db
 from app.models.ventas import VentaEncabezado, VentaDetalle
+from app.models.pedidos_cliente import PedidoClienteEncabezado, PedidoClienteDetalle
 from app.models.modelos_productos import ProductoTerminado
 from app.models.explosion_materiales import ExplosionMaterialesCabecera
 from app.models.clientes import Cliente
 from app.models.usuarios import Usuario
 from app.models.produccion import OrdenProduccion
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from datetime import datetime, timedelta
 from flask_mail import Message
 
@@ -78,15 +79,12 @@ def marcar_enviado(uuid_venta):
 @login_required
 @roles_accepted('admin', 'gerente')
 def index():
-    # ── Filtros GET ───────────────────────────────────────────────────────
-    q          = request.args.get('q', '').strip()          # búsqueda por cliente
+    q          = request.args.get('q', '').strip()         
     start_str  = request.args.get('start', '')
     end_str    = request.args.get('end', '')
-    estatus    = request.args.get('estatus', '')            # filtro por estatus_envio
+    estatus    = request.args.get('estatus', '')           
     page       = request.args.get('page', 1, type=int)
     per_page   = 20
-
-    # Rango de fechas por defecto: Ninguno (Mostrar todo)
     fecha_fin  = None
     fecha_ini  = None
 
@@ -101,21 +99,34 @@ def index():
         except ValueError:
             pass
 
+    # ── Subconsultas para totales (Evitar duplicados por joins múltiples) ──
+    # 1. Totales de Venta Directa (Stock)
+    vd_sub = db.session.query(
+        VentaDetalle.uuid_venta,
+        func.sum(VentaDetalle.cantidad * VentaDetalle.precio_unitario_historico).label('total_vd'),
+        func.sum(VentaDetalle.cantidad).label('units_vd')
+    ).group_by(VentaDetalle.uuid_venta).subquery()
+
+    # 2. Totales de Pedidos Pendientes (Producción)
+    pd_sub = db.session.query(
+        PedidoClienteEncabezado.uuid_venta_origen,
+        func.sum(PedidoClienteDetalle.cantidad * PedidoClienteDetalle.precio_unitario_historico).label('total_pd'),
+        func.sum(PedidoClienteDetalle.cantidad).label('units_pd')
+    ).join(PedidoClienteDetalle, PedidoClienteEncabezado.uuid_pedido == PedidoClienteDetalle.uuid_pedido)\
+     .group_by(PedidoClienteEncabezado.uuid_venta_origen).subquery()
+
     # ── Query principal ───────────────────────────────────────────────────
-    # Une VentaEncabezado → Cliente → Usuario para obtener nombre_completo
     query = (
         db.session.query(
             VentaEncabezado,
             Usuario.nombre_completo.label('nombre_cliente'),
-            func.sum(
-                VentaDetalle.cantidad * VentaDetalle.precio_unitario_historico
-            ).label('total_venta'),
-            func.sum(VentaDetalle.cantidad).label('total_unidades'),
+            (func.coalesce(vd_sub.c.total_vd, 0) + func.coalesce(pd_sub.c.total_pd, 0)).label('total_venta'),
+            (func.coalesce(vd_sub.c.units_vd, 0) + func.coalesce(pd_sub.c.units_pd, 0)).label('total_unidades')
         )
-        .join(Cliente,     VentaEncabezado.uuid_cliente == Cliente.uuid_cliente)
-        .join(Usuario,     Cliente.uuid_usuario         == Usuario.uuid_usuario)
-        .join(VentaDetalle, VentaEncabezado.uuid_venta  == VentaDetalle.uuid_venta)
-        .group_by(VentaEncabezado.uuid_venta, Usuario.nombre_completo)
+        .join(Cliente, VentaEncabezado.uuid_cliente == Cliente.uuid_cliente)
+        .join(Usuario, Cliente.uuid_usuario == Usuario.uuid_usuario)
+        .outerjoin(vd_sub, VentaEncabezado.uuid_venta == vd_sub.c.uuid_venta)
+        .outerjoin(pd_sub, VentaEncabezado.uuid_venta == pd_sub.c.uuid_venta_origen)
     )
     
     if fecha_ini:
@@ -139,21 +150,27 @@ def index():
     total_pages  = (total + per_page - 1) // per_page
 
     # ── KPIs del rango ────────────────────────────────────────────────────
+    # Ajustamos KPIs para sumar ambos orígenes
     kpi_query = db.session.query(
-        func.count(func.distinct(VentaEncabezado.uuid_venta)).label('num_ventas'),
-        func.sum(
-            VentaDetalle.cantidad * VentaDetalle.precio_unitario_historico
-        ).label('ingresos'),
-        func.sum(VentaDetalle.cantidad).label('unidades'),
-    ).join(VentaDetalle, VentaEncabezado.uuid_venta == VentaDetalle.uuid_venta)
-        
+        func.count(VentaEncabezado.uuid_venta).label('num_ventas'),
+        func.sum(func.coalesce(vd_sub.c.total_vd, 0) + func.coalesce(pd_sub.c.total_pd, 0)).label('ingresos'),
+        func.sum(func.coalesce(vd_sub.c.units_vd, 0) + func.coalesce(pd_sub.c.units_pd, 0)).label('unidades'),
+    ).outerjoin(vd_sub, VentaEncabezado.uuid_venta == vd_sub.c.uuid_venta)\
+     .outerjoin(pd_sub, VentaEncabezado.uuid_venta == pd_sub.c.uuid_venta_origen)
+    
+    # Aplicar mismos filtros a KPI
+    if fecha_ini: kpi_query = kpi_query.filter(func.date(VentaEncabezado.fecha_venta) >= fecha_ini)
+    if fecha_fin: kpi_query = kpi_query.filter(func.date(VentaEncabezado.fecha_venta) <= fecha_fin)
+    if q: kpi_query = kpi_query.join(Cliente).join(Usuario).filter(Usuario.nombre_completo.ilike(f'%{q}%'))
+    if estatus: kpi_query = kpi_query.filter(VentaEncabezado.estatus_envio == estatus)
+
     kpi = kpi_query.first()
 
     # ── Construir lista para el template ──────────────────────────────────
     ventas = []
     for ve, nombre_cliente, total_venta, total_unidades in ventas_rows:
-        # Detalle de productos de esta venta
-        productos = db.session.query(
+        # Detalle de productos (Stock)
+        productos_stock = db.session.query(
             ExplosionMaterialesCabecera.nombre_receta,
             ExplosionMaterialesCabecera.talla,
             VentaDetalle.cantidad,
@@ -162,6 +179,36 @@ def index():
          .join(ExplosionMaterialesCabecera, ProductoTerminado.uuid_explosion == ExplosionMaterialesCabecera.uuid_explosion)\
          .filter(VentaDetalle.uuid_venta == ve.uuid_venta)\
          .all()
+
+        # Detalle de productos (Pedido)
+        productos_pedido = db.session.query(
+            ExplosionMaterialesCabecera.nombre_receta,
+            ExplosionMaterialesCabecera.talla,
+            PedidoClienteDetalle.cantidad,
+            PedidoClienteDetalle.precio_unitario_historico,
+        ).join(PedidoClienteEncabezado, PedidoClienteDetalle.uuid_pedido == PedidoClienteEncabezado.uuid_pedido)\
+         .join(ProductoTerminado, PedidoClienteDetalle.uuid_producto == ProductoTerminado.uuid_producto)\
+         .join(ExplosionMaterialesCabecera, ProductoTerminado.uuid_explosion == ExplosionMaterialesCabecera.uuid_explosion)\
+         .filter(PedidoClienteEncabezado.uuid_venta_origen == ve.uuid_venta)\
+         .all()
+
+        combined_products = []
+        for p in productos_stock:
+            combined_products.append({
+                'nombre' : p.nombre_receta,
+                'talla'  : p.talla,
+                'qty'    : p.cantidad,
+                'precio' : float(p.precio_unitario_historico),
+                'tag'    : 'Stock'
+            })
+        for p in productos_pedido:
+            combined_products.append({
+                'nombre' : p.nombre_receta,
+                'talla'  : p.talla,
+                'qty'    : p.cantidad,
+                'precio' : float(p.precio_unitario_historico),
+                'tag'    : 'Pedido'
+            })
 
         ventas.append({
             'uuid_venta'      : ve.uuid_venta,
@@ -172,30 +219,19 @@ def index():
             'estatus_envio'   : ve.estatus_envio,
             'total_venta'     : float(total_venta or 0),
             'total_unidades'  : int(total_unidades or 0),
-            'productos'       : [
-                {
-                    'nombre' : p.nombre_receta,
-                    'talla'  : p.talla,
-                    'qty'    : p.cantidad,
-                    'precio' : float(p.precio_unitario_historico),
-                }
-                for p in productos
-            ],
+            'productos'       : combined_products
         })
 
     return render_template(
         'ventas/index.html',
         ventas        = ventas,
-        # KPIs
         kpi_ventas    = int(kpi.num_ventas   or 0),
         kpi_ingresos  = float(kpi.ingresos   or 0),
         kpi_unidades  = int(kpi.unidades     or 0),
-        # Filtros activos
         q             = q,
         start         = fecha_ini.strftime('%Y-%m-%d') if fecha_ini else '',
         end           = fecha_fin.strftime('%Y-%m-%d') if fecha_fin else '',
         estatus       = estatus,
-        # Paginación
         page          = page,
         total_pages   = total_pages,
         total         = total,
