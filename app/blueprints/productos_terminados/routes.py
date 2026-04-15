@@ -296,3 +296,43 @@ def detalle_producto(uuid):
     explosion = producto.explosion
     
     return render_template('produccion/productos_terminados/detalle_producto.html', producto=producto, explosion=explosion)
+
+
+@productos_bp.route('/ajustar-stock/<uuid>', methods=['POST'])
+@login_required
+@roles_accepted('admin', 'produccion')
+def ajustar_stock(uuid):
+    """
+    Permite agregar stock físico de un producto terminado de forma manual.
+    Solo permite valores positivos para evitar decrementos accidentales o stock negativo.
+    """
+    producto = ProductoTerminado.query.get_or_404(uuid)
+    
+    try:
+        cantidad_str = request.form.get('cantidad')
+        if not cantidad_str:
+            flash('Debes especificar una cantidad para agregar.', 'error')
+            return redirect(url_for('productos_bp.index'))
+            
+        try:
+            cantidad_ajuste = int(cantidad_str)
+        except ValueError:
+            flash('La cantidad debe ser un número entero válido.', 'error')
+            return redirect(url_for('productos_bp.index'))
+
+        if cantidad_ajuste <= 0:
+            flash('La cantidad a agregar debe ser un número mayor a cero. Para mermas, use el módulo correspondiente.', 'error')
+            return redirect(url_for('productos_bp.index'))
+
+        # Aplicar incremento
+        nuevo_stock = (producto.stock_fisico_actual or 0) + cantidad_ajuste
+        producto.stock_fisico_actual = nuevo_stock
+        db.session.commit()
+        
+        flash(f'Stock de {producto.sku_especifico} incrementado en {cantidad_ajuste} unidades. Nuevo stock: {nuevo_stock}.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Ocurrió un error inesperado al procesar el ajuste de stock.', 'error')
+        
+    return redirect(url_for('productos_bp.index'))

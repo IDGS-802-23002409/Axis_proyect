@@ -105,6 +105,11 @@ def create():
                 "ancho": ancho
             })
 
+        # --- VALIDACIÓN ADICIONAL: Al menos un insumo ---
+        if not detalles_validos:
+            flash('Debes agregar al menos un insumo válido a la receta.', 'error')
+            return redirect(request.url)
+
         # Si hubo errores, no se guarda nada y se muestran mensajes
         if errores:
             for e in errores:
