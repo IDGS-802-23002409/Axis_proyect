@@ -74,7 +74,7 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
 
       <div class="p-4 bg-secondary border border-border rounded-md hover:border-primary transition-colors">
-        <p class="text-xs text-muted-foreground mb-2">Precio actual</p>
+        <p class="text-xs text-muted-foreground mb-2">Precio actual <span class="text-xs">(c/IVA)</span></p>
         <p class="text-2xl font-bold text-primary">${{ '%.2f' | format(producto.precio_venta or 0) }}</p>
       </div>
 
@@ -143,45 +143,70 @@
     <!-- ── Simulación de precio ── -->
     <div class="border-t border-border pt-6">
       <h3 class="text-lg font-semibold mb-4">Simulación de precio</h3>
-      <form method="POST" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <form method="POST" class="space-y-4">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="producto" value="{{ producto.uuid_producto }}">
 
-        <div>
-          <label class="text-xs text-muted-foreground mb-2 block" for="margen">
-            Margen deseado (%)
-          </label>
-          <input type="number" step="0.1" min="0"
-            name="margen" id="margen" value="{{ margen }}"
-            class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm
-                   focus:outline-none focus:border-primary"
-            required>
+        <!-- Fila 1: Margen e IVA -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label class="text-xs text-muted-foreground mb-2 block" for="margen">
+              Margen deseado (%)
+            </label>
+            <input type="number" step="0.1" min="0"
+              name="margen" id="margen" value="{{ margen }}"
+              class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm
+                     focus:outline-none focus:border-primary"
+              required>
+          </div>
+
+          <div>
+            <label class="text-xs text-muted-foreground mb-2 block" for="iva">
+              IVA (%)
+            </label>
+            <input type="number" step="0.1" min="0"
+              name="iva" id="iva" value="{{ iva }}"
+              class="w-full border border-border bg-input rounded-md px-3 py-2 text-sm
+                     focus:outline-none focus:border-primary">
+          </div>
+
+          <div>
+            <label class="text-xs text-muted-foreground mb-2 block">Costo de materiales</label>
+            <input type="text" readonly
+              class="w-full border border-border bg-secondary rounded-md px-3 py-2 text-sm"
+              value="${{ '%.2f' | format(costo_mp) }}">
+          </div>
+
+          <div>
+            <label class="text-xs text-muted-foreground mb-2 block">
+              {% if precio_con_iva > 0 %}Margen aplicado{% else %}Utilidad s/precio actual{% endif %}
+            </label>
+            <input type="text" readonly
+              class="w-full border border-border bg-secondary rounded-md px-3 py-2 text-sm"
+              value="{% if precio_con_iva > 0 %}{{ '%.2f' | format(margen) }}%{% else %}{{ '%.2f' | format(utilidad_actual) }}%{% endif %}">
+          </div>
         </div>
 
-        <div>
-          <label class="text-xs text-muted-foreground mb-2 block">Costo de materiales</label>
-          <input type="text" readonly
-            class="w-full border border-border bg-secondary rounded-md px-3 py-2 text-sm"
-            value="${{ '%.2f' | format(costo_mp) }}">
+        <!-- Fila 2: Desglose de precio sugerido -->
+        {% if precio_con_iva > 0 %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-secondary/50 border border-border rounded-md">
+          <div>
+            <p class="text-xs text-muted-foreground mb-1">Precio sugerido sin IVA</p>
+            <p class="text-lg font-semibold">${{ '%.2f' | format(precio_sin_iva) }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-muted-foreground mb-1">IVA ({{ '%.0f' | format(iva) }}%)</p>
+            <p class="text-lg font-semibold text-amber-600">${{ '%.2f' | format(precio_con_iva - precio_sin_iva) }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-muted-foreground mb-1">Precio sugerido <span class="font-semibold text-primary">con IVA</span></p>
+            <p class="text-2xl font-bold text-primary">${{ '%.2f' | format(precio_con_iva) }}</p>
+          </div>
         </div>
+        {% endif %}
 
-        <div>
-          <label class="text-xs text-muted-foreground mb-2 block">Precio sugerido</label>
-          <input type="text" readonly
-            class="w-full border border-border bg-secondary rounded-md px-3 py-2 text-sm font-semibold text-primary"
-            value="{% if precio_ajustado > 0 %}${{ '%.2f' | format(precio_ajustado) }}{% else %}—{% endif %}">
-        </div>
-
-        <div>
-          <label class="text-xs text-muted-foreground mb-2 block">
-            {% if precio_ajustado > 0 %}Margen aplicado{% else %}Utilidad sobre precio actual{% endif %}
-          </label>
-          <input type="text" readonly
-            class="w-full border border-border bg-secondary rounded-md px-3 py-2 text-sm"
-            value="{% if precio_ajustado > 0 %}{{ '%.2f' | format(margen) }}%{% else %}{{ '%.2f' | format(utilidad_actual) }}%{% endif %}">
-        </div>
-
-        <div class="flex gap-3 col-span-1 md:col-span-2 lg:col-span-4">
+        <!-- Botones -->
+        <div class="flex gap-3">
           <button type="submit"
             class="w-full px-4 py-2 rounded-md bg-primary text-white text-sm
                    hover:bg-primary/90 transition-colors">
@@ -190,8 +215,8 @@
           <button type="submit" name="guardar_precio" value="1"
             class="w-full px-4 py-2 rounded-md bg-black text-white text-sm
                    hover:bg-black/90 transition-colors"
-            {% if precio_ajustado == 0 %}disabled title="Primero calcula un precio"{% endif %}>
-            Guardar precio en producto
+            {% if precio_con_iva == 0 %}disabled title="Primero calcula un precio"{% endif %}>
+            Guardar precio con IVA
           </button>
         </div>
       </form>

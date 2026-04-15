@@ -88,8 +88,10 @@ def create_app():
     application.config['SECURITY_MSG_TWO_FACTOR_INVALID_TOKEN'] = ('Código de verificación inválido.', 'error')
 
     # 2FA — solo email y authenticator, sin SMS
-    application.config['SECURITY_TWO_FACTOR'] = True
-    application.config['SECURITY_TWO_FACTOR_REQUIRED'] = True
+    # application.config['SECURITY_TWO_FACTOR'] = True
+    application.config['SECURITY_TWO_FACTOR'] = False
+    application.config['SECURITY_TWO_FACTOR_REQUIRED'] = False
+    # application.config['SECURITY_TWO_FACTOR_REQUIRED'] = True
     application.config['SECURITY_TWO_FACTOR_ENABLED_METHODS'] = ['email', 'authenticator']
     application.config['SECURITY_TWO_FACTOR_ALWAYS_VALIDATE'] = True
     application.config['SECURITY_TOTP_SECRETS'] = {

@@ -1,0 +1,6 @@
+projectKey=Axis
+serverUrl=http://host.docker.internal:9000
+serverVersion=26.3.0.120487
+dashboardUrl=http://host.docker.internal:9000/dashboard?id=Axis
+ceTaskId=384078a8-652a-492c-bd96-5636f173ec30
+ceTaskUrl=http://host.docker.internal:9000/api/ce/task?id=384078a8-652a-492c-bd96-5636f173ec30
