@@ -76,6 +76,12 @@ def registrar_merma_op(uuid_op):
         rollos_ids = request.form.getlist('rollo[]')
         cantidades = request.form.getlist('cantidad[]')
         
+        # Mapeo de insumo -> consumo unitario para recálculo de capacidad
+        consumos_receta = {}
+        if orden.producto and orden.producto.explosion:
+            for d in orden.producto.explosion.detalles:
+                consumos_receta[d.uuid_insumo] = Decimal(str(d.consumo_teorico_unitario))
+
         # Diccionario para validación rápida en servidor
         limites = {}
         for item in insumos_data:
@@ -113,6 +119,22 @@ def registrar_merma_op(uuid_op):
                 )
                 db.session.add(nueva_merma)
                 
+                # RECALCULAR CAPACIDAD DE LA OP
+                # Si el material desperdiciado reduce la capacidad matemática de completar la OP
+                consumo_u = consumos_receta.get(uuid_insumo)
+                if consumo_u and consumo_u > 0:
+                    # cantidad_teorica_total = lo que se necesita para la cantidad actual
+                    # Si desperdiciamos qty, lo que queda disponible para producir es:
+                    # disponible = (consumo_u * orden.cantidad_a_producir) - qty
+                    # prendas_posibles = piso(disponible / consumo_u)
+                    
+                    cantidad_disponible = (consumo_u * Decimal(orden.cantidad_a_producir)) - qty
+                    posibles = int(cantidad_disponible // consumo_u)
+                    
+                    if posibles < orden.cantidad_a_producir:
+                        # Si bajamos de 8 a 7.5, solo podemos hacer 7 (usamos int() para piso)
+                        orden.cantidad_a_producir = posibles
+
                 # Descuento de Inventario
                 if uuid_rollo:
                     rollo = RolloInventario.query.get(uuid_rollo)
