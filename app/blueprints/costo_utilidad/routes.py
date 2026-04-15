@@ -175,8 +175,10 @@ def detalle(uuid_producto):
     product          = None
     costo_mp         = 0.0
     margen           = 0.0
+    iva              = 16.0
     utilidad_actual  = 0.0
-    precio_ajustado  = 0.0
+    precio_sin_iva   = 0.0
+    precio_con_iva   = 0.0
     desglose_insumos = []
 
     # ── GET ──────────────────────────────────
@@ -196,8 +198,14 @@ def detalle(uuid_producto):
                 except (TypeError, ValueError):
                     precio_actual = 0.0
 
+                # El precio almacenado es con IVA; para calcular utilidad
+                # se compara el precio SIN IVA contra el costo de materiales.
+                precio_actual_sin_iva = (
+                    precio_actual / (1 + iva / 100)
+                    if iva > 0 else precio_actual
+                )
                 utilidad_actual = (
-                    ((precio_actual - costo_mp) / costo_mp) * 100
+                    ((precio_actual_sin_iva - costo_mp) / costo_mp) * 100
                     if costo_mp > 0 else 0.0
                 )
 
@@ -228,6 +236,13 @@ def detalle(uuid_producto):
         except ValueError:
             margen = 0.0
 
+        try:
+            iva = float(request.form.get("iva", 16) or 16)
+            if iva < 0:
+                iva = 0.0
+        except ValueError:
+            iva = 16.0
+
         _, detalles = _obtener_explosion_y_detalles(product)
 
         if not detalles:
@@ -253,18 +268,27 @@ def detalle(uuid_producto):
         except (TypeError, ValueError):
             precio_actual = 0.0
 
+        # El precio almacenado es con IVA; descontar para calcular utilidad real.
+        precio_actual_sin_iva = (
+            precio_actual / (1 + iva / 100)
+            if iva > 0 else precio_actual
+        )
         utilidad_actual = (
-            ((precio_actual - costo_mp) / costo_mp) * 100
+            ((precio_actual_sin_iva - costo_mp) / costo_mp) * 100
             if costo_mp > 0 else 0.0
         )
 
-        precio_ajustado = costo_mp * (1 + (margen / 100))
+        # Precio sin IVA (base sobre la que se aplica el margen)
+        precio_sin_iva = costo_mp * (1 + (margen / 100))
+        # Precio final con IVA (lo que paga el cliente)
+        precio_con_iva = precio_sin_iva * (1 + (iva / 100))
 
         if request.form.get("guardar_precio") == "1":
-            product.precio_venta = precio_ajustado
+            # Se guarda el precio CON IVA en el producto
+            product.precio_venta = precio_con_iva
             db.session.commit()
             flash(
-                f"Precio actualizado a ${precio_ajustado:.2f} "
+                f"Precio actualizado a ${precio_con_iva:.2f} (IVA incluido) "
                 f"para {product.sku_especifico}.",
                 "success",
             )
@@ -276,7 +300,9 @@ def detalle(uuid_producto):
         producto=product,
         costo_mp=costo_mp,
         margen=margen,
+        iva=iva,
         utilidad_actual=utilidad_actual,
-        precio_ajustado=precio_ajustado,
+        precio_sin_iva=precio_sin_iva,
+        precio_con_iva=precio_con_iva,
         desglose_insumos=desglose_insumos,
     )
