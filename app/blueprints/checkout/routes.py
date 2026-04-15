@@ -384,7 +384,13 @@ def mi_cuenta():
             cliente = Cliente(uuid_usuario=current_user.uuid_usuario)
             db.session.add(cliente)
         
-        cliente.telefono = re.sub(r'\D', '', str(telefono))
+        # Validar teléfono (10 dígitos)
+        telefono_limpio = re.sub(r'\D', '', str(telefono))
+        if len(telefono_limpio) != 10:
+            flash("El teléfono debe contener exactamente 10 dígitos numéricos.", "error")
+            return redirect(url_for('checkout.mi_cuenta'))
+
+        cliente.telefono = telefono_limpio
         cliente.direccion_completa = direccion
         
         try:
@@ -439,9 +445,15 @@ def completar_perfil():
             flash("Por favor proporcione un teléfono y una dirección válida.", "error")
             return render_template('completar_perfil.html')
 
+        # Validar teléfono (10 dígitos)
+        telefono_limpio = re.sub(r'\D', '', str(telefono))
+        if len(telefono_limpio) != 10:
+            flash("El teléfono debe contener exactamente 10 dígitos numéricos.", "error")
+            return render_template('completar_perfil.html')
+
         nuevo_cliente = Cliente(
             uuid_usuario=current_user.uuid_usuario,
-            telefono=re.sub(r'\D', '', str(telefono)),
+            telefono=telefono_limpio,
             direccion_completa=direccion
         )
         db.session.add(nuevo_cliente)

@@ -57,7 +57,6 @@ class ClienteForm(FlaskForm):
         if field.data:
             import re
             dato_limpio = re.sub(r'\D', '', str(field.data))
-            if not str(field.data).replace("-", "").replace(" ", "").isdigit():
-                raise validators.ValidationError('Solo se permiten números, guiones y espacios.')
             if len(dato_limpio) != 10:
-                raise validators.ValidationError('El número debe contener exactamente 10 dígitos.')
+                raise validators.ValidationError('El número de teléfono debe tener exactamente 10 dígitos numéricos.')
+            field.data = dato_limpio
