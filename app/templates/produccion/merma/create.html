@@ -19,21 +19,6 @@
 
       <!-- ELIMINADO TIPO MERMA, ya se asigna dinámicamente -->
 
-      <!-- PROCESO -->
-      <div class="mb-4">
-        <label class="block text-sm font-semibold mb-1">Proceso</label>
-
-        {% set proceso_actual = proceso_sugerido|default('CORTE') %}
-
-        <div class="flex items-center gap-2">
-            <span class="px-3 py-2 bg-neutral-100 border rounded text-sm font-bold uppercase transition-all">
-                {{ proceso_actual }}
-            </span>
-            <input type="hidden" name="proceso" value="{{ proceso_actual }}">
-            <p class="text-xs text-neutral-400 italic">Identificado automáticamente por el estado de la orden.</p>
-        </div>
-      </div>
-
       <!-- EVENTO -->
       <div class="mb-4">
         <label class="block text-sm font-semibold mb-1">Tipo de Evento</label>

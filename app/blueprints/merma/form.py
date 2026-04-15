@@ -24,17 +24,6 @@ class MermaForm(FlaskForm):
         validators=[DataRequired()]
     )
 
-    proceso = SelectField(
-        "Proceso",
-        choices=[
-            ("CORTE", "Corte"),
-            ("CONFECCION", "Confección"),
-            ("ACABADO", "Acabado"),
-            ("ALMACEN", "Almacén")
-        ],
-        validators=[DataRequired()]
-    )
-
     tipo_evento = SelectField(
         "Tipo de Evento",
         choices=[
