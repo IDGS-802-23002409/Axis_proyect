@@ -85,6 +85,12 @@ def registrar_merma_op(uuid_op):
         rollos_ids = request.form.getlist('rollo[]')
         cantidades = request.form.getlist('cantidad[]')
         
+        # Diccionario para validación rápida en servidor
+        limites = {}
+        for item in insumos_data:
+            key = (item['uuid_insumo'], item['uuid_rollo'])
+            limites[key] = Decimal(item.get('usado') or item.get('teorico') or 0)
+
         exito = False
         try:
             for i in range(len(insumos_ids)):
@@ -95,6 +101,11 @@ def registrar_merma_op(uuid_op):
                 uuid_insumo = insumos_ids[i]
                 uuid_rollo = rollos_ids[i] if i < len(rollos_ids) and rollos_ids[i] else None
                 
+                # VALIDACIÓN SERVIDOR
+                max_permitido = limites.get((uuid_insumo, uuid_rollo), Decimal(0))
+                if qty > (max_permitido + Decimal('0.0001')):
+                    raise Exception(f"La cantidad de merma ({qty}) excede el límite permitido ({max_permitido}) para el insumo.")
+
                 # Crear registro de merma
                 nueva_merma = Merma(
                     tipo_merma='TELA' if uuid_rollo else 'INSUMO',

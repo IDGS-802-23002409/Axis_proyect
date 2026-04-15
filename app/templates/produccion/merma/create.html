@@ -100,21 +100,19 @@
               <!-- CANTIDAD MERMA -->
               <div class="col-span-4">
 
+                {% set max_val = i.usado if i.tipo == "ROLLO" else i.teorico %}
                 <input type="number"
                        name="cantidad[]"
                        step="0.0001"
+                       min="0"
+                       max="{{ max_val or 999999 }}"
                        placeholder="Merma"
-                       class="border rounded px-3 py-2 w-full">
+                       class="border rounded px-3 py-2 w-full merma-input-field"
+                       oninput="validateMerma(this)">
 
-                {% if i.tipo == "ROLLO" %}
-                  <p class="text-xs text-gray-400 mt-1">
-                    Máx: {{ i.usado or 0 }}
-                  </p>
-                {% else %}
-                  <p class="text-xs text-gray-400 mt-1">
-                    Máx: {{ i.teorico or 0 }}
-                  </p>
-                {% endif %}
+                <p class="text-[10px] text-gray-400 mt-1 uppercase">
+                  Límite: <span class="font-bold text-gray-600">{{ max_val or 0 }}</span>
+                </p>
 
               </div>
 
@@ -158,6 +156,44 @@
     </form>
 
   </div>
-</div>
+{% endblock %}
 
+{% block scripts %}
+<script>
+    function validateMerma(input) {
+        const val = parseFloat(input.value) || 0;
+        const max = parseFloat(input.getAttribute('max')) || 999999;
+
+        if (val > (max + 0.0001)) { // Margen pequeño para decimales
+            input.classList.add('border-red-500', 'bg-red-50', 'text-red-700');
+            input.classList.remove('border-gray-200');
+        } else {
+            input.classList.remove('border-red-500', 'bg-red-50', 'text-red-700');
+            input.classList.add('border-gray-200');
+        }
+    }
+
+    // Validar antes de enviar
+    document.querySelector('form').addEventListener('submit', function(e) {
+        let hasError = false;
+        document.querySelectorAll('.merma-input-field').forEach(input => {
+            const val = parseFloat(input.value) || 0;
+            const max = parseFloat(input.getAttribute('max')) || 999999;
+            if (val > (max + 0.0001)) {
+                hasError = true;
+                input.focus();
+            }
+        });
+
+        if (hasError) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Límite Excedido',
+                text: 'No puedes registrar más merma de la que fue consumida o planificada.',
+                icon: 'error',
+                confirmButtonColor: '#000000'
+            });
+        }
+    });
+</script>
 {% endblock %}
