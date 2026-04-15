@@ -24,8 +24,8 @@ class OrdenProduccion(db.Model):
 
     producto = db.relationship('ProductoTerminado', backref=db.backref('ordenes_produccion', lazy=True))
     venta = db.relationship('VentaEncabezado', backref=db.backref('ordenes_produccion', lazy=True))
-    venta_detalle = db.relationship('VentaDetalle', backref=db.backref('orden_produccion', uselist=False))
-    pedido_detalle = db.relationship('PedidoClienteDetalle', backref=db.backref('orden_produccion', uselist=False))
+    venta_detalle = db.relationship('VentaDetalle', backref=db.backref('ordenes_produccion', lazy=True))
+    pedido_detalle = db.relationship('PedidoClienteDetalle', backref=db.backref('ordenes_produccion', lazy=True))
 
     __table_args__ = (
         Index('idx_op_estado', 'estado'),

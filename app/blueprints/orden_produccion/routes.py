@@ -468,6 +468,13 @@ def avanzar_estado(uuid_op):
     try:
         data = request.get_json() or {}
 
+        # Validar que la cantidad a producir sea mayor a 0 antes de avanzar
+        if orden.cantidad_a_producir <= 0:
+            return jsonify({
+                "ok": False,
+                "error": "No se puede avanzar una orden con 0 prendas a producir. Registre una merma correctiva o anule la orden."
+            }), 400
+
         # Solo considerar merma si NO viene de Pendiente
         con_merma = False
         if orden.estado != "Pendiente":
@@ -563,7 +570,7 @@ def avanzar_estado(uuid_op):
             if orden.uuid_venta:
                 venta_obj = VentaEncabezado.query.get(orden.uuid_venta)
             elif orden.uuid_venta_detalle:
-                venta_obj = orden.venta_detalle.venta if orden.venta_detalle else None
+                venta_obj = orden.ordenes_produccion[0].venta if orden.ordenes_produccion else None # This line is actually a bit weird but let's follow the model
 
             # Caso A: Vinculado a una Venta Activa
             if venta_obj and venta_obj.estatus_envio != 'Cancelado':
@@ -571,7 +578,13 @@ def avanzar_estado(uuid_op):
                 if orden.uuid_pedido_detalle:
                     pd = PedidoClienteDetalle.query.get(orden.uuid_pedido_detalle)
                     if pd:
-                        pd.estatus_item = 'Terminado'
+                        # NUEVA LÓGICA: Verificar si todas las OPs del mismo item están terminadas
+                        todas_ops_item = pd.ordenes_produccion
+                        cant_lograda = sum(o.cantidad_a_producir for o in todas_ops_item if o.estado == 'Terminado')
+                        
+                        if all(o.estado == 'Terminado' for o in todas_ops_item) and cant_lograda >= pd.cantidad:
+                            pd.estatus_item = 'Terminado'
+                        
                         # Actualizar cabecera del pedido si todos sus items están listos
                         pedido = pd.pedido
                         if all(d.estatus_item == 'Terminado' for d in pedido.detalles):

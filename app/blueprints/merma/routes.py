@@ -31,6 +31,10 @@ def registrar_merma_op(uuid_op):
     orden = OrdenProduccion.query.get_or_404(uuid_op)
     form = MermaForm()
     
+    # Obtener cantidad original del corte para cálculos teóricos precisos
+    ejecucion_base = EjecucionCorte.query.filter_by(uuid_op=uuid_op).first()
+    cantidad_original = Decimal(ejecucion_base.prendas_reales_logradas if ejecucion_base else orden.cantidad_a_producir)
+    
     # Obtener insumos relacionados (Receta + Rollos usados si está en corte)
     insumos_data = []
     
@@ -42,7 +46,7 @@ def registrar_merma_op(uuid_op):
                     'uuid_insumo': d.insumo.uuid_insumo,
                     'nombre': d.insumo.nombre,
                     'tipo': 'INSUMO',
-                    'teorico': float(d.consumo_teorico_unitario) * orden.cantidad_a_producir,
+                    'teorico': float(d.consumo_teorico_unitario) * float(cantidad_original),
                     'uuid_rollo': None
                 })
     
@@ -62,10 +66,6 @@ def registrar_merma_op(uuid_op):
                 })
 
     if request.method == 'POST':
-        # Nota: El form original de MermaForm es individual, 
-        # pero la plantilla create.html usa listas (insumo[], cantidad[]).
-        # Procesamos manualmente las listas enviadas por el formulario.
-        
         tipo_merma_gral = request.form.get('tipo_merma')
         proceso = 'ALMACEN'
         tipo_evento = request.form.get('tipo_evento')
@@ -90,6 +90,8 @@ def registrar_merma_op(uuid_op):
 
         exito = False
         try:
+            cantidad_previa_op = orden.cantidad_a_producir
+            
             for i in range(len(insumos_ids)):
                 qty = Decimal(cantidades[i] or 0)
                 if qty <= 0:
@@ -120,19 +122,26 @@ def registrar_merma_op(uuid_op):
                 db.session.add(nueva_merma)
                 
                 # RECALCULAR CAPACIDAD DE LA OP
-                # Si el material desperdiciado reduce la capacidad matemática de completar la OP
+                # Usamos la cantidad_original para evitar errores acumulativos
                 consumo_u = consumos_receta.get(uuid_insumo)
                 if consumo_u and consumo_u > 0:
-                    # cantidad_teorica_total = lo que se necesita para la cantidad actual
-                    # Si desperdiciamos qty, lo que queda disponible para producir es:
-                    # disponible = (consumo_u * orden.cantidad_a_producir) - qty
-                    # prendas_posibles = piso(disponible / consumo_u)
+                    # Buscamos todas las mermas activas para este insumo en esta OP (incluyendo la actual)
+                    # Para simplificar, usaremos el total acumulado en esta transacción
                     
-                    cantidad_disponible = (consumo_u * Decimal(orden.cantidad_a_producir)) - qty
+                    # 1. Mermas previas
+                    total_merma_insumo = db.session.query(func.sum(Merma.cantidad)).filter(
+                        Merma.uuid_op == uuid_op,
+                        Merma.uuid_insumo == uuid_insumo,
+                        Merma.activo == True
+                    ).scalar() or Decimal(0)
+                    
+                    # 2. Sumar la actual (que aún no está commit pero ya está en el session)
+                    total_merma_insumo += qty
+                    
+                    cantidad_disponible = (consumo_u * cantidad_original) - total_merma_insumo
                     posibles = int(cantidad_disponible // consumo_u)
                     
                     if posibles < orden.cantidad_a_producir:
-                        # Si bajamos de 8 a 7.5, solo podemos hacer 7 (usamos int() para piso)
                         orden.cantidad_a_producir = posibles
 
                 # Descuento de Inventario
@@ -169,13 +178,27 @@ def registrar_merma_op(uuid_op):
                 )
                 db.session.add(nueva_merma_prod)
                 
-                # Descontamos de la OP, ya que esas prendas jamás llegarán a terminarse
                 if orden.cantidad_a_producir >= qty_prod_dec:
                     orden.cantidad_a_producir -= int(qty_prod_dec)
                 else:
                     orden.cantidad_a_producir = 0
 
                 exito = True
+
+            # LANZAR NUEVA ORDEN PARA FALTANTES SI ES VENTA
+            if exito and (orden.uuid_pedido_detalle or orden.uuid_venta_detalle):
+                diferencia = cantidad_previa_op - orden.cantidad_a_producir
+                if diferencia > 0:
+                    nueva_op = OrdenProduccion(
+                        uuid_producto=orden.uuid_producto,
+                        uuid_venta=orden.uuid_venta,
+                        uuid_venta_detalle=orden.uuid_venta_detalle,
+                        uuid_pedido_detalle=orden.uuid_pedido_detalle,
+                        cantidad_a_producir=int(diferencia),
+                        estado='Pendiente'
+                    )
+                    db.session.add(nueva_op)
+                    flash(f'Se ha generado una nueva orden por {int(diferencia)} prendas faltantes para cumplir con el pedido.', 'info')
                 
             if exito:
                 db.session.commit()
