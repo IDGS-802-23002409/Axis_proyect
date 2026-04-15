@@ -36,6 +36,18 @@ def registrar_merma_op(uuid_op):
     ejecucion_base = EjecucionCorte.query.filter_by(uuid_op=uuid_op).first()
     cantidad_original = Decimal(ejecucion_base.prendas_reales_logradas if ejecucion_base else orden.cantidad_a_producir)
     
+    # Obtener mermas previas para ajustar el limite (material ya desperdiciado)
+    mermas_previas = db.session.query(
+        Merma.uuid_insumo,
+        Merma.uuid_rollo,
+        func.sum(Merma.cantidad).label('total')
+    ).filter(
+        Merma.uuid_op == uuid_op,
+        Merma.activo == True
+    ).group_by(Merma.uuid_insumo, Merma.uuid_rollo).all()
+    
+    mermas_map = {(m.uuid_insumo, m.uuid_rollo): Decimal(m.total or 0) for m in mermas_previas}
+
     # Obtener insumos relacionados (Receta + Rollos usados si está en corte)
     insumos_data = []
     
@@ -43,11 +55,15 @@ def registrar_merma_op(uuid_op):
     if orden.producto and orden.producto.explosion:
         for d in orden.producto.explosion.detalles:
             if d.insumo.unidad_medida == 'PIEZA':
+                total_asignado = Decimal(d.consumo_teorico_unitario) * cantidad_original
+                ya_mermado = mermas_map.get((d.insumo.uuid_insumo, None), Decimal(0))
+                disponible = max(0, total_asignado - ya_mermado)
+                
                 insumos_data.append({
                     'uuid_insumo': d.insumo.uuid_insumo,
                     'nombre': d.insumo.nombre,
                     'tipo': 'INSUMO',
-                    'teorico': float(d.consumo_teorico_unitario) * float(cantidad_original),
+                    'teorico': float(disponible),
                     'uuid_rollo': None
                 })
     
@@ -58,11 +74,15 @@ def registrar_merma_op(uuid_op):
         for ecr in ec_rollos:
             rollo = RolloInventario.query.get(ecr.uuid_rollo)
             if rollo:
+                total_asignado = Decimal(ecr.metros_usados)
+                ya_mermado = mermas_map.get((rollo.uuid_insumo, rollo.uuid_rollo), Decimal(0))
+                disponible = max(0, total_asignado - ya_mermado)
+
                 insumos_data.append({
                     'uuid_insumo': rollo.uuid_insumo,
                     'nombre': rollo.insumo.nombre if rollo.insumo else "Sin Nombre de Insumo",
                     'tipo': 'ROLLO',
-                    'usado': float(ecr.metros_usados),
+                    'usado': float(disponible),
                     'uuid_rollo': rollo.uuid_rollo
                 })
 
