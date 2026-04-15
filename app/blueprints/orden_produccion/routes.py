@@ -437,6 +437,15 @@ def iniciar_corte(uuid_op, uuid_usuario):
         # ─────────────────────────────
         op.estado = "En Corte"
 
+        # Actualizar estatus de pedido si existe
+        if op.uuid_pedido_detalle:
+            pd = PedidoClienteDetalle.query.get(op.uuid_pedido_detalle)
+            if pd:
+                pd.estatus_item = 'En Producción'
+                pedido = pd.pedido
+                if pedido and pedido.estatus == 'Pendiente':
+                    pedido.estatus = 'Producción'
+
         db.session.commit()
 
         return {
@@ -447,10 +456,6 @@ def iniciar_corte(uuid_op, uuid_usuario):
     except Exception as e:
         db.session.rollback()
         return {"ok": False, "error": str(e)}
-
-from flask import request, jsonify, url_for
-from flask_login import current_user
-
 
 @orden_bp.route("/avanzar_estado/<uuid_op>", methods=["POST"])
 @login_required
@@ -554,30 +559,46 @@ def avanzar_estado(uuid_op):
             # Cambiar estado
             orden.estado = nuevo_estado
 
-            # ─────────────────────────
-            # PRODUCCIÓN NORMAL
-            # ─────────────────────────
-            if not orden.uuid_venta_detalle:
+            venta_obj = None
+            if orden.uuid_venta:
+                venta_obj = VentaEncabezado.query.get(orden.uuid_venta)
+            elif orden.uuid_venta_detalle:
+                venta_obj = orden.venta_detalle.venta if orden.venta_detalle else None
 
+            # Caso A: Vinculado a una Venta Activa
+            if venta_obj and venta_obj.estatus_envio != 'Cancelado':
+                # 1. Actualizar detalle de pedido si existe
+                if orden.uuid_pedido_detalle:
+                    pd = PedidoClienteDetalle.query.get(orden.uuid_pedido_detalle)
+                    if pd:
+                        pd.estatus_item = 'Terminado'
+                        # Actualizar cabecera del pedido si todos sus items están listos
+                        pedido = pd.pedido
+                        if all(d.estatus_item == 'Terminado' for d in pedido.detalles):
+                            pedido.estatus = 'Listo'
+                
+                # 2. Verificar si TODA la venta puede completarse
+                # Una venta se completa si todas sus OPs están terminadas 
+                # y todos sus Pedidos están listos.
+                all_ops_done = all(op.estado == 'Terminado' for op in venta_obj.ordenes_produccion)
+                all_pedidos_ready = all(p.estatus in ['Listo', 'Entregado'] for p in venta_obj.pedidos_vinculados)
+                
+                if all_ops_done and all_pedidos_ready:
+                    venta_obj.estatus_envio = 'Completado'
+                    message = "Orden terminada. Venta marcada como COMPLETADA."
+                else:
+                    message = "Orden terminada. La venta sigue pendiente de otras piezas."
+
+            # Caso B: Producción para Stock (o venta cancelada)
+            else:
                 producto = orden.producto
                 producto.stock_fisico_actual = (
                     producto.stock_fisico_actual or 0
                 ) + orden.cantidad_a_producir
-
-                message = f"{orden.cantidad_a_producir} unidades agregadas al stock."
-
-            # ─────────────────────────
-            # PRODUCCIÓN POR VENTA
-            # ─────────────────────────
-            else:
-
-                detalle = orden.venta_detalle
-
-                if detalle:
-                    venta = detalle.venta
-                    venta.estatus_envio = "Enviado"
-
-                message = "Orden terminada. Venta marcada como completada."
+                
+                message = f"Orden terminada. {orden.cantidad_a_producir} unidades agregadas al stock."
+                if venta_obj and venta_obj.estatus_envio == 'Cancelado':
+                    message += " (La venta original fue cancelada)"
 
             db.session.commit()
 
