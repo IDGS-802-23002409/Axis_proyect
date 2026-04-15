@@ -9,9 +9,9 @@
     <!-- Resumen y Acción Principal -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div
-            class="md:col-span-2 bg-card border border-border p-6 rounded-xl shadow-sm flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+            class="md:col-span-2 bg-card border border-border p-6 rounded-xl shadow-sm flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-4 min-w-[200px]">
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shrink-0">
                     <i data-lucide="database" class="w-6 h-6"></i>
                 </div>
                 <div>
@@ -43,7 +43,7 @@
                     class="bg-muted px-1 rounded">respaldos/</code> del proyecto.</p>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto w-full">
             <table class="w-full text-left">
                 <thead class="axis-table-head">
                     <tr style="background:#111;color:#fff;">
@@ -71,10 +71,10 @@
                     {% endif %}
                     {% for file in files %}
                     <tr class="hover:bg-sidebar transition-colors">
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4 max-w-[200px] md:max-w-md">
                             <div class="flex items-center gap-3">
-                                <i data-lucide="file-text" class="w-4 h-4 text-muted-foreground"></i>
-                                <span class="font-medium text-sm">{{ file.name }}</span>
+                                <i data-lucide="file-text" class="w-4 h-4 text-muted-foreground shrink-0"></i>
+                                <span class="font-medium text-sm truncate" title="{{ file.name }}">{{ file.name }}</span>
                             </div>
                         </td>
                         <td class="px-6 py-4 text-sm text-muted-foreground">
