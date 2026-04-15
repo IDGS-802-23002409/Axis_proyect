@@ -15,7 +15,6 @@ class Cliente(db.Model):
     usuario_actualizo_uuid = Column(String(36))
 
     usuario = db.relationship('Usuario', backref=db.backref('cliente', uselist=False))
-    ventas = db.relationship('VentaEncabezado', backref='cliente_obj', lazy=True)
 
     def __repr__(self):
         return f'<Cliente {self.uuid_cliente}>'
