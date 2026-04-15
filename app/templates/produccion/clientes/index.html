@@ -44,6 +44,7 @@ Gestión de Clientes y Agenda
                     <th class="text-left">Usuario base</th>
                     <th class="text-left">Teléfono</th>
                     <th class="text-left">Dirección Domicilio</th>
+                    <th class="text-center">Ventas</th>
                     <th class="text-left">F. Registro</th>
                     <th class="text-right">Acciones</th>
                 </tr>
@@ -59,8 +60,13 @@ Gestión de Clientes y Agenda
                     <td class="px-6 py-4 text-xs">
                         {{ cli.direccion_completa or '—' }}
                     </td>
-                    <td class="px-6 py-4 text-muted-foreground">
-                        {{ cli.fecha_creacion.strftime('%d %b %Y') if cli.fecha_creacion else '—' }}
+                    <td class="px-6 py-4 text-center">
+                        <span class="bg-neutral-100 px-2 py-1 rounded text-xs font-bold">
+                            {{ cli.ventas|length }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-muted-foreground text-xs whitespace-nowrap">
+                        {{ (cli.fecha_creacion|timezone_adjust).strftime('%d %b %Y') if cli.fecha_creacion else '—' }}
                     </td>
                     <td class="px-6 py-4 text-right">
                         <div class="flex justify-end gap-3 items-center">

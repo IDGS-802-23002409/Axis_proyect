@@ -128,9 +128,9 @@
 
                     {# Fecha #}
                     <td class="px-4 py-4 text-xs text-gray-500">
-                        {{ v.fecha_venta.strftime('%d %b %Y') if v.fecha_venta else '—' }}
+                        {{ (v.fecha_venta|timezone_adjust).strftime('%d %b %Y') if v.fecha_venta else '—' }}
                         <p class="text-[10px] text-gray-400">
-                            {{ v.fecha_venta.strftime('%H:%M') if v.fecha_venta else '' }}
+                            {{ (v.fecha_venta|timezone_adjust).strftime('%H:%M') if v.fecha_venta else '' }}
                         </p>
                     </td>
 

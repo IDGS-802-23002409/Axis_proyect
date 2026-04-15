@@ -297,6 +297,14 @@ def create_app():
             pass
         return {'cart_items': [], 'cart_count': 0}
 
+    # ── Timezone Adjustment Filter ────────────────────────────
+    @application.template_filter('timezone_adjust')
+    def timezone_adjust(dt, offset=-6):
+        if dt is None:
+            return None
+        from datetime import timedelta
+        return dt + timedelta(hours=offset)
+
     # ── Prevent Cache on Protected Routes ─────────────────────
     @application.after_request
     def add_header(response):

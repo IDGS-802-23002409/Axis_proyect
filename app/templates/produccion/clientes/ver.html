@@ -31,7 +31,7 @@
             </div>
             <div>
                 <p class="text-xs text-muted-foreground font-bold uppercase tracking-wider">Fecha de Creación</p>
-                <p class="text-base">{{ cliente.fecha_creacion.strftime('%d/%m/%Y') if cliente.fecha_creacion else '—'
+                <p class="text-base">{{ (cliente.fecha_creacion|timezone_adjust).strftime('%d/%m/%Y') if cliente.fecha_creacion else '—'
                     }}</p>
             </div>
             <div class="sm:col-span-2">
