@@ -178,6 +178,7 @@
             {{ nav_link('insumos_bp.index', 'Insumos & Stocks', 'package', 'insumos_bp') }}
             {{ nav_link('recetas_bp.index', 'Recetas', 'book-open', 'recetas_bp') }}
             {{ nav_link('inventario_bp.index', 'Inventario', 'archive', 'inventario_bp') }}
+            {{ nav_link('merma_bp.index', 'Mermas & Ajustes', 'alert-triangle', 'merma_bp') }}
 
             {% if current_user.has_role('admin') or current_user.has_role('gerente') or current_user.has_role('produccion') %}
             {{ nav_link('orden_bp.index', 'Órdenes Producción', 'clipboard-list', 'orden_bp') }}
@@ -210,15 +211,19 @@
         </div>
         {% endif %}
 
-        {# ── Administración (admin + gerente) ──────────── #}
-        {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
+        {# ── Administración (admin + gerente + produccion para compras) ──────────── #}
+        {% if current_user.has_role('admin') or current_user.has_role('gerente') or current_user.has_role('produccion') %}
         <div>
           <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Administración</p>
           <div class="flex flex-col gap-1">
             {{ nav_link('proveedores.index', 'Proveedores', 'truck', 'proveedores') }}
             {{ nav_link('pedidos_proveedor_bp.index', 'Pedidos a Proveedor', 'file-text', 'pedidos_proveedor_bp') }}
             {{ nav_link('compras_bp.index', 'Compras / Recepción', 'package-check', 'compras_bp') }}
+            
+            {% if current_user.has_role('admin') or current_user.has_role('gerente') %}
             {{ nav_link('empleados.index', 'Empleados', 'briefcase', 'empleados') }}
+            {% endif %}
+
             {% if current_user.has_role('admin') %}
             {{ nav_link('usuarios.index', 'Usuarios', 'users', 'usuarios') }}
             {{ nav_link('respaldos.index', 'Respaldos', 'database', 'respaldos') }}

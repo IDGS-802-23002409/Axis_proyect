@@ -19,7 +19,7 @@ def get_upload_folder():
 
 @productos_bp.route('/')
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def index():
     nombre = request.args.get('nombre', '').strip()
     talla = request.args.get('talla', '').strip()
@@ -166,7 +166,7 @@ def registro_producto():
 
 @productos_bp.route('/editar/<uuid>', methods=['GET', 'POST'])
 @login_required
-@roles_accepted('admin', 'produccion')
+@roles_accepted('admin', 'gerente', 'produccion')
 def editar_producto(uuid):
     producto = ProductoTerminado.query.get_or_404(uuid)
     form = ProductoTerminadoForm(obj=producto)
